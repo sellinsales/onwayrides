@@ -1,0 +1,40 @@
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary
+__repo_tmp/
+.deploy/
+
+# Node / frontend
+node_modules/
+
+# Flutter / mobile
+apps/mobile/**/build/
+apps/mobile/**/.dart_tool/
+apps/mobile/**/.flutter-plugins
+apps/mobile/**/.flutter-plugins-dependencies
+apps/mobile/**/.packages
+apps/mobile/**/android/.gradle/
+
+# Laravel backend
+backend/.env
+backend/.env.*.local
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*.php
+backend/database/database.sqlite
+backend/public/storage
+backend/.phpunit.result.cache
+

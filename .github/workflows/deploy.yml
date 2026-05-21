@@ -1,0 +1,163 @@
+name: Deploy OnWay Rides
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: onwayrides-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, fileinfo, openssl, tokenizer, xml, ctype, json
+          tools: composer:v2
+
+      - name: Install backend production dependencies
+        working-directory: backend
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Generate production backend environment file
+        shell: bash
+        run: |
+          cat > backend/.env <<'EOF'
+          APP_NAME="OnWay Rides Backend"
+          APP_ENV=production
+          APP_KEY="${{ secrets.LARAVEL_APP_KEY }}"
+          APP_DEBUG=false
+          APP_URL="${{ vars.LARAVEL_APP_URL != '' && vars.LARAVEL_APP_URL || 'https://onwayrides.com' }}"
+          APP_LOCALE=en
+          APP_FALLBACK_LOCALE=en
+          APP_FAKER_LOCALE=en_US
+          APP_TIMEZONE=UTC
+          APP_MAINTENANCE_DRIVER=file
+          BCRYPT_ROUNDS=12
+          LOG_CHANNEL=stack
+          LOG_STACK=single
+          LOG_DEPRECATIONS_CHANNEL=null
+          LOG_LEVEL=error
+          DB_CONNECTION=mysql
+          DB_HOST="${{ secrets.DB_HOST }}"
+          DB_PORT="${{ secrets.DB_PORT }}"
+          DB_DATABASE="${{ secrets.DB_DATABASE }}"
+          DB_USERNAME="${{ secrets.DB_USERNAME }}"
+          DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+          SESSION_DRIVER=file
+          SESSION_LIFETIME=120
+          SESSION_ENCRYPT=false
+          SESSION_PATH=/
+          SESSION_DOMAIN=null
+          BROADCAST_CONNECTION=log
+          FILESYSTEM_DISK=local
+          QUEUE_CONNECTION=sync
+          CACHE_STORE=file
+          MEMCACHED_HOST=127.0.0.1
+          REDIS_CLIENT=phpredis
+          REDIS_HOST=127.0.0.1
+          REDIS_PASSWORD=null
+          REDIS_PORT=6379
+          MAIL_MAILER=log
+          MAIL_SCHEME=null
+          MAIL_HOST=127.0.0.1
+          MAIL_PORT=2525
+          MAIL_USERNAME=null
+          MAIL_PASSWORD=null
+          MAIL_FROM_ADDRESS="${{ vars.SUPPORT_EMAIL != '' && vars.SUPPORT_EMAIL || 'support@onwayrides.com' }}"
+          MAIL_FROM_NAME="OnWay Rides Backend"
+          AWS_ACCESS_KEY_ID=
+          AWS_SECRET_ACCESS_KEY=
+          AWS_DEFAULT_REGION=us-east-1
+          AWS_BUCKET=
+          AWS_USE_PATH_STYLE_ENDPOINT=false
+          ONWAYRIDES_API_VERSION=v1
+          FRONTEND_URL="${{ vars.FRONTEND_URL != '' && vars.FRONTEND_URL || 'https://onwayrides.com' }}"
+          ADMIN_URL="${{ vars.ADMIN_URL != '' && vars.ADMIN_URL || 'https://admin.onwayrides.com' }}"
+          SUPPORT_EMAIL="${{ vars.SUPPORT_EMAIL != '' && vars.SUPPORT_EMAIL || 'support@onwayrides.com' }}"
+          SUPPORT_PHONE="${{ vars.SUPPORT_PHONE != '' && vars.SUPPORT_PHONE || '+92-300-0000000' }}"
+          DEFAULT_COUNTRY_CODE="${{ vars.DEFAULT_COUNTRY_CODE != '' && vars.DEFAULT_COUNTRY_CODE || '+92' }}"
+          DEFAULT_CURRENCY="${{ vars.DEFAULT_CURRENCY != '' && vars.DEFAULT_CURRENCY || 'PKR' }}"
+          CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS != '' && vars.CORS_ALLOWED_ORIGINS || 'https://onwayrides.com,https://www.onwayrides.com' }}"
+          VITE_APP_NAME="OnWay Rides Backend"
+          EOF
+
+      - name: Prepare backend runtime directories
+        shell: bash
+        run: |
+          mkdir -p backend/storage/app/private/driver-documents
+          mkdir -p backend/storage/app/private/vehicle-documents
+          mkdir -p backend/storage/app/private/profile-photos
+          mkdir -p backend/storage/app/private/complaint-attachments
+          mkdir -p backend/storage/framework/cache/data
+          mkdir -p backend/storage/framework/sessions
+          mkdir -p backend/storage/framework/testing
+          mkdir -p backend/storage/framework/views
+          mkdir -p backend/storage/logs
+          mkdir -p backend/bootstrap/cache
+
+      - name: Build deployable frontend and backend bundles
+        shell: bash
+        run: |
+          mkdir -p .deploy/frontend .deploy/backend
+          rsync -av --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'apps/' \
+            --exclude 'backend/' \
+            --exclude '.deploy/' \
+            --exclude 'README.md' \
+            --exclude '.gitignore' \
+            ./ .deploy/frontend/
+
+          rsync -av --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'tests/' \
+            --exclude 'docs/' \
+            --exclude 'legacy/' \
+            --exclude 'database/database.sqlite' \
+            --exclude '.phpunit.result.cache' \
+            ./backend/ .deploy/backend/
+
+      - name: Install lftp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+
+      - name: Deploy frontend and backend over FTPS
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_FRONTEND_DIR: ${{ vars.FTP_FRONTEND_DIR }}
+          FTP_BACKEND_DIR: ${{ vars.FTP_BACKEND_DIR }}
+        run: |
+          FRONTEND_REMOTE_DIR="${FTP_FRONTEND_DIR:-/public_html/}"
+          BACKEND_REMOTE_DIR="${FTP_BACKEND_DIR:-/backend/}"
+
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$FTP_PORT" "$FTP_SERVER" <<EOF
+          set ftp:ssl-force true
+          set ftp:ssl-protect-data true
+          set ssl:verify-certificate no
+          set net:max-retries 2
+          set net:timeout 20
+          set xfer:clobber true
+          mkdir -p $FRONTEND_REMOTE_DIR
+          mkdir -p $BACKEND_REMOTE_DIR
+          mirror -R --delete --verbose .deploy/frontend $FRONTEND_REMOTE_DIR
+          mirror -R --delete --verbose .deploy/backend $BACKEND_REMOTE_DIR
+          bye
+          EOF

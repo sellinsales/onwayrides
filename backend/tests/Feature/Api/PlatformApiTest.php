@@ -1,0 +1,35 @@
+<?php
+
+namespace Tests\Feature\Api;
+
+use Tests\TestCase;
+
+class PlatformApiTest extends TestCase
+{
+    public function test_health_endpoint_returns_backend_status_payload(): void
+    {
+        $this->getJson('/api/health')
+            ->assertOk()
+            ->assertJsonStructure([
+                'status',
+                'app',
+                'environment',
+                'api_version',
+                'timestamp',
+                'database' => [
+                    'connection',
+                    'status',
+                ],
+            ]);
+    }
+
+    public function test_bootstrap_endpoint_returns_platform_metadata(): void
+    {
+        $this->getJson('/api/bootstrap')
+            ->assertOk()
+            ->assertJsonFragment([
+                'name' => 'OnWay Rides',
+                'strategy' => 'server-local',
+            ]);
+    }
+}
