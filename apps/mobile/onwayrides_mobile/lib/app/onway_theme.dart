@@ -9,17 +9,18 @@ class OnWayTheme {
   static const Color fog = Color(0xFFF5F5F5);
 
   static ThemeData get darkTheme {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: yellow,
-      brightness: Brightness.dark,
-    ).copyWith(
-      primary: yellow,
-      secondary: yellow,
-      surface: charcoal,
-      onSurface: white,
-      onPrimary: black,
-      outline: Colors.white24,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: yellow,
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: yellow,
+          secondary: yellow,
+          surface: charcoal,
+          onSurface: white,
+          onPrimary: black,
+          outline: Colors.white24,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -60,21 +61,9 @@ class OnWayTheme {
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(
-          color: white,
-          fontSize: 15,
-          height: 1.45,
-        ),
-        bodyMedium: TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-          height: 1.4,
-        ),
-        bodySmall: TextStyle(
-          color: Colors.white60,
-          fontSize: 12,
-          height: 1.35,
-        ),
+        bodyLarge: TextStyle(color: white, fontSize: 15, height: 1.45),
+        bodyMedium: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+        bodySmall: TextStyle(color: Colors.white60, fontSize: 12, height: 1.35),
         labelLarge: TextStyle(
           color: black,
           fontSize: 15,
@@ -98,9 +87,7 @@ class OnWayTheme {
           fontWeight: FontWeight.w700,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       cardTheme: CardThemeData(
         color: charcoal,

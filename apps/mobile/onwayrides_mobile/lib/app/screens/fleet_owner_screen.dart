@@ -14,13 +14,18 @@ class FleetOwnerScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
-          const BrandHeader(caption: 'Fleet ID, drivers, vehicles and operations'),
+          const BrandHeader(
+            caption: 'Fleet ID, drivers, vehicles and operations',
+          ),
           const SizedBox(height: 20),
           OnWayPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ONW-LHR-0001', style: Theme.of(context).textTheme.displaySmall),
+                Text(
+                  'ONW-LHR-0001',
+                  style: Theme.of(context).textTheme.displaySmall,
+                ),
                 const SizedBox(height: 10),
                 Text(
                   'Fleet owner dashboard for local city operations, complaints and payouts.',
@@ -78,7 +83,8 @@ class FleetOwnerScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Drivers',
-            subtitle: 'Independent or fleet-linked drivers can be managed here.',
+            subtitle:
+                'Independent or fleet-linked drivers can be managed here.',
           ),
           const SizedBox(height: 14),
           for (final driver in OnWayMockData.fleetDrivers) ...[
@@ -140,14 +146,20 @@ class FleetOwnerScreen extends StatelessWidget {
                       color: Colors.white10,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.directions_car_rounded, color: OnWayTheme.yellow),
+                    child: const Icon(
+                      Icons.directions_car_rounded,
+                      color: OnWayTheme.yellow,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(vehicle.type, style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          vehicle.type,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 4),
                         Text('${vehicle.plate} • ${vehicle.assignedDriver}'),
                       ],
@@ -155,9 +167,9 @@ class FleetOwnerScreen extends StatelessWidget {
                   ),
                   Text(
                     vehicle.status,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: OnWayTheme.yellow,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: OnWayTheme.yellow),
                   ),
                 ],
               ),
@@ -178,7 +190,9 @@ class FleetOwnerScreen extends StatelessWidget {
                 Text('• Vehicle inspection and permits'),
                 Text('• Assignments, payouts and disputes'),
                 Text('• Rider complaints and driver quality'),
-                Text('• TODO: connect to real fleet APIs and fleet_id persistence'),
+                Text(
+                  '• TODO: connect to real fleet APIs and fleet_id persistence',
+                ),
               ],
             ),
           ),
@@ -189,7 +203,9 @@ class FleetOwnerScreen extends StatelessWidget {
 
   void _showTodo(BuildContext context, String action) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$action flow will be connected to backend next.')),
+      SnackBar(
+        content: Text('$action flow will be connected to backend next.'),
+      ),
     );
   }
 }

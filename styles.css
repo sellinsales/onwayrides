@@ -10,8 +10,11 @@
   --gold-strong: #ffcf26;
   --gold-soft: #ffe9a6;
   --ink: #121212;
+  --ink-soft: #3f4148;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
   --container: 1240px;
+  --radius-lg: 30px;
+  --radius-md: 22px;
 }
 
 * {
@@ -25,6 +28,8 @@ html {
 body {
   margin: 0;
   font-family: "DM Sans", "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--text);
   background:
     radial-gradient(circle at top center, rgba(245, 197, 24, 0.12), transparent 22%),
@@ -105,6 +110,7 @@ button {
 
 .site-nav a {
   color: var(--muted);
+  font-size: 0.97rem;
   font-weight: 500;
 }
 
@@ -251,10 +257,10 @@ button {
 }
 
 .hero-text {
-  max-width: 540px;
+  max-width: 36rem;
   color: var(--muted);
-  font-size: 1.28rem;
-  line-height: 1.6;
+  font-size: 1.16rem;
+  line-height: 1.72;
 }
 
 .hero-actions {
@@ -409,6 +415,16 @@ button {
   opacity: 0.78;
 }
 
+.page-hero p,
+.info-card p,
+.faq-card p,
+.testimonial-card p,
+.service-card p,
+.launch-card p,
+.signal-card p {
+  max-width: 65ch;
+}
+
 .services-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -418,7 +434,11 @@ button {
 .service-card,
 .info-card,
 .faq-card,
-.testimonial-card {
+.testimonial-card,
+.icon-card,
+.legal-card,
+.beta-banner,
+.policy-article {
   border-radius: 26px;
   border: 1px solid rgba(18, 18, 18, 0.06);
   box-shadow: 0 16px 50px rgba(18, 18, 18, 0.08);
@@ -469,7 +489,11 @@ button {
 .split-copy h3,
 .info-card h3,
 .faq-card h3,
-.testimonial-card h3 {
+.testimonial-card h3,
+.icon-card h3,
+.legal-card h3,
+.policy-article h2,
+.policy-article h3 {
   margin: 0;
   font-family: "Sora", "Segoe UI", sans-serif;
   font-size: 1.36rem;
@@ -496,6 +520,10 @@ button {
   gap: 10px;
   color: #d49a00;
   font-weight: 700;
+}
+
+.text-link.secondary {
+  color: var(--text);
 }
 
 .dark-section {
@@ -741,6 +769,28 @@ button {
   align-items: center;
 }
 
+.beta-banner {
+  padding: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(245, 197, 24, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 243, 232, 0.94) 100%);
+  color: var(--ink);
+}
+
+.beta-banner h3,
+.beta-banner p {
+  margin: 0;
+}
+
+.beta-banner .feature-list li {
+  color: var(--ink);
+}
+
+.beta-banner .feature-list li::before {
+  background: rgba(245, 197, 24, 0.18);
+  color: #7b5a00;
+}
+
 .site-footer {
   margin-top: 84px;
   padding: 38px 0 48px;
@@ -781,6 +831,10 @@ button {
 
 .page-hero-card {
   padding: 48px;
+}
+
+.page-hero-card p {
+  max-width: 58ch;
 }
 
 .content-section {
@@ -826,6 +880,158 @@ button {
   background: rgba(255, 255, 255, 0.04);
   color: var(--gold-soft);
   font-weight: 600;
+}
+
+.icon-card-grid,
+.legal-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.icon-card-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.legal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.icon-card,
+.legal-card {
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+}
+
+.icon-card p,
+.legal-card p {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  line-height: 1.72;
+}
+
+.icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 18px;
+  background: rgba(245, 197, 24, 0.12);
+  color: #946600;
+  border: 1px solid rgba(245, 197, 24, 0.22);
+}
+
+.icon-badge .material-symbols-outlined {
+  font-size: 28px;
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+}
+
+.mini-list,
+.contact-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.mini-list li,
+.contact-list li {
+  color: var(--ink-soft);
+  line-height: 1.68;
+}
+
+.contact-list strong {
+  color: var(--ink);
+}
+
+.contact-list a,
+.policy-article a {
+  color: #7b5a00;
+  font-weight: 600;
+}
+
+.policy-layout {
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: 18px;
+}
+
+.policy-sidebar,
+.policy-article {
+  border-radius: var(--radius-lg);
+}
+
+.policy-sidebar {
+  padding: 28px;
+  color: var(--ink);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(242, 236, 222, 0.94) 100%);
+  border: 1px solid rgba(18, 18, 18, 0.06);
+}
+
+.policy-sidebar h3 {
+  margin: 0 0 12px;
+  font-family: "Sora", "Segoe UI", sans-serif;
+}
+
+.policy-sidebar p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.policy-article {
+  padding: 30px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.policy-article h2 {
+  font-size: 1.7rem;
+}
+
+.policy-article h3 {
+  margin-top: 24px;
+  font-size: 1.12rem;
+}
+
+.policy-article p,
+.policy-article li {
+  color: var(--ink-soft);
+  line-height: 1.78;
+}
+
+.policy-article strong {
+  color: var(--ink);
+}
+
+.policy-article ul,
+.policy-article ol {
+  padding-left: 20px;
+}
+
+.policy-meta {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.policy-meta .pill {
+  width: fit-content;
+  color: rgba(18, 18, 18, 0.82);
+  border-color: rgba(18, 18, 18, 0.08);
+  background: rgba(18, 18, 18, 0.04);
+}
+
+.footer-links-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.footer-links-inline a {
+  color: var(--muted);
 }
 
 .signal-section {
@@ -917,6 +1123,7 @@ button {
   .hero-grid,
   .split-grid,
   .cta-banner,
+  .policy-layout,
   .footer-grid {
     grid-template-columns: 1fr;
   }
@@ -933,6 +1140,8 @@ button {
   .signal-grid,
   .launch-grid,
   .benefits-bar,
+  .icon-card-grid,
+  .legal-grid,
   .content-grid,
   .pricing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1051,6 +1260,8 @@ button {
   .signal-grid,
   .launch-grid,
   .benefits-bar,
+  .icon-card-grid,
+  .legal-grid,
   .content-grid,
   .pricing-grid {
     grid-template-columns: 1fr;

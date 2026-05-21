@@ -1,17 +1,19 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:onwayrides_mobile/app/onway_app.dart';
 
 void main() {
-  testWidgets('renders the OnWay rider shell', (WidgetTester tester) async {
-    await tester.pumpWidget(const OnWayApp());
+  testWidgets('renders the OnWay rider shell in preview mode', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 2800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: OnWayShell(previewMode: true)),
+    );
 
     expect(find.text('Quick services'), findsOneWidget);
     expect(find.text('Driver Mode'), findsOneWidget);

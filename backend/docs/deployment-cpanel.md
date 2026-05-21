@@ -45,6 +45,11 @@ The workflow is designed to:
 
 For production use, create a GitHub environment named `prd` and store the FTP and Laravel secrets there instead of storing them in version control.
 
+Firebase verification for Laravel should be supplied through environment configuration, ideally:
+
+- `FIREBASE_PROJECT_ID` as a non-secret environment variable
+- `FIREBASE_CREDENTIALS_JSON` as a base64-encoded secret
+
 ## Recommended cPanel checks
 
 - `Terminal` or `SSH Access`

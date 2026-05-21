@@ -33,9 +33,9 @@ class BrandHeader extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     caption,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white54,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white54),
                   ),
                 ],
               ),
@@ -115,11 +115,7 @@ class SectionHeading extends StatelessWidget {
 }
 
 class ServiceCard extends StatelessWidget {
-  const ServiceCard({
-    super.key,
-    required this.service,
-    required this.onTap,
-  });
+  const ServiceCard({super.key, required this.service, required this.onTap});
 
   final OnWayService service;
   final VoidCallback onTap;
@@ -134,10 +130,7 @@ class ServiceCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              OnWayTheme.charcoal,
-              Colors.black.withValues(alpha: 0.94),
-            ],
+            colors: [OnWayTheme.charcoal, Colors.black.withValues(alpha: 0.94)],
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white10),
@@ -185,7 +178,11 @@ class ServiceCard extends StatelessWidget {
                             color: Colors.black.withValues(alpha: 0.72),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(service.icon, color: OnWayTheme.yellow, size: 18),
+                          child: Icon(
+                            service.icon,
+                            color: OnWayTheme.yellow,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ],
@@ -193,9 +190,15 @@ class ServiceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(service.title, style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                service.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 6),
-              Text(service.subtitle, style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                service.subtitle,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -253,9 +256,9 @@ class MetricTile extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             delta,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: OnWayTheme.yellow,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: OnWayTheme.yellow),
           ),
         ],
       ),
@@ -264,11 +267,7 @@ class MetricTile extends StatelessWidget {
 }
 
 class ModeChip extends StatelessWidget {
-  const ModeChip({
-    super.key,
-    required this.label,
-    required this.selected,
-  });
+  const ModeChip({super.key, required this.label, required this.selected});
 
   final String label;
   final bool selected;

@@ -51,10 +51,7 @@ class RiderHomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  _ServiceGrid(
-                    services: services,
-                    onTap: onOpenBooking,
-                  ),
+                  _ServiceGrid(services: services, onTap: onOpenBooking),
                   const SizedBox(height: 24),
                   if (activeTrip != null) ...[
                     SectionHeading(
@@ -81,12 +78,16 @@ class RiderHomeScreen extends StatelessWidget {
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall
-                                          ?.copyWith(fontWeight: FontWeight.w700),
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       '${activeTrip!.pickup} -> ${activeTrip!.destination}',
-                                      style: Theme.of(context).textTheme.bodyMedium,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
                                     ),
                                   ],
                                 ),
@@ -102,9 +103,7 @@ class RiderHomeScreen extends StatelessWidget {
                                 ),
                                 child: Text(
                                   activeTrip!.fareLabel,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
+                                  style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(color: OnWayTheme.yellow),
                                 ),
                               ),
@@ -116,8 +115,9 @@ class RiderHomeScreen extends StatelessWidget {
                               CircleAvatar(
                                 radius: 28,
                                 backgroundColor: Colors.white10,
-                                backgroundImage:
-                                    AssetImage(activeTrip!.driver.avatarAsset),
+                                backgroundImage: AssetImage(
+                                  activeTrip!.driver.avatarAsset,
+                                ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
@@ -128,7 +128,9 @@ class RiderHomeScreen extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(
                                       '${activeTrip!.driver.vehicle}\n${activeTrip!.driver.eta}',
-                                      style: Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                   ],
                                 ),
@@ -189,7 +191,7 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 320,
+      height: 352,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         image: const DecorationImage(
@@ -236,7 +238,10 @@ class _HeroCard extends StatelessWidget {
               onTap: () => onOpenBooking(),
               borderRadius: BorderRadius.circular(18),
               child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: OnWayTheme.white,
                   borderRadius: BorderRadius.circular(18),
@@ -248,12 +253,14 @@ class _HeroCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Where to?',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: OnWayTheme.black,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: OnWayTheme.black),
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_rounded, color: OnWayTheme.black),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: OnWayTheme.black,
+                    ),
                   ],
                 ),
               ),
@@ -288,7 +295,8 @@ class _SignalRow extends StatelessWidget {
             _SignalCard(
               width: width,
               title: 'Cash-first',
-              subtitle: 'Built for trust and affordability before full wallet rollout',
+              subtitle:
+                  'Built for trust and affordability before full wallet rollout',
             ),
             _SignalCard(
               width: width,
@@ -334,10 +342,7 @@ class _SignalCard extends StatelessWidget {
 }
 
 class _ServiceGrid extends StatelessWidget {
-  const _ServiceGrid({
-    required this.services,
-    required this.onTap,
-  });
+  const _ServiceGrid({required this.services, required this.onTap});
 
   final List<OnWayService> services;
   final Future<void> Function([OnWayService? service]) onTap;

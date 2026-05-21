@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
 
+import '../auth/onway_auth_session.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key, required this.onOpenFleetOwner});
+  const ProfileScreen({
+    super.key,
+    required this.onOpenFleetOwner,
+    this.session,
+    this.onSignOut,
+    this.previewMode = false,
+  });
 
   final VoidCallback onOpenFleetOwner;
+  final OnWayAuthSession? session;
+  final Future<void> Function()? onSignOut;
+  final bool previewMode;
 
   @override
   Widget build(BuildContext context) {
+    final accountName = session?.fullName ?? 'Preview User';
+    final accountEmail = session?.email;
+    final accountSubtitle = previewMode
+        ? 'Preview mode with mock rider and driver views'
+        : '${session?.roleLabel ?? 'Rider'} account synced from Firebase and Laravel';
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
@@ -32,12 +48,23 @@ class ProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Muhammad Ahsan', style: Theme.of(context).textTheme.titleLarge),
+                          Text(
+                            accountName,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                           const SizedBox(height: 4),
                           Text(
-                            'Cash-first rider profile with driver mode access',
+                            accountSubtitle,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
+                          if (accountEmail != null &&
+                              accountEmail.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              accountEmail,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -47,12 +74,28 @@ class ProfileScreen extends StatelessWidget {
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
-                  children: const [
-                    ModeChip(label: 'Rider', selected: true),
-                    ModeChip(label: 'Driver Mode', selected: false),
-                    ModeChip(label: 'Fleet Eligible', selected: false),
+                  children: [
+                    ModeChip(
+                      label: session?.primaryModeLabel ?? 'Rider',
+                      selected: true,
+                    ),
+                    ModeChip(
+                      label: previewMode ? 'Preview' : 'Firebase Auth',
+                      selected: false,
+                    ),
+                    ModeChip(
+                      label: session?.statusLabel ?? 'Beta',
+                      selected: false,
+                    ),
                   ],
                 ),
+                if (session != null) ...[
+                  const SizedBox(height: 18),
+                  Text(
+                    'Beta access: ${session!.betaModeLabel} | ${session!.dailyRideLimitLabel}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ],
             ),
           ),
@@ -86,10 +129,22 @@ class ProfileScreen extends StatelessWidget {
             subtitle: 'Open fleet dashboard, drivers and vehicles',
             onTap: onOpenFleetOwner,
           ),
+          if (onSignOut != null) ...[
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: () {
+                onSignOut!.call();
+              },
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Sign out'),
+            ),
+          ],
           const SizedBox(height: 24),
-          const OnWayPanel(
+          OnWayPanel(
             child: Text(
-              'TODO: connect profile, wallet, saved places and support flows to real backend endpoints once the new OnWay API surface is ready.',
+              previewMode
+                  ? 'Preview mode stays available for design review even when Firebase is not configured locally.'
+                  : 'Firebase identity is now synced to the Laravel backend. Wallet, saved places, and support endpoints are the next mobile integration layer.',
             ),
           ),
         ],
@@ -143,7 +198,10 @@ class _ActionTile extends StatelessWidget {
                   children: [
                     Text(title, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
-                    Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),

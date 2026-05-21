@@ -32,4 +32,14 @@ class PlatformApiTest extends TestCase
                 'strategy' => 'server-local',
             ]);
     }
+
+    public function test_auth_me_requires_a_firebase_token(): void
+    {
+        $this->getJson('/api/auth/me')
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
 }

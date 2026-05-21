@@ -8,6 +8,11 @@ return [
     'support_phone' => env('SUPPORT_PHONE', '+92-300-0000000'),
     'default_country_code' => env('DEFAULT_COUNTRY_CODE', '+92'),
     'default_currency' => env('DEFAULT_CURRENCY', 'PKR'),
+    'beta' => [
+        'mode' => 'free-beta',
+        'daily_rides_limit' => 3,
+        'full_access_requires_driver_approval' => true,
+    ],
 
     'platform' => [
         'name' => 'OnWay Rides',

@@ -41,6 +41,15 @@ Implemented as clean Laravel routes:
 
 These are framework-safe starter endpoints for environment verification and platform bootstrap metadata.
 
+## Firebase auth endpoints
+
+Implemented starter auth endpoints:
+
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+
+These endpoints are designed for Firebase ID token verification and local user sync against the existing `users.firebase_uid` schema.
+
 ## Project structure
 
 ```text
@@ -89,18 +98,23 @@ backend/
 
 4. Configure database credentials in `.env`
 
-5. Import SQL files in this order:
+5. Configure Firebase verification values in `.env`
+
+   - `FIREBASE_PROJECT_ID`
+   - `FIREBASE_CREDENTIALS` or `FIREBASE_CREDENTIALS_JSON`
+
+6. Import SQL files in this order:
 
    - `database/sql/01_onwayrides_schema.sql`
    - `database/sql/02_onwayrides_seed.sql`
 
-6. Create the storage symlink:
+7. Create the storage symlink:
 
    ```bash
    php artisan storage:link
    ```
 
-7. Start local development:
+8. Start local development:
 
    ```bash
    php artisan serve
@@ -168,13 +182,12 @@ See:
 
 ## Immediate next implementation phases
 
-1. Firebase ID token verification in Laravel
-2. auth guards, roles, and protected API middleware
-3. rider booking creation and history modules
-4. driver availability, offers, and dispatch modules
-5. document upload and approval flows
-6. payments, wallets, commissions, and payouts
-7. fleet owner and admin APIs
+1. auth guards, roles, and protected API middleware
+2. rider booking creation and history modules
+3. driver availability, offers, and dispatch modules
+4. document upload and approval flows
+5. payments, wallets, commissions, and payouts
+6. fleet owner and admin APIs
 
 ## Archived scaffold
 

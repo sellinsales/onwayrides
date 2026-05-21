@@ -39,6 +39,8 @@ Set up the Laravel backend locally or on hosting while continuing to use the pro
    - `ADMIN_URL`
    - `SUPPORT_EMAIL`
    - `SUPPORT_PHONE`
+   - `FIREBASE_PROJECT_ID`
+   - `FIREBASE_CREDENTIALS` or `FIREBASE_CREDENTIALS_JSON`
 
 5. Import:
 
@@ -65,7 +67,18 @@ Check:
 - `/up`
 - `/api/health`
 - `/api/bootstrap`
+- `/api/auth/login`
+- `/api/auth/me`
 
 ## Important note
 
 Do not run old default Laravel domain migrations against the production database. The platform domain schema already exists in `database/sql/`.
+
+## Firebase verification note
+
+Laravel now expects a Firebase service account for server-side ID token verification.
+
+Use one of:
+
+- `FIREBASE_CREDENTIALS` with a server-local JSON file path
+- `FIREBASE_CREDENTIALS_JSON` with base64-encoded JSON for CI-friendly deployment, or raw JSON for local-only use

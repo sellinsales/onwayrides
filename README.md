@@ -83,6 +83,7 @@ Add these under:
 - `DB_DATABASE`
 - `DB_USERNAME`
 - `DB_PASSWORD`
+- `FIREBASE_CREDENTIALS_JSON`
 
 ## Recommended GitHub Variables
 
@@ -98,6 +99,7 @@ These are non-secret values and should be stored on the same `prd` environment.
 - `DEFAULT_COUNTRY_CODE`
 - `DEFAULT_CURRENCY`
 - `CORS_ALLOWED_ORIGINS`
+- `FIREBASE_PROJECT_ID`
 
 Recommended values:
 
@@ -107,6 +109,17 @@ Recommended values:
 ## Important backend note
 
 The workflow deliberately creates the production Laravel `.env` during CI from GitHub Secrets. Credentials are not committed to this repository.
+
+## Firebase auth note
+
+Firebase auth is now wired into the Flutter app and Laravel backend.
+
+Production deployment also needs:
+
+- `FIREBASE_PROJECT_ID` as a GitHub Actions environment variable
+- `FIREBASE_CREDENTIALS_JSON` as a GitHub Actions environment secret
+
+`FIREBASE_CREDENTIALS_JSON` should preferably contain a base64-encoded Firebase service-account JSON for Laravel token verification in CI.
 
 ## Backend documentation
 

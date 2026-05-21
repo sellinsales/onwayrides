@@ -36,7 +36,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     _selectedService = widget.initialService ?? widget.services.first;
     _selectedFare = OnWayMockData.fareOptions.first;
     _pickupController = TextEditingController(text: 'Johar Town, Lahore');
-    _destinationController = TextEditingController(text: 'Packages Mall, Lahore');
+    _destinationController = TextEditingController(
+      text: 'Packages Mall, Lahore',
+    );
     _offerController = TextEditingController(text: '600');
     _syncNegotiation();
   }
@@ -66,7 +68,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
             : trip.statusLine,
         routeLine: trip.routeLine,
         paymentLabel: '$_paymentMethod payment',
-        fareLabel: _isNegotiated ? 'PKR ${_offerController.text}' : _selectedFare.priceLabel,
+        fareLabel: _isNegotiated
+            ? 'PKR ${_offerController.text}'
+            : _selectedFare.priceLabel,
         driver: trip.driver,
       ),
     );
@@ -158,7 +162,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                   onChanged: (value) {
                     setState(() {
                       _isPrebooked = value;
-                      _scheduleLabel = value ? 'Tomorrow, 7:30 AM' : 'Today, ASAP';
+                      _scheduleLabel = value
+                          ? 'Tomorrow, 7:30 AM'
+                          : 'Today, ASAP';
                     });
                   },
                 ),
@@ -180,10 +186,14 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
               }),
               child: Ink(
                 decoration: BoxDecoration(
-                  color: fare == _selectedFare ? const Color(0x22FFC107) : OnWayTheme.charcoal,
+                  color: fare == _selectedFare
+                      ? const Color(0x22FFC107)
+                      : OnWayTheme.charcoal,
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(
-                    color: fare == _selectedFare ? OnWayTheme.yellow : Colors.white10,
+                    color: fare == _selectedFare
+                        ? OnWayTheme.yellow
+                        : Colors.white10,
                   ),
                 ),
                 child: Padding(
@@ -224,7 +234,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                               children: [
                                 Text(
                                   fare.title,
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
                                 if (fare.recommended) ...[
                                   const SizedBox(width: 8),

@@ -26,6 +26,12 @@ class BootstrapController extends Controller
                 'email' => config('onwayrides.support_email'),
                 'phone' => config('onwayrides.support_phone'),
             ],
+            'beta' => config('onwayrides.beta'),
+            'auth' => [
+                'provider' => 'firebase',
+                'login_endpoint' => route('api.auth.login', absolute: false),
+                'me_endpoint' => route('api.auth.me', absolute: false),
+            ],
             'roles' => config('onwayrides.platform.roles'),
             'service_categories' => config('onwayrides.platform.service_categories'),
             'storage' => [

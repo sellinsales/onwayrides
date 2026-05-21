@@ -70,7 +70,10 @@ class TrackingScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Driver details', style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  'Driver details',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -136,7 +139,10 @@ class TrackingScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Booking summary', style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  'Booking summary',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: 14),
                 _SummaryRow(label: 'Service', value: trip.serviceTitle),
                 _SummaryRow(label: 'Pickup', value: trip.pickup),
@@ -153,10 +159,7 @@ class TrackingScreen extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -170,10 +173,7 @@ class _SummaryRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 88,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
           ),
           Expanded(child: Text(value)),
         ],

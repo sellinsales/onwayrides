@@ -91,6 +91,8 @@ jobs:
           DEFAULT_COUNTRY_CODE="${{ vars.DEFAULT_COUNTRY_CODE != '' && vars.DEFAULT_COUNTRY_CODE || '+92' }}"
           DEFAULT_CURRENCY="${{ vars.DEFAULT_CURRENCY != '' && vars.DEFAULT_CURRENCY || 'PKR' }}"
           CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS != '' && vars.CORS_ALLOWED_ORIGINS || 'https://onwayrides.com,https://www.onwayrides.com' }}"
+          FIREBASE_PROJECT_ID="${{ vars.FIREBASE_PROJECT_ID != '' && vars.FIREBASE_PROJECT_ID || '' }}"
+          FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'
           VITE_APP_NAME="OnWay Rides Backend"
           EOF
 

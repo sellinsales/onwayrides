@@ -64,9 +64,14 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: _online ? const Color(0x29FFC107) : Colors.white10,
+                        color: _online
+                            ? const Color(0x29FFC107)
+                            : Colors.white10,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -111,7 +116,8 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Performance today',
-            subtitle: 'Simple operating view for earnings, requests and wallet.',
+            subtitle:
+                'Simple operating view for earnings, requests and wallet.',
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -200,7 +206,10 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(request.riderName, style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    request.riderName,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 6),
                   Text('${request.pickup} -> ${request.dropoff}'),
                   const SizedBox(height: 6),
@@ -213,7 +222,8 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showAction(context, 'Request rejected'),
+                          onPressed: () =>
+                              _showAction(context, 'Request rejected'),
                           child: const Text('Reject'),
                         ),
                       ),
@@ -232,7 +242,8 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                       if (request.canCounter) const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
-                          onPressed: () => _showAction(context, 'Request accepted'),
+                          onPressed: () =>
+                              _showAction(context, 'Request accepted'),
                           child: const Text('Accept'),
                         ),
                       ),
@@ -255,6 +266,8 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   }
 
   void _showAction(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

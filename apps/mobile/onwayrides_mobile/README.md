@@ -1,17 +1,52 @@
 # OnWay Rides Mobile
 
-Fresh Flutter mobile app scaffold for the OnWay Rides rebrand, built in the separate `onwayrides` repo.
+Flutter mobile app for OnWay Rides with:
 
-## Getting Started
+- rider-facing booking UI
+- driver mode and fleet preview flows
+- Firebase email/password auth
+- Laravel backend user sync using Firebase ID tokens
 
-This project contains the new OnWay Rides rider, driver mode, and fleet owner flows with mock-backed UI.
+## Current auth flow
 
-A few resources to get you started if this is your first Flutter project:
+1. user signs in or creates an account with Firebase Auth
+2. app requests a Firebase ID token
+3. app sends that token to Laravel `POST /api/auth/login`
+4. Laravel verifies the token and syncs the local `users` record
+5. app receives the synced local user payload and opens the main shell
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Required local setup
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Inside `apps/mobile/onwayrides_mobile`:
+
+1. install Flutter dependencies
+
+   ```bash
+   flutter pub get
+   ```
+
+2. generate real Firebase options
+
+   ```bash
+   flutterfire configure
+   ```
+
+   or replace the placeholder values in `lib/firebase_options.dart`
+
+3. point the app to your backend API
+
+   ```bash
+   flutter run --dart-define=ONWAYRIDES_API_BASE_URL=http://10.0.2.2:8000/api
+   ```
+
+   Example production value:
+
+   ```bash
+   flutter run --dart-define=ONWAYRIDES_API_BASE_URL=https://api.onwayrides.com/api
+   ```
+
+## Notes
+
+- Android and Web are the Firebase-configured target platforms in this repo
+- preview mode still exists when Firebase config is missing, so UI review is not blocked
+- driver and fleet onboarding still require additional backend endpoints after auth

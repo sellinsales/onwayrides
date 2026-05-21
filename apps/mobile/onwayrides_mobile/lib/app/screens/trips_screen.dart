@@ -72,7 +72,9 @@ class TripsScreen extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.white10,
-                        backgroundImage: AssetImage(activeTrip!.driver.avatarAsset),
+                        backgroundImage: AssetImage(
+                          activeTrip!.driver.avatarAsset,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -100,12 +102,15 @@ class TripsScreen extends StatelessWidget {
             )
           else
             const OnWayPanel(
-              child: Text('No active booking yet. Start from Home to plan one.'),
+              child: Text(
+                'No active booking yet. Start from Home to plan one.',
+              ),
             ),
           const SizedBox(height: 24),
           SectionHeading(
             title: 'Recent activity',
-            subtitle: 'Rides, deliveries, airport and prebookings in one place.',
+            subtitle:
+                'Rides, deliveries, airport and prebookings in one place.',
           ),
           const SizedBox(height: 14),
           for (final item in history) ...[
@@ -121,18 +126,30 @@ class TripsScreen extends StatelessWidget {
                       color: Colors.white10,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.route_rounded, color: OnWayTheme.yellow),
+                    child: const Icon(
+                      Icons.route_rounded,
+                      color: OnWayTheme.yellow,
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.title, style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          item.title,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 4),
-                        Text(item.dateLabel, style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          item.dateLabel,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                         const SizedBox(height: 4),
-                        Text(item.route, style: Theme.of(context).textTheme.bodyMedium),
+                        Text(
+                          item.route,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                       ],
                     ),
                   ),
@@ -140,7 +157,10 @@ class TripsScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(item.amount, style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        item.amount,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         item.status,
