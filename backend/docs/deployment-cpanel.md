@@ -43,7 +43,7 @@ The workflow is designed to:
 - upload the Laravel backend to `/backend`
 - generate the production Laravel `.env` from GitHub Secrets during CI
 
-For production use, configure FTP and Laravel secrets in the GitHub repository instead of storing them in version control.
+For production use, create a GitHub environment named `prd` and store the FTP and Laravel secrets there instead of storing them in version control.
 
 ## Recommended cPanel checks
 

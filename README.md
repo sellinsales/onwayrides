@@ -50,9 +50,23 @@ What it does on push to `main` or manual run:
 4. prepares clean frontend and backend deployment folders
 5. uploads both folders to the server over FTPS
 
+## GitHub Environment
+
+Create a GitHub Actions environment named:
+
+- `prd`
+
+Recommended location:
+
+- `Settings > Environments`
+
+Use that environment for production deploy secrets and variables instead of plain repo-level values.
+
 ## Required GitHub Secrets
 
-Add these in GitHub repo settings under `Settings > Secrets and variables > Actions`.
+Add these under:
+
+- `Settings > Environments > prd`
 
 ### FTP secrets
 
@@ -72,7 +86,7 @@ Add these in GitHub repo settings under `Settings > Secrets and variables > Acti
 
 ## Recommended GitHub Variables
 
-These are non-secret values and should be stored as repository variables.
+These are non-secret values and should be stored on the same `prd` environment.
 
 - `FTP_FRONTEND_DIR`
 - `FTP_BACKEND_DIR`
@@ -113,4 +127,3 @@ Confirm the hosting side is ready:
 3. PHP version is compatible with Laravel
 4. required PHP extensions are enabled
 5. `storage/` and `bootstrap/cache/` are writable
-

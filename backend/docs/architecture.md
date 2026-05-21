@@ -2,7 +2,7 @@
 
 ## Backend framework
 
-- Laravel 13
+- Laravel 12
 - PHP 8.3+
 - MySQL or MariaDB
 
