@@ -42,4 +42,19 @@ class PlatformApiTest extends TestCase
                 'message' => 'A Firebase ID token is required.',
             ]);
     }
+
+    public function test_auth_onboarding_requires_a_firebase_token(): void
+    {
+        $this->patchJson('/api/auth/onboarding', [
+            'country_code' => '+92',
+            'phone' => '3001234567',
+            'accept_privacy_policy' => true,
+            'accept_terms' => true,
+        ])
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
 }

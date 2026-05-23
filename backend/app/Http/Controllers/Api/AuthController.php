@@ -35,6 +35,125 @@ class AuthController extends Controller
         return $this->authenticateRequest($request, [], $tokenVerifier, $userSyncService, false);
     }
 
+    public function completeOnboarding(
+        Request $request,
+        FirebaseTokenVerifier $tokenVerifier,
+        FirebaseUserSyncService $userSyncService
+    ): JsonResponse {
+        $payload = $request->validate([
+            'full_name' => ['nullable', 'string', 'max:191'],
+            'country_code' => ['required', 'string', 'regex:/^\+?[0-9]{1,4}$/'],
+            'phone' => ['required', 'string', 'max:30'],
+            'accept_privacy_policy' => ['accepted'],
+            'accept_terms' => ['accepted'],
+            'sms_marketing_opt_in' => ['nullable', 'boolean'],
+            'whatsapp_marketing_opt_in' => ['nullable', 'boolean'],
+        ]);
+
+        try {
+            $identity = $tokenVerifier->verify($this->extractIdToken($request));
+            $user = $userSyncService->syncFromIdentity($identity, [], false);
+        } catch (FirebaseConfigurationException $exception) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $exception->getMessage(),
+            ], 503);
+        } catch (FirebaseAuthenticationException $exception) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $exception->getMessage(),
+            ], 401);
+        }
+
+        $countryCode = $this->normalizeCountryCode($payload['country_code']);
+        $normalizedPhone = $this->normalizePhone($payload['phone'], $countryCode);
+
+        if (strlen(preg_replace('/\D+/', '', $normalizedPhone) ?? '') < 10) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please enter a valid phone number.',
+                'errors' => [
+                    'phone' => [
+                        'Please enter a valid phone number.',
+                    ],
+                ],
+            ], 422);
+        }
+
+        $existingPhoneOwner = User::query()
+            ->where('phone', $normalizedPhone)
+            ->whereKeyNot($user->id)
+            ->first();
+
+        if ($existingPhoneOwner !== null) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'That phone number is already linked to another OnWay Rides account.',
+                'errors' => [
+                    'phone' => [
+                        'That phone number is already linked to another OnWay Rides account.',
+                    ],
+                ],
+            ], 422);
+        }
+
+        if (isset($payload['full_name']) && trim((string) $payload['full_name']) !== '') {
+            $fullName = trim((string) $payload['full_name']);
+            [$firstName, $lastName] = $this->splitName($fullName);
+            $user->full_name = $fullName;
+            $user->first_name = $firstName;
+            $user->last_name = $lastName;
+        }
+
+        if ($user->phone !== $normalizedPhone) {
+            $user->phone = $normalizedPhone;
+            $user->phone_verified_at = null;
+        }
+
+        $user->country_code = $countryCode;
+
+        $metadata = is_array($user->metadata) ? $user->metadata : [];
+        $metadata['auth_provider'] = $metadata['auth_provider'] ?? 'firebase';
+        $metadata['beta_mode'] = config('onwayrides.beta.mode');
+        $metadata['privacy_policy_accepted_at'] = now()->toIso8601String();
+        $metadata['terms_of_service_accepted_at'] = now()->toIso8601String();
+        $metadata['sms_marketing_opt_in'] = (bool) ($payload['sms_marketing_opt_in'] ?? false);
+        $metadata['whatsapp_marketing_opt_in'] = (bool) ($payload['whatsapp_marketing_opt_in'] ?? false);
+        $metadata['phone_collection_source'] = 'profile_completion';
+        $metadata['phone_collected_at'] = now()->toIso8601String();
+        $metadata['profile_completed_at'] = now()->toIso8601String();
+
+        if ($identity->phoneNumber !== null && $identity->phoneNumber === $normalizedPhone) {
+            $user->phone_verified_at ??= now();
+            $metadata['phone_verification_source'] = 'firebase-phone';
+        } else {
+            $user->phone_verified_at = null;
+            $metadata['phone_verification_source'] = 'pending-otp';
+        }
+
+        $user->metadata = $metadata;
+        $user->save();
+
+        $user = $user->fresh();
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Phone number and consent preferences saved.',
+            'auth' => [
+                'provider' => 'firebase',
+                'guard' => 'firebase-id-token',
+            ],
+            'beta' => [
+                'mode' => config('onwayrides.beta.mode'),
+                'daily_rides_limit' => config('onwayrides.beta.daily_rides_limit'),
+                'full_access_requires_driver_approval' => config('onwayrides.beta.full_access_requires_driver_approval'),
+            ],
+            'requirements' => $this->buildRequirements($user),
+            'consents' => $this->buildConsents($user),
+            'user' => $this->serializeUser($user),
+        ]);
+    }
+
     private function authenticateRequest(
         Request $request,
         array $context,
@@ -43,8 +162,7 @@ class AuthController extends Controller
         bool $touchLogin
     ): JsonResponse {
         try {
-            $identity = $tokenVerifier->verify($this->extractIdToken($request));
-            $user = $userSyncService->syncFromIdentity($identity, $context, $touchLogin);
+            $user = $this->authenticateUser($request, $context, $tokenVerifier, $userSyncService, $touchLogin);
         } catch (FirebaseConfigurationException $exception) {
             return response()->json([
                 'status' => 'error',
@@ -69,8 +187,22 @@ class AuthController extends Controller
                 'daily_rides_limit' => config('onwayrides.beta.daily_rides_limit'),
                 'full_access_requires_driver_approval' => config('onwayrides.beta.full_access_requires_driver_approval'),
             ],
+            'requirements' => $this->buildRequirements($user),
+            'consents' => $this->buildConsents($user),
             'user' => $this->serializeUser($user),
         ]);
+    }
+
+    private function authenticateUser(
+        Request $request,
+        array $context,
+        FirebaseTokenVerifier $tokenVerifier,
+        FirebaseUserSyncService $userSyncService,
+        bool $touchLogin
+    ): User {
+        $identity = $tokenVerifier->verify($this->extractIdToken($request));
+
+        return $userSyncService->syncFromIdentity($identity, $context, $touchLogin);
     }
 
     private function extractIdToken(Request $request): string
@@ -107,5 +239,64 @@ class AuthController extends Controller
             'last_login_at' => optional($user->last_login_at)->toIso8601String(),
             'metadata' => $user->metadata ?? [],
         ];
+    }
+
+    private function buildRequirements(User $user): array
+    {
+        $metadata = is_array($user->metadata) ? $user->metadata : [];
+        $needsPhone = blank($user->phone) || blank($user->country_code);
+        $needsPhoneVerification = ! $needsPhone && blank($user->phone_verified_at);
+        $needsPrivacyAcceptance = empty($metadata['privacy_policy_accepted_at']);
+        $needsTermsAcceptance = empty($metadata['terms_of_service_accepted_at']);
+
+        return [
+            'needs_phone_number' => $needsPhone,
+            'needs_phone_verification' => $needsPhoneVerification,
+            'needs_privacy_acceptance' => $needsPrivacyAcceptance,
+            'needs_terms_acceptance' => $needsTermsAcceptance,
+            'profile_complete' => ! $needsPhone && ! $needsPhoneVerification && ! $needsPrivacyAcceptance && ! $needsTermsAcceptance,
+        ];
+    }
+
+    private function buildConsents(User $user): array
+    {
+        $metadata = is_array($user->metadata) ? $user->metadata : [];
+
+        return [
+            'sms_marketing_opt_in' => (bool) ($metadata['sms_marketing_opt_in'] ?? false),
+            'whatsapp_marketing_opt_in' => (bool) ($metadata['whatsapp_marketing_opt_in'] ?? false),
+            'privacy_policy_accepted_at' => $metadata['privacy_policy_accepted_at'] ?? null,
+            'terms_of_service_accepted_at' => $metadata['terms_of_service_accepted_at'] ?? null,
+        ];
+    }
+
+    private function normalizeCountryCode(string $value): string
+    {
+        $digits = preg_replace('/\D+/', '', trim($value)) ?? '';
+
+        return '+' . ltrim($digits, '0');
+    }
+
+    private function normalizePhone(string $phone, string $countryCode): string
+    {
+        $phoneDigits = preg_replace('/\D+/', '', trim($phone)) ?? '';
+        $countryDigits = ltrim(preg_replace('/\D+/', '', $countryCode) ?? '', '0');
+
+        $phoneDigits = ltrim($phoneDigits, '0');
+
+        if ($countryDigits !== '' && str_starts_with($phoneDigits, $countryDigits)) {
+            return '+' . $phoneDigits;
+        }
+
+        return '+' . $countryDigits . $phoneDigits;
+    }
+
+    private function splitName(string $fullName): array
+    {
+        $segments = preg_split('/\s+/', trim($fullName)) ?: [];
+        $firstName = $segments[0] ?? $fullName;
+        $lastName = count($segments) > 1 ? implode(' ', array_slice($segments, 1)) : null;
+
+        return [$firstName, $lastName];
     }
 }

@@ -9,3 +9,4 @@ Route::get('/health', HealthController::class)->name('api.health');
 Route::get('/bootstrap', BootstrapController::class)->name('api.bootstrap');
 Route::post('/auth/login', [AuthController::class, 'login'])->name('api.auth.login');
 Route::get('/auth/me', [AuthController::class, 'me'])->name('api.auth.me');
+Route::patch('/auth/onboarding', [AuthController::class, 'completeOnboarding'])->name('api.auth.onboarding');

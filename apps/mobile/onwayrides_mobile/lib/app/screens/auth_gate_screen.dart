@@ -7,6 +7,7 @@ import '../auth/onway_firebase_bootstrap.dart';
 import '../onway_app.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
+import 'account_completion_screen.dart';
 
 class AuthGateScreen extends StatefulWidget {
   const AuthGateScreen({
@@ -106,10 +107,25 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
               );
             }
 
-            return OnWayShell(
-              session: sessionSnapshot.data,
-              onSignOut: _signOut,
-            );
+            final session = sessionSnapshot.data!;
+            if (!session.profileComplete) {
+              return AccountCompletionScreen(
+                session: session,
+                authService: widget.authService,
+                onSignOut: _signOut,
+                onCompleted: (updatedSession) {
+                  if (mounted) {
+                    setState(() {
+                      _sessionFuture = Future<OnWayAuthSession>.value(
+                        updatedSession,
+                      );
+                    });
+                  }
+                },
+              );
+            }
+
+            return OnWayShell(session: session, onSignOut: _signOut);
           },
         );
       },
@@ -167,6 +183,25 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
           password: _passwordController.text,
         );
       }
+    } on OnWayAuthException catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = error.message);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await widget.authService.signInWithGoogle();
     } on OnWayAuthException catch (error) {
       if (mounted) {
         setState(() => _errorMessage = error.message);
@@ -271,6 +306,36 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                           ),
                         ],
                         const SizedBox(height: 20),
+                        FilledButton.tonalIcon(
+                          onPressed: _loading ? null : _signInWithGoogle,
+                          icon: const Icon(Icons.g_mobiledata_rounded),
+                          label: const Text('Continue with Google'),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                color: Colors.white.withValues(alpha: 0.16),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                'or use email',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: Colors.white.withValues(alpha: 0.16),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         FilledButton.icon(
                           onPressed: _loading ? null : _submit,
                           icon: Icon(
@@ -299,6 +364,11 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                                 ? 'Already have an account? Sign in'
                                 : 'Need rider beta access? Create an account',
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Phone-based login stays limited during beta. Sign in with Google or email first, then add your real phone number before entering the app.',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),

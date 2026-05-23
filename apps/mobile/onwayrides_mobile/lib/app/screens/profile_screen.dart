@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../auth/onway_auth_session.dart';
+import '../onway_links.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
 
@@ -22,6 +24,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final accountName = session?.fullName ?? 'Preview User';
     final accountEmail = session?.email;
+    final accountPhone = session?.phone;
     final accountSubtitle = previewMode
         ? 'Preview mode with mock rider and driver views'
         : '${session?.roleLabel ?? 'Rider'} account synced from Firebase and Laravel';
@@ -65,6 +68,14 @@ class ProfileScreen extends StatelessWidget {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
+                          if (accountPhone != null &&
+                              accountPhone.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              accountPhone,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -95,6 +106,18 @@ class ProfileScreen extends StatelessWidget {
                     'Beta access: ${session!.betaModeLabel} | ${session!.dailyRideLimitLabel}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    session!.phoneVerified
+                        ? 'Phone status: Verified'
+                        : 'Phone status: Collected but not verified yet',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Marketing consent: SMS ${session!.smsMarketingOptIn ? 'on' : 'off'} | WhatsApp ${session!.whatsappMarketingOptIn ? 'on' : 'off'}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ],
             ),
@@ -120,8 +143,36 @@ class ProfileScreen extends StatelessWidget {
           _ActionTile(
             icon: Icons.support_agent_rounded,
             title: 'Support',
-            subtitle: 'Complaints, lost items and trip help',
-            onTap: () {},
+            subtitle: 'Complaints, lost items, beta help and support center',
+            onTap: () => _openExternalLink(
+              context,
+              OnWayLinks.supportCenter,
+              fallback: OnWayLinks.supportEmail,
+            ),
+          ),
+          _ActionTile(
+            icon: Icons.policy_outlined,
+            title: 'Privacy policy',
+            subtitle:
+                'See how OnWay Rides, Firebase Auth and backend systems use your data',
+            onTap: () => _openExternalLink(context, OnWayLinks.privacyPolicy),
+          ),
+          _ActionTile(
+            icon: Icons.gavel_rounded,
+            title: 'Terms of service',
+            subtitle: 'Review beta usage rules, ride limits and account terms',
+            onTap: () => _openExternalLink(context, OnWayLinks.termsOfService),
+          ),
+          _ActionTile(
+            icon: Icons.delete_outline_rounded,
+            title: 'Delete account and data',
+            subtitle:
+                'Open the public deletion request page required for Google Play',
+            onTap: () => _openExternalLink(
+              context,
+              OnWayLinks.deleteAccount,
+              fallback: OnWayLinks.deleteAccountEmail,
+            ),
           ),
           _ActionTile(
             icon: Icons.groups_rounded,
@@ -151,6 +202,31 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _openExternalLink(
+  BuildContext context,
+  Uri uri, {
+  Uri? fallback,
+}) async {
+  final messenger = ScaffoldMessenger.of(context);
+
+  if (await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    return;
+  }
+
+  if (fallback != null &&
+      await launchUrl(fallback, mode: LaunchMode.externalApplication)) {
+    return;
+  }
+
+  messenger.showSnackBar(
+    const SnackBar(
+      content: Text(
+        'Unable to open the link right now. Please try again later.',
+      ),
+    ),
+  );
 }
 
 class _ActionTile extends StatelessWidget {
