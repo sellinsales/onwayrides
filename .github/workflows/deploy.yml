@@ -20,17 +20,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, pdo_mysql, fileinfo, openssl, tokenizer, xml, ctype, json
-          tools: composer:v2
-
-      - name: Install backend production dependencies
-        working-directory: backend
-        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-
       - name: Generate production backend environment file
         shell: bash
         run: |
@@ -130,6 +119,8 @@ jobs:
             --exclude 'tests/' \
             --exclude 'docs/' \
             --exclude 'legacy/' \
+            --exclude 'vendor/' \
+            --exclude 'storage/' \
             --exclude 'database/database.sqlite' \
             --exclude '.phpunit.result.cache' \
             ./backend/ .deploy/backend/
@@ -162,6 +153,6 @@ jobs:
           mkdir -p $FRONTEND_REMOTE_DIR
           mkdir -p $BACKEND_REMOTE_DIR
           mirror -R --delete --verbose .deploy/frontend $FRONTEND_REMOTE_DIR
-          mirror -R --delete --verbose .deploy/backend $BACKEND_REMOTE_DIR
+          mirror -R --verbose .deploy/backend $BACKEND_REMOTE_DIR
           bye
           EOF
