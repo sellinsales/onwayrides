@@ -31,6 +31,13 @@ class BootstrapController extends Controller
                 'provider' => 'firebase',
                 'login_endpoint' => route('api.auth.login', absolute: false),
                 'me_endpoint' => route('api.auth.me', absolute: false),
+                'onboarding_endpoint' => route('api.auth.onboarding', absolute: false),
+            ],
+            'marketing' => [
+                'whatsapp_business_number' => config('onwayrides.whatsapp_business_number'),
+                'whatsapp_channel_url' => config('onwayrides.whatsapp_channel_url'),
+                'admin_contacts_endpoint' => route('api.admin.marketing.contacts', absolute: false),
+                'admin_contacts_export_endpoint' => route('api.admin.marketing.contacts.export', absolute: false),
             ],
             'roles' => config('onwayrides.platform.roles'),
             'service_categories' => config('onwayrides.platform.service_categories'),

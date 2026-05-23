@@ -6,6 +6,8 @@ return [
     'admin_url' => env('ADMIN_URL', 'https://admin.onwayrides.com'),
     'support_email' => env('SUPPORT_EMAIL', 'support@onwayrides.com'),
     'support_phone' => env('SUPPORT_PHONE', '+92-300-0000000'),
+    'whatsapp_business_number' => env('WHATSAPP_BUSINESS_NUMBER', '+46793000786'),
+    'whatsapp_channel_url' => env('WHATSAPP_CHANNEL_URL', ''),
     'default_country_code' => env('DEFAULT_COUNTRY_CODE', '+92'),
     'default_currency' => env('DEFAULT_CURRENCY', 'PKR'),
     'beta' => [

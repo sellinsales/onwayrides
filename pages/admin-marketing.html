@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="OnWay Rides admin marketing audience page for exportable WhatsApp and SMS consented user lists across web and mobile logins.">
+    <title>OnWay Rides | Admin Marketing Audience</title>
+    <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container header-row">
+          <a class="brand" href="../index.html" aria-label="OnWayRides home">
+            <img src="../assets/onwayrides_logo.png" alt="OnWayRides logo">
+          </a>
+          <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+          <nav class="site-nav" data-site-nav>
+            <a href="../index.html">Home</a>
+            <a href="login.html">Web Login</a>
+            <a class="active" href="admin-marketing.html">Admin Marketing</a>
+            <a href="help.html">Help</a>
+          </nav>
+          <div class="header-actions">
+            <a class="outline-button" href="login.html">User Login</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-shell">
+        <div class="container admin-layout">
+          <section class="admin-panel light">
+            <span class="eyebrow">Admin Access</span>
+            <h1>Marketing audience for web and mobile.</h1>
+            <p>This page reads the shared `users` table through Laravel and lets admin or support accounts review who opted into WhatsApp or SMS outreach.</p>
+            <div class="status-banner" style="margin-top:18px;">
+              <strong>WhatsApp sender</strong>
+              <p>Configured business number: <span data-whatsapp-number></span></p>
+            </div>
+            <div class="status-banner" style="margin-top:18px;">
+              <strong>Who can use this page</strong>
+              <p>Only local users with the role `admin` or `support` can open the marketing audience API.</p>
+            </div>
+            <div class="helper-text" style="margin-top:18px;">If your admin email exists in the backend seed but not in Firebase yet, create the same email in Firebase Auth first so the backend can link it.</div>
+          </section>
+
+          <section class="admin-panel" id="admin-root">
+            <div class="auth-stack" id="admin-auth-screen">
+              <div>
+                <span class="eyebrow">Secure Sign In</span>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Use your admin Firebase account</h2>
+                <p>The web page verifies your Firebase session and then checks your local role in Laravel.</p>
+              </div>
+              <form class="auth-form" id="admin-auth-form">
+                <div class="field-group">
+                  <label for="admin-email">Email</label>
+                  <input id="admin-email" type="email" required placeholder="admin@onwayrides.com">
+                </div>
+                <div class="field-group">
+                  <label for="admin-password">Password</label>
+                  <input id="admin-password" type="password" required placeholder="Your password">
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" type="submit">Sign In</button>
+                  <button class="ghost-button" type="button" id="admin-google-button">Continue with Google</button>
+                </div>
+                <div class="error-text" id="admin-auth-error" hidden></div>
+              </form>
+            </div>
+
+            <div class="admin-stack" id="admin-dashboard-screen" hidden>
+              <div class="inline-actions" style="justify-content:space-between; align-items:center;">
+                <div>
+                  <span class="eyebrow">Audience Dashboard</span>
+                  <h2 style="margin:16px 0 0; font-family:'Sora', 'Segoe UI', sans-serif;">Review and export consented users</h2>
+                </div>
+                <button class="lang-pill" type="button" id="admin-signout-button">Sign Out</button>
+              </div>
+
+              <form class="admin-filter-form" id="marketing-filter-form">
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="marketing-search">Search</label>
+                    <input id="marketing-search" name="q" type="text" placeholder="Name, email, or phone">
+                  </div>
+                  <div class="field-group">
+                    <label for="marketing-channel">Channel</label>
+                    <select id="marketing-channel" name="channel">
+                      <option value="all">All users</option>
+                      <option value="whatsapp">WhatsApp opted-in</option>
+                      <option value="sms">SMS opted-in</option>
+                      <option value="unsubscribed">No marketing opt-in</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="marketing-platform">Last sign-in platform</label>
+                    <select id="marketing-platform" name="platform">
+                      <option value="all">All platforms</option>
+                      <option value="web">Web</option>
+                      <option value="android">Android</option>
+                      <option value="ios">iOS</option>
+                      <option value="unknown">Unknown</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="marketing-actions">
+                  <button class="primary-button" type="submit">Refresh List</button>
+                  <button class="outline-button" type="button" id="marketing-export-button">Export CSV</button>
+                </div>
+              </form>
+
+              <div class="summary-grid" id="marketing-summary-grid"></div>
+
+              <div class="marketing-table-card">
+                <h2>Users</h2>
+                <div class="helper-text" style="margin-bottom:14px;">The table below is limited to the latest 500 matching users for quick review. Use the CSV export for the full filtered audience.</div>
+                <div class="table-wrap">
+                  <table class="marketing-table">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Phone</th>
+                        <th>Role / Platform</th>
+                        <th>WhatsApp</th>
+                        <th>SMS</th>
+                        <th>Last Login</th>
+                      </tr>
+                    </thead>
+                    <tbody id="marketing-table-body"></tbody>
+                  </table>
+                </div>
+                <div class="error-text" id="marketing-error" hidden></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-bottom">
+            <span>&copy; <span data-year></span> OnWay Rides. All rights reserved.</span>
+            <div class="footer-links-inline">
+              <a href="privacy.html">Privacy Policy</a>
+              <a href="terms.html">Terms of Service</a>
+              <a href="delete-account.html">Delete Account</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="../assets/js/onway-web-config.js"></script>
+    <script src="../app.js"></script>
+    <script type="module" src="../assets/js/admin-marketing.js"></script>
+  </body>
+</html>

@@ -45,10 +45,15 @@ Workflow file:
 What it does on push to `main` or manual run:
 
 1. checks out the repo
-2. installs production Laravel dependencies
-3. generates the backend production `.env` from GitHub Secrets and Variables
-4. prepares clean frontend and backend deployment folders
-5. uploads both folders to the server over FTPS
+2. generates the backend production `.env` from GitHub Secrets and Variables
+3. prepares clean frontend and backend deployment folders
+4. uploads both folders to the server over FTPS
+
+Important behavior:
+
+- frontend deploy is mirrored with delete
+- backend deploy does not delete remote runtime files
+- backend `vendor/` and `storage/` are excluded from CI deploy and should remain managed on the server
 
 ## GitHub Environment
 
@@ -100,6 +105,8 @@ These are non-secret values and should be stored on the same `prd` environment.
 - `DEFAULT_CURRENCY`
 - `CORS_ALLOWED_ORIGINS`
 - `FIREBASE_PROJECT_ID`
+- `WHATSAPP_BUSINESS_NUMBER`
+- `WHATSAPP_CHANNEL_URL`
 
 Recommended values:
 

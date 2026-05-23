@@ -57,4 +57,14 @@ class PlatformApiTest extends TestCase
                 'message' => 'A Firebase ID token is required.',
             ]);
     }
+
+    public function test_admin_marketing_contacts_require_a_firebase_token(): void
+    {
+        $this->getJson('/api/admin/marketing/contacts')
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
 }

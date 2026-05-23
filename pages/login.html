@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sign in to OnWay Rides on the web, complete onboarding, manage your consent preferences, and stay connected across mobile and website.">
+    <title>OnWay Rides | Web Login</title>
+    <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container header-row">
+          <a class="brand" href="../index.html" aria-label="OnWayRides home">
+            <img src="../assets/onwayrides_logo.png" alt="OnWayRides logo">
+          </a>
+          <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+          <nav class="site-nav" data-site-nav>
+            <a href="../index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="help.html">Help</a>
+            <a href="privacy.html">Privacy</a>
+            <a class="active" href="login.html">Login</a>
+          </nav>
+          <div class="header-actions">
+            <a class="lang-pill" href="help.html">EN</a>
+            <a class="outline-button" href="admin-marketing.html">Admin</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="auth-shell">
+        <div class="container auth-layout">
+          <section class="auth-panel light">
+            <span class="eyebrow">Unified Access</span>
+            <h1>One account for web and mobile.</h1>
+            <p>Sign in with Google or email, sync into the shared OnWay Rides user table, verify your phone number, and keep your contact preferences under one profile.</p>
+            <ul class="auth-hint-list">
+              <li>New registrations are stored in the same backend `users` table used by the mobile app.</li>
+              <li>WhatsApp and SMS marketing remain optional and are stored with consent timestamps.</li>
+              <li>Your verified phone number helps with trip updates, support follow-up, and future business messaging.</li>
+            </ul>
+            <div class="status-banner" style="margin-top:18px;">
+              <strong>WhatsApp updates</strong>
+              <p>OnWay Rides uses the business sender number <span data-whatsapp-number></span> for direct customer communication. Group auto-enrollment is intentionally not used.</p>
+            </div>
+          </section>
+
+          <section class="auth-panel" id="web-auth-root">
+            <div class="auth-stack" id="auth-screen">
+              <div>
+                <span class="eyebrow">Sign In</span>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Start with Google or email</h2>
+                <p>During beta, web and mobile share the same login and onboarding rules.</p>
+              </div>
+
+              <form class="auth-form" id="email-auth-form">
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="auth-full-name">Full name</label>
+                    <input id="auth-full-name" name="full_name" type="text" placeholder="Your full name">
+                  </div>
+                  <div class="field-group">
+                    <label for="auth-email">Email</label>
+                    <input id="auth-email" name="email" type="email" placeholder="name@example.com" required>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label for="auth-password">Password</label>
+                  <input id="auth-password" name="password" type="password" placeholder="Enter your password" required>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" type="submit" data-submit-mode="signin">Sign In</button>
+                  <button class="outline-button" type="button" id="register-button">Create Account</button>
+                  <button class="ghost-button" type="button" id="google-signin-button">Continue with Google</button>
+                </div>
+                <div class="helper-text">Phone login stays limited during beta. Sign in first, then verify your real phone number.</div>
+                <div class="error-text" id="auth-error" hidden></div>
+              </form>
+            </div>
+
+            <div class="auth-stack" id="onboarding-screen" hidden>
+              <div>
+                <span class="eyebrow">Complete Profile</span>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Verify your phone and consent</h2>
+                <p>Before using the full web experience, complete your contact profile and confirm what OnWay Rides can send you.</p>
+              </div>
+
+              <form class="onboarding-form" id="onboarding-form">
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="onboarding-full-name">Full name</label>
+                    <input id="onboarding-full-name" name="full_name" type="text" required>
+                  </div>
+                  <div class="field-group">
+                    <label for="onboarding-country-code">Country code</label>
+                    <input id="onboarding-country-code" name="country_code" type="text" value="+92" required>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="onboarding-phone">Phone number</label>
+                    <input id="onboarding-phone" name="phone" type="tel" placeholder="3001234567" required>
+                  </div>
+                  <div class="field-group">
+                    <label for="otp-code">OTP code</label>
+                    <input id="otp-code" name="otp_code" type="text" inputmode="numeric" placeholder="123456">
+                  </div>
+                </div>
+                <div class="inline-actions">
+                  <button class="outline-button" type="button" id="send-otp-button">Send OTP</button>
+                  <button class="ghost-button" type="button" id="verify-otp-button">Verify OTP</button>
+                </div>
+                <div class="recaptcha-slot" id="recaptcha-container"></div>
+                <div class="status-row">
+                  <span class="pill warn" id="phone-status-pill">Phone not verified</span>
+                </div>
+
+                <div class="consent-block">
+                  <strong>Contact permissions</strong>
+                  <p>Service contacts are separate from optional marketing. You can change optional preferences later.</p>
+                  <div class="checkbox-list" style="margin-top:14px;">
+                    <label class="checkbox-item">
+                      <input id="accept-privacy" type="checkbox" required>
+                      <span>I accept the <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+                    </label>
+                    <label class="checkbox-item">
+                      <input id="accept-terms" type="checkbox" required>
+                      <span>I accept the <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>.</span>
+                    </label>
+                    <label class="checkbox-item">
+                      <input id="whatsapp-opt-in" type="checkbox">
+                      <span>I want direct WhatsApp updates and offers from OnWay Rides on the verified number above.</span>
+                    </label>
+                    <label class="checkbox-item">
+                      <input id="sms-opt-in" type="checkbox">
+                      <span>I want SMS alerts and promotional messages from OnWay Rides.</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="inline-actions">
+                  <button class="primary-button" type="submit">Save and Continue</button>
+                  <button class="outline-button" type="button" id="signout-button-onboarding">Sign Out</button>
+                </div>
+                <div class="error-text" id="onboarding-error" hidden></div>
+                <div class="success-text" id="onboarding-success" hidden></div>
+              </form>
+            </div>
+
+            <div class="auth-stack" id="account-screen" hidden>
+              <div>
+                <span class="eyebrow">Account Ready</span>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Your shared OnWay Rides profile</h2>
+                <p>This profile is synced for web and mobile, and the consent values below drive future outreach lists.</p>
+              </div>
+
+              <div class="account-grid" id="account-data-grid"></div>
+
+              <div class="account-actions">
+                <a class="primary-button" href="#" id="open-whatsapp-button" target="_blank" rel="noopener">Open WhatsApp Business Chat</a>
+                <a class="outline-button" href="#" id="follow-channel-button" target="_blank" rel="noopener">Follow WhatsApp Channel</a>
+                <a class="ghost-button" href="delete-account.html">Delete Account</a>
+                <button class="lang-pill" type="button" id="signout-button-account">Sign Out</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-grid">
+            <div class="footer-brand">
+              <a class="brand" href="../index.html">
+                <img src="../assets/onwayrides_logo.png" alt="OnWayRides logo">
+              </a>
+              <p>OnWay Rides helps you book rides, deliveries, rentals, airport trips, and routine transport from one simple platform.</p>
+            </div>
+            <div>
+              <div class="footer-title">Platform</div>
+              <div class="footer-links">
+                <a href="../index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="riders.html">Riders</a>
+              </div>
+            </div>
+            <div>
+              <div class="footer-title">Legal</div>
+              <div class="footer-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+                <a href="delete-account.html">Delete Account</a>
+              </div>
+            </div>
+            <div>
+              <div class="footer-title">Access</div>
+              <div class="footer-links">
+                <a href="login.html">Web Login</a>
+                <a href="admin-marketing.html">Admin Marketing</a>
+                <a href="help.html">Support</a>
+              </div>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <span>&copy; <span data-year></span> OnWay Rides. All rights reserved.</span>
+            <div class="footer-links-inline">
+              <a href="privacy.html">Privacy Policy</a>
+              <a href="terms.html">Terms of Service</a>
+              <a href="delete-account.html">Delete Account</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="../assets/js/onway-web-config.js"></script>
+    <script src="../app.js"></script>
+    <script type="module" src="../assets/js/web-auth.js"></script>
+  </body>
+</html>

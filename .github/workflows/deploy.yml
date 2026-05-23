@@ -77,6 +77,8 @@ jobs:
           ADMIN_URL="${{ vars.ADMIN_URL != '' && vars.ADMIN_URL || 'https://admin.onwayrides.com' }}"
           SUPPORT_EMAIL="${{ vars.SUPPORT_EMAIL != '' && vars.SUPPORT_EMAIL || 'support@onwayrides.com' }}"
           SUPPORT_PHONE="${{ vars.SUPPORT_PHONE != '' && vars.SUPPORT_PHONE || '+92-300-0000000' }}"
+          WHATSAPP_BUSINESS_NUMBER="${{ vars.WHATSAPP_BUSINESS_NUMBER != '' && vars.WHATSAPP_BUSINESS_NUMBER || '+46793000786' }}"
+          WHATSAPP_CHANNEL_URL="${{ vars.WHATSAPP_CHANNEL_URL != '' && vars.WHATSAPP_CHANNEL_URL || '' }}"
           DEFAULT_COUNTRY_CODE="${{ vars.DEFAULT_COUNTRY_CODE != '' && vars.DEFAULT_COUNTRY_CODE || '+92' }}"
           DEFAULT_CURRENCY="${{ vars.DEFAULT_CURRENCY != '' && vars.DEFAULT_CURRENCY || 'PKR' }}"
           CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS != '' && vars.CORS_ALLOWED_ORIGINS || 'https://onwayrides.com,https://www.onwayrides.com' }}"

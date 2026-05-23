@@ -47,8 +47,20 @@ Implemented starter auth endpoints:
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `PATCH /api/auth/onboarding`
+- `GET /api/admin/marketing/contacts`
+- `GET /api/admin/marketing/contacts/export`
 
 These endpoints are designed for Firebase ID token verification and local user sync against the existing `users.firebase_uid` schema.
+
+The onboarding endpoint keeps web and mobile user registration aligned around:
+
+- verified phone numbers
+- privacy and terms acceptance
+- optional WhatsApp marketing consent
+- optional SMS marketing consent
+
+The admin marketing endpoints expose exportable consented user lists from the shared `users` table for approved `admin` and `support` roles.
 
 ## Project structure
 
