@@ -27,6 +27,7 @@
             <a href="help.html">Help</a>
           </nav>
           <div class="header-actions">
+            <a class="ghost-button" href="auth-diagnostics.html">Diagnostics</a>
             <a class="outline-button" href="login.html">User Login</a>
           </div>
         </div>
@@ -59,11 +60,11 @@
               <form class="auth-form" id="admin-auth-form">
                 <div class="field-group">
                   <label for="admin-email">Email</label>
-                  <input id="admin-email" type="email" required placeholder="admin@onwayrides.com">
+                  <input id="admin-email" type="email" required placeholder="admin@onwayrides.com" autocomplete="username">
                 </div>
                 <div class="field-group">
                   <label for="admin-password">Password</label>
-                  <input id="admin-password" type="password" required placeholder="Your password">
+                  <input id="admin-password" type="password" required placeholder="Your password" autocomplete="current-password">
                 </div>
                 <div class="inline-actions">
                   <button class="primary-button" type="submit">Sign In</button>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Diagnostic page for OnWay Rides web authentication configuration, popup policy, browser storage, and API connectivity.">
+    <title>OnWay Rides | Auth Diagnostics</title>
+    <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container header-row">
+          <a class="brand" href="../index.html" aria-label="OnWayRides home">
+            <img src="../assets/onwayrides_logo.png" alt="OnWayRides logo">
+          </a>
+          <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+          <nav class="site-nav" data-site-nav>
+            <a href="../index.html">Home</a>
+            <a href="login.html">Web Login</a>
+            <a href="admin-marketing.html">Admin Marketing</a>
+            <a class="active" href="auth-diagnostics.html">Diagnostics</a>
+          </nav>
+          <div class="header-actions">
+            <a class="outline-button" href="login.html">Back to Login</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-shell">
+        <div class="container admin-layout">
+          <section class="admin-panel light">
+            <span class="eyebrow">Web Auth Checks</span>
+            <h1>Find where the login is failing.</h1>
+            <p>This page checks the browser environment that Firebase popup and redirect auth depend on: current domain, browser storage, popup behavior, response headers, and backend reachability.</p>
+            <div class="status-banner" style="margin-top:18px;">
+              <strong>What this can catch</strong>
+              <p>Blocked `sessionStorage`, popup blockers, strict `Cross-Origin-Opener-Policy`, bad API host wiring, and missing public page headers.</p>
+            </div>
+            <div class="status-banner" style="margin-top:18px;">
+              <strong>What this cannot confirm</strong>
+              <p>Firebase Authorized Domains or WhatsApp Business credentials cannot be read from the browser. Those still have to be checked in the console or Meta dashboard.</p>
+            </div>
+          </section>
+
+          <section class="admin-panel">
+            <div class="inline-actions" style="justify-content:space-between; align-items:center;">
+              <div>
+                <span class="eyebrow">Run Diagnostics</span>
+                <h2 style="margin:16px 0 0; font-family:'Sora', 'Segoe UI', sans-serif;">Current page health</h2>
+              </div>
+              <button class="primary-button" type="button" id="run-diagnostics-button">Run checks</button>
+            </div>
+
+            <div class="summary-grid" id="diagnostic-summary-grid" style="margin-top:18px;"></div>
+
+            <div class="marketing-table-card" style="margin-top:18px;">
+              <h2>Detailed results</h2>
+              <div class="helper-text" style="margin-bottom:14px;">The response-header rows are especially useful for popup login problems. COOP should normally be `unsafe-none` or `same-origin-allow-popups` for the login page.</div>
+              <div class="table-wrap">
+                <table class="marketing-table">
+                  <thead>
+                    <tr>
+                      <th>Check</th>
+                      <th>Status</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="diagnostic-table-body"></tbody>
+                </table>
+              </div>
+              <div class="helper-text" id="diagnostic-timestamp" style="margin-top:14px;"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-bottom">
+            <span>&copy; <span data-year></span> OnWay Rides. All rights reserved.</span>
+            <div class="footer-links-inline">
+              <a href="privacy.html">Privacy Policy</a>
+              <a href="terms.html">Terms of Service</a>
+              <a href="delete-account.html">Delete Account</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="../assets/js/onway-web-config.js"></script>
+    <script src="../app.js"></script>
+    <script type="module" src="../assets/js/auth-diagnostics.js"></script>
+  </body>
+</html>
