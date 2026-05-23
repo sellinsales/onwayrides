@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "867042633205",
+    "project_id": "onwayrides",
+    "storage_bucket": "onwayrides.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867042633205:android:246d7a2028095a312facbc",
+        "android_client_info": {
+          "package_name": "com.onway.rides"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "867042633205-hb64cbkqhgc1pglt5ifq1th0q8q47046.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvFKRr2UEel4I8AQwlmfCSpGMEoqd7AUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "867042633205-hb64cbkqhgc1pglt5ifq1th0q8q47046.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

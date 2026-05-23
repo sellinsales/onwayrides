@@ -36,20 +36,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'replace-me-web-api-key',
-    appId: 'replace-me-web-app-id',
-    messagingSenderId: 'replace-me-sender-id',
-    projectId: 'replace-me-project-id',
-    authDomain: 'replace-me-project-id.firebaseapp.com',
-    storageBucket: 'replace-me-project-id.firebasestorage.app',
-    measurementId: 'replace-me-measurement-id',
+  apiKey: "AIzaSyCtZYFp9a3-Wl_4ykpC-erNuMsFb2EUFvs",
+  authDomain: "onwayrides.firebaseapp.com",
+  projectId: "onwayrides",
+  storageBucket: "onwayrides.firebasestorage.app",
+  messagingSenderId: "867042633205",
+  appId: "1:867042633205:web:0540cb61e238caf22facbc",
+  measurementId: "G-V9T4Y37VCT"
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'replace-me-android-api-key',
-    appId: 'replace-me-android-app-id',
-    messagingSenderId: 'replace-me-sender-id',
-    projectId: 'replace-me-project-id',
-    storageBucket: 'replace-me-project-id.firebasestorage.app',
+    apiKey: 'AIzaSyCvFKRr2UEel4I8AQwlmfCSpGMEoqd7AUU',
+    appId: '1:867042633205:android:246d7a2028095a312facbc',
+    messagingSenderId: '867042633205',
+    projectId: 'onwayrides',
+    storageBucket: 'onwayrides.firebasestorage.app',
   );
 }

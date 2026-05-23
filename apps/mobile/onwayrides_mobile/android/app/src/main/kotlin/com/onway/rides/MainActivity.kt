@@ -1,4 +1,4 @@
-package com.onwayrides.onwayrides_mobile
+package com.onway.rides
 
 import io.flutter.embedding.android.FlutterActivity
 
