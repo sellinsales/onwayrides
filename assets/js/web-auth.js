@@ -351,8 +351,9 @@ async function saveOnboarding(event) {
   const whatsappOptIn = document.querySelector("#whatsapp-opt-in").checked;
   const smsOptIn = document.querySelector("#sms-opt-in").checked;
   const e164Phone = normalizePhone(countryCode, phone);
+  const phoneVerificationRequired = Boolean(lastSession?.beta?.phone_verification_required);
 
-  if (!verifiedPhone || verifiedPhone !== e164Phone) {
+  if (phoneVerificationRequired && (!verifiedPhone || verifiedPhone !== e164Phone)) {
     showOnboardingError("Verify the exact phone number you want to save before continuing.");
     return;
   }

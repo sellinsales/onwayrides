@@ -198,7 +198,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
       return;
     }
 
-    if (!_phoneVerified) {
+    if (widget.session.phoneVerificationRequired && !_phoneVerified) {
       setState(() {
         _errorMessage =
             'Verify your phone number with the OTP code before continuing.';
@@ -274,7 +274,9 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Google and email/password are the preferred beta login methods. Before you can request rides, OnWay Rides now requires a verified phone number for operational contact, service updates, and any optional future marketing you explicitly allow.',
+                          widget.session.phoneVerificationRequired
+                              ? 'Google and email/password are the preferred beta login methods. Before you can request rides, OnWay Rides currently requires a verified phone number for operational contact, service updates, and any optional future marketing you explicitly allow.'
+                              : 'Google and email/password are the preferred beta login methods. During this beta, add a working phone number for operational contact and future messaging. OTP verification is available, but not required until the full version rollout.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 18),
@@ -341,7 +343,9 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                         Text(
                           _phoneVerified
                               ? 'This phone number has been verified with Firebase and can now be saved to your OnWay Rides profile.'
-                              : 'Send a verification code and confirm the OTP before you can continue.',
+                              : widget.session.phoneVerificationRequired
+                              ? 'Send a verification code and confirm the OTP before you can continue.'
+                              : 'Phone verification is optional during beta. You can continue without OTP for now and verify later for the full version.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 14),

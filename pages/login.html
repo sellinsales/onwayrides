@@ -39,11 +39,11 @@
           <section class="auth-panel light">
             <span class="eyebrow">Unified Access</span>
             <h1>One account for web and mobile.</h1>
-            <p>Sign in with Google or email, sync into the shared OnWay Rides user table, verify your phone number, and keep your contact preferences under one profile.</p>
+            <p>Sign in with Google or email, sync into the shared OnWay Rides user table, add your working phone number, and keep your contact preferences under one profile.</p>
             <ul class="auth-hint-list">
               <li>New registrations are stored in the same backend `users` table used by the mobile app.</li>
               <li>WhatsApp and SMS marketing remain optional and are stored with consent timestamps.</li>
-              <li>Your verified phone number helps with trip updates, support follow-up, and future business messaging.</li>
+              <li>Your phone number helps with trip updates, support follow-up, and future business messaging. Verification stays optional during beta.</li>
             </ul>
             <div class="status-banner" style="margin-top:18px;">
               <strong>WhatsApp updates</strong>
@@ -88,7 +88,7 @@
               <div>
                 <span class="eyebrow">Complete Profile</span>
                 <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Verify your phone and consent</h2>
-                <p>Before using the full web experience, complete your contact profile and confirm what OnWay Rides can send you.</p>
+                <p>Before using the web experience, complete your contact profile and confirm what OnWay Rides can send you. OTP verification is optional during beta and can be enforced later for the full version.</p>
               </div>
 
               <form class="onboarding-form" id="onboarding-form">
@@ -135,7 +135,7 @@
                     </label>
                     <label class="checkbox-item">
                       <input id="whatsapp-opt-in" type="checkbox">
-                      <span>I want direct WhatsApp updates and offers from OnWay Rides on the verified number above.</span>
+                      <span>I want direct WhatsApp updates and offers from OnWay Rides on the phone number above.</span>
                     </label>
                     <label class="checkbox-item">
                       <input id="sms-opt-in" type="checkbox">

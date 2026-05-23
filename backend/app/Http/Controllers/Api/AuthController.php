@@ -147,6 +147,7 @@ class AuthController extends Controller
                 'mode' => config('onwayrides.beta.mode'),
                 'daily_rides_limit' => config('onwayrides.beta.daily_rides_limit'),
                 'full_access_requires_driver_approval' => config('onwayrides.beta.full_access_requires_driver_approval'),
+                'phone_verification_required' => config('onwayrides.beta.phone_verification_required'),
             ],
             'requirements' => $this->buildRequirements($user),
             'consents' => $this->buildConsents($user),
@@ -186,6 +187,7 @@ class AuthController extends Controller
                 'mode' => config('onwayrides.beta.mode'),
                 'daily_rides_limit' => config('onwayrides.beta.daily_rides_limit'),
                 'full_access_requires_driver_approval' => config('onwayrides.beta.full_access_requires_driver_approval'),
+                'phone_verification_required' => config('onwayrides.beta.phone_verification_required'),
             ],
             'requirements' => $this->buildRequirements($user),
             'consents' => $this->buildConsents($user),
@@ -245,7 +247,8 @@ class AuthController extends Controller
     {
         $metadata = is_array($user->metadata) ? $user->metadata : [];
         $needsPhone = blank($user->phone) || blank($user->country_code);
-        $needsPhoneVerification = ! $needsPhone && blank($user->phone_verified_at);
+        $phoneVerificationRequired = (bool) config('onwayrides.beta.phone_verification_required', false);
+        $needsPhoneVerification = $phoneVerificationRequired && ! $needsPhone && blank($user->phone_verified_at);
         $needsPrivacyAcceptance = empty($metadata['privacy_policy_accepted_at']);
         $needsTermsAcceptance = empty($metadata['terms_of_service_accepted_at']);
 

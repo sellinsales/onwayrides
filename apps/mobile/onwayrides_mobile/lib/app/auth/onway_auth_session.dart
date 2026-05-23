@@ -8,6 +8,7 @@ class OnWayAuthSession {
     required this.betaMode,
     required this.dailyRideLimit,
     required this.fullAccessRequiresDriverApproval,
+    required this.phoneVerificationRequired,
     required this.profileComplete,
     required this.needsPhoneNumber,
     required this.needsPhoneVerification,
@@ -32,6 +33,7 @@ class OnWayAuthSession {
   final String betaMode;
   final int dailyRideLimit;
   final bool fullAccessRequiresDriverApproval;
+  final bool phoneVerificationRequired;
   final bool profileComplete;
   final bool needsPhoneNumber;
   final bool needsPhoneVerification;
@@ -90,6 +92,8 @@ class OnWayAuthSession {
       dailyRideLimit: (beta['daily_rides_limit'] as num?)?.toInt() ?? 3,
       fullAccessRequiresDriverApproval:
           (beta['full_access_requires_driver_approval'] as bool?) ?? true,
+      phoneVerificationRequired:
+          (beta['phone_verification_required'] as bool?) ?? false,
       profileComplete: (requirements['profile_complete'] as bool?) ?? false,
       needsPhoneNumber: (requirements['needs_phone_number'] as bool?) ?? true,
       needsPhoneVerification:

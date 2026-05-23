@@ -14,6 +14,7 @@ return [
         'mode' => 'free-beta',
         'daily_rides_limit' => 3,
         'full_access_requires_driver_approval' => true,
+        'phone_verification_required' => false,
     ],
 
     'platform' => [
