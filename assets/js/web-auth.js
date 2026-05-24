@@ -18,12 +18,19 @@ const app = initializeApp(config.firebase ?? {});
 const auth = getAuth(app);
 await setPersistence(auth, browserLocalPersistence);
 
-const authScreen = document.querySelector("#auth-screen");
+const authChoiceScreen = document.querySelector("#auth-choice-screen");
+const emailScreen = document.querySelector("#email-screen");
 const onboardingScreen = document.querySelector("#onboarding-screen");
 const accountScreen = document.querySelector("#account-screen");
 const emailAuthForm = document.querySelector("#email-auth-form");
 const authError = document.querySelector("#auth-error");
-const registerButton = document.querySelector("#register-button");
+const emailSigninButton = document.querySelector("#email-signin-button");
+const emailRegisterButton = document.querySelector("#email-register-button");
+const emailBackButton = document.querySelector("#email-back-button");
+const emailSubmitButton = document.querySelector("#email-submit-button");
+const emailScreenTitle = document.querySelector("#email-screen-title");
+const emailScreenCopy = document.querySelector("#email-screen-copy");
+const emailStepLabel = document.querySelector("#email-step-label");
 const googleSigninButton = document.querySelector("#google-signin-button");
 const onboardingForm = document.querySelector("#onboarding-form");
 const onboardingError = document.querySelector("#onboarding-error");
@@ -32,10 +39,15 @@ const sendOtpButton = document.querySelector("#send-otp-button");
 const verifyOtpButton = document.querySelector("#verify-otp-button");
 const phoneStatusPill = document.querySelector("#phone-status-pill");
 const accountDataGrid = document.querySelector("#account-data-grid");
+const accountWelcomeTitle = document.querySelector("#account-welcome-title");
+const accountWelcomeCopy = document.querySelector("#account-welcome-copy");
 const openWhatsAppButton = document.querySelector("#open-whatsapp-button");
 const followChannelButton = document.querySelector("#follow-channel-button");
 const signoutButtonOnboarding = document.querySelector("#signout-button-onboarding");
 const signoutButtonAccount = document.querySelector("#signout-button-account");
+const progressStepAccess = document.querySelector("#progress-step-access");
+const progressStepProfile = document.querySelector("#progress-step-profile");
+const progressStepReady = document.querySelector("#progress-step-ready");
 
 document.querySelectorAll("[data-whatsapp-number]").forEach((slot) => {
   slot.textContent = config.whatsappBusinessNumber ?? "";
@@ -45,6 +57,7 @@ let confirmationResult = null;
 let recaptchaVerifier = null;
 let verifiedPhone = null;
 let lastSession = null;
+let emailMode = "signin";
 
 function showAuthError(message) {
   authError.hidden = !message;
@@ -62,9 +75,35 @@ function showOnboardingSuccess(message) {
 }
 
 function setScreen(screen) {
-  authScreen.hidden = screen !== "auth";
+  authChoiceScreen.hidden = screen !== "choice";
+  emailScreen.hidden = screen !== "email";
   onboardingScreen.hidden = screen !== "onboarding";
   accountScreen.hidden = screen !== "account";
+
+  progressStepAccess?.classList.toggle("is-active", screen === "choice" || screen === "email");
+  progressStepProfile?.classList.toggle("is-active", screen === "onboarding");
+  progressStepReady?.classList.toggle("is-active", screen === "account");
+}
+
+function configureEmailScreen(mode = "signin") {
+  emailMode = mode;
+
+  if (mode === "register") {
+    emailStepLabel.textContent = "Step 1 of 3";
+    emailScreenTitle.textContent = "Create your OnWay Rides account";
+    emailScreenCopy.textContent = "Register first with email and password, then continue to complete your rider profile.";
+    emailSubmitButton.textContent = "Create account";
+    document.querySelector("#auth-full-name").required = true;
+  } else {
+    emailStepLabel.textContent = "Step 1 of 3";
+    emailScreenTitle.textContent = "Sign in with email";
+    emailScreenCopy.textContent = "Enter your email and password, then continue to your profile step.";
+    emailSubmitButton.textContent = "Sign in";
+    document.querySelector("#auth-full-name").required = false;
+  }
+
+  showAuthError("");
+  setScreen("email");
 }
 
 function buildApiUrl(path) {
@@ -170,6 +209,7 @@ function renderAccount(session) {
   const user = session.user ?? {};
   const consents = session.consents ?? {};
   const beta = session.beta ?? {};
+  const firstName = user.full_name?.trim()?.split(/\s+/)[0] ?? "there";
   const fields = [
     ["Full name", user.full_name ?? "Not set"],
     ["Email", user.email ?? "Not set"],
@@ -180,6 +220,11 @@ function renderAccount(session) {
     ["Role", user.role ?? "rider"],
     ["Beta rides per day", String(beta.daily_rides_limit ?? 3)],
   ];
+
+  accountWelcomeTitle.textContent = `Welcome, ${firstName}`;
+  accountWelcomeCopy.textContent = user.phone_verified_at
+    ? "Your profile is fully synced across web and mobile, and your phone number is already verified."
+    : "Your profile is synced across web and mobile. During beta, you can continue even if phone verification is still pending.";
 
   accountDataGrid.innerHTML = fields
     .map(
@@ -213,7 +258,7 @@ async function refreshSession() {
     setScreen("onboarding");
   } catch (error) {
     showAuthError(error.message);
-    setScreen("auth");
+    setScreen("choice");
   }
 }
 
@@ -387,11 +432,16 @@ async function signOutEverywhere() {
   verifiedPhone = null;
   lastSession = null;
   await signOut(auth);
-  setScreen("auth");
+  setScreen("choice");
 }
 
-emailAuthForm?.addEventListener("submit", (event) => handleEmailAuth(event, "signin"));
-registerButton?.addEventListener("click", (event) => handleEmailAuth(event, "register"));
+emailAuthForm?.addEventListener("submit", (event) => handleEmailAuth(event, emailMode));
+emailSigninButton?.addEventListener("click", () => configureEmailScreen("signin"));
+emailRegisterButton?.addEventListener("click", () => configureEmailScreen("register"));
+emailBackButton?.addEventListener("click", () => {
+  showAuthError("");
+  setScreen("choice");
+});
 googleSigninButton?.addEventListener("click", handleGoogleAuth);
 sendOtpButton?.addEventListener("click", sendOtp);
 verifyOtpButton?.addEventListener("click", verifyOtp);
@@ -405,7 +455,7 @@ onAuthStateChanged(auth, async (user) => {
   showOnboardingSuccess("");
 
   if (!user) {
-    setScreen("auth");
+    setScreen("choice");
     return;
   }
 
