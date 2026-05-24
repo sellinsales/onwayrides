@@ -64,7 +64,7 @@ button {
   top: 0;
   z-index: 50;
   backdrop-filter: blur(16px);
-  background: rgba(5, 5, 5, 0.82);
+  background: rgba(5, 5, 5, 0.88);
   border-bottom: 1px solid var(--line);
 }
 
@@ -72,8 +72,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  min-height: 84px;
+  gap: 18px;
+  min-height: 72px;
 }
 
 .brand {
@@ -86,7 +86,7 @@ button {
 }
 
 .brand img {
-  height: 48px;
+  height: 44px;
   width: auto;
 }
 
@@ -105,13 +105,13 @@ button {
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 26px;
+  gap: 22px;
 }
 
 .site-nav a {
   color: var(--muted);
-  font-size: 0.97rem;
-  font-weight: 500;
+  font-size: 0.94rem;
+  font-weight: 600;
 }
 
 .site-nav a.active,
@@ -122,7 +122,7 @@ button {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .lang-pill,
@@ -133,9 +133,9 @@ button {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 0 22px;
-  border-radius: 16px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 15px;
   font-weight: 700;
   transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
 }
@@ -172,7 +172,7 @@ button {
 }
 
 .hero {
-  padding: 24px 0 18px;
+  padding: 18px 0 12px;
 }
 
 .hero-panel {
@@ -181,8 +181,8 @@ button {
   border-radius: 34px;
   border: 1px solid var(--line);
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.94) 0%, rgba(4, 4, 4, 0.82) 36%, rgba(8, 8, 8, 0.34) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.3)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.94) 0%, rgba(4, 4, 4, 0.84) 38%, rgba(8, 8, 8, 0.48) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.48)),
     url("assets/01_hero_banner_background.png") center/cover no-repeat,
     linear-gradient(135deg, #040404 0%, #161616 100%);
   box-shadow: var(--shadow);
@@ -204,11 +204,14 @@ button {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 18px;
-  min-height: 500px;
+  min-height: clamp(480px, 70vh, 580px);
 }
 
 .hero-copy {
-  padding: 50px 50px 42px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 46px 34px;
 }
 
 .eyebrow {
@@ -244,8 +247,8 @@ button {
 }
 
 .hero-title {
-  font-size: clamp(2.6rem, 5vw, 4.35rem);
-  max-width: 12ch;
+  font-size: clamp(2.7rem, 5vw, 4.15rem);
+  max-width: 10.5ch;
 }
 
 .page-hero h1 {
@@ -258,52 +261,44 @@ button {
 }
 
 .hero-text {
-  max-width: 34rem;
+  max-width: 32rem;
   color: var(--muted);
-  font-size: 1.02rem;
-  line-height: 1.64;
+  font-size: 1rem;
+  line-height: 1.68;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 24px;
-}
-
-.hero-meta {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
   margin-top: 22px;
 }
 
-.hero-meta-compact .hero-stat strong {
-  font-size: 1.12rem;
+.hero-chip-row {
+  margin-top: 18px;
 }
 
-.hero-stat {
-  padding: 16px;
-  border-radius: 22px;
+.trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.trust-pill {
+  padding: 11px 14px;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.hero-stat strong {
-  display: block;
-  margin-bottom: 6px;
-  font-family: "Sora", "Segoe UI", sans-serif;
-  font-size: 1.28rem;
-}
-
-.hero-stat span {
-  color: var(--muted);
-  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .hero-visual {
   position: relative;
-  padding: 38px 24px 26px 0;
+  padding: 34px 20px 22px 0;
   display: flex;
   align-items: center;
   justify-content: end;
@@ -312,9 +307,9 @@ button {
 .hero-device-frame {
   position: relative;
   z-index: 1;
-  width: min(100%, 490px);
+  width: min(100%, 420px);
   margin-left: auto;
-  border-radius: 28px;
+  border-radius: 26px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 34px 80px rgba(0, 0, 0, 0.48);
@@ -325,61 +320,9 @@ button {
   height: auto;
 }
 
-.hero-floating-card {
-  position: absolute;
-  left: -18px;
-  bottom: 28px;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  align-items: center;
-  width: min(300px, calc(100% - 48px));
-  padding: 16px;
-  border-radius: 24px;
-  background: rgba(7, 7, 8, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.3);
-}
-
-.hero-floating-card img {
-  width: 58px;
-  height: 58px;
-}
-
-.hero-floating-card strong,
 .benefit strong {
   display: block;
   margin-bottom: 4px;
-}
-
-.hero-floating-card span {
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.hero-service-rail {
-  position: absolute;
-  right: 18px;
-  top: 18px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: end;
-  gap: 8px;
-  max-width: 280px;
-}
-
-.hero-service-rail span {
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(6, 6, 7, 0.72);
-  color: var(--gold-soft);
-  font-size: 0.76rem;
-  font-weight: 700;
-  backdrop-filter: blur(12px);
 }
 
 .section {
@@ -1521,7 +1464,7 @@ button {
   }
 
   .hero-visual {
-    padding: 0 30px 34px;
+    padding: 0 28px 30px;
     min-height: 0;
   }
 
@@ -1575,7 +1518,8 @@ button {
     border-bottom: 0;
   }
 
-  .header-actions .lang-pill {
+  .header-actions .lang-pill,
+  .header-actions .ghost-button {
     display: none;
   }
 
@@ -1589,7 +1533,6 @@ button {
     padding: 28px;
   }
 
-  .hero-meta,
   .stack-grid,
   .field-grid,
   .account-grid {
@@ -1599,27 +1542,26 @@ button {
   .hero-visual {
     display: grid;
     justify-items: center;
+    padding: 0 24px 28px;
   }
 
-  .hero-service-rail {
-    position: relative;
-    right: auto;
-    top: auto;
+  .hero-copy {
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-text {
+    margin-inline: auto;
+  }
+
+  .hero-actions,
+  .hero-chip-row,
+  .trust-strip {
     justify-content: center;
-    max-width: none;
-    margin-top: 18px;
   }
 
   .hero-device-frame {
-    width: min(100%, 520px);
-  }
-
-  .hero-floating-card {
-    position: relative;
-    left: auto;
-    bottom: auto;
-    width: 100%;
-    margin-top: 18px;
+    width: min(100%, 380px);
   }
 }
 
@@ -1629,15 +1571,15 @@ button {
   }
 
   .header-row {
-    min-height: 74px;
+    min-height: 68px;
   }
 
   .brand img {
-    height: 40px;
+    height: 38px;
   }
 
   .hero {
-    padding-top: 18px;
+    padding-top: 14px;
   }
 
   .hero-grid {
@@ -1645,11 +1587,33 @@ button {
   }
 
   .hero-copy {
-    padding: 26px 20px 18px;
+    padding: 28px 20px 20px;
   }
 
   .hero-text {
-    font-size: 1.05rem;
+    font-size: 0.98rem;
+  }
+
+  .hero-title {
+    max-width: 11ch;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .hero-actions .primary-button,
+  .hero-actions .outline-button {
+    width: 100%;
+  }
+
+  .hero-device-frame {
+    width: min(100%, 320px);
+  }
+
+  .trust-pill {
+    width: 100%;
+    text-align: center;
   }
 
   .services-grid,
