@@ -98,6 +98,16 @@ function checkPopup(results) {
   }
 }
 
+function addSkippedPopupResult(results) {
+  addResult(
+    results,
+    "Popup window behavior",
+    false,
+    "Popup test was skipped on automatic load. Click 'Run checks' to test popup behavior from a real user action.",
+    true,
+  );
+}
+
 async function checkHeaders(results) {
   try {
     const response = await fetch(window.location.href, {
@@ -249,14 +259,20 @@ function render(results) {
   timestampSlot.textContent = `Last run: ${new Date().toLocaleString()}`;
 }
 
-async function runDiagnostics() {
+async function runDiagnostics({ allowPopupTest = false } = {}) {
   runButton.disabled = true;
   runButton.textContent = "Running...";
 
   const results = [];
   checkConfig(results);
+
+  if (allowPopupTest) {
+    checkPopup(results);
+  } else {
+    addSkippedPopupResult(results);
+  }
+
   await checkSessionStorage(results);
-  checkPopup(results);
   await checkHeaders(results);
   await checkApi(results);
   render(results);
@@ -265,5 +281,5 @@ async function runDiagnostics() {
   runButton.textContent = "Run checks";
 }
 
-runButton?.addEventListener("click", runDiagnostics);
+runButton?.addEventListener("click", () => runDiagnostics({ allowPopupTest: true }));
 runDiagnostics();
