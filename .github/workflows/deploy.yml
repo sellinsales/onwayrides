@@ -123,6 +123,7 @@ jobs:
             --exclude 'legacy/' \
             --exclude 'vendor/' \
             --exclude 'storage/' \
+            --exclude 'bootstrap/cache/*.php' \
             --exclude 'database/database.sqlite' \
             --exclude '.phpunit.result.cache' \
             ./backend/ .deploy/backend/
@@ -144,6 +145,8 @@ jobs:
         run: |
           FRONTEND_REMOTE_DIR="${FTP_FRONTEND_DIR:-/public_html/}"
           BACKEND_REMOTE_DIR="${FTP_BACKEND_DIR:-/backend/}"
+          LOCAL_FRONTEND_DIR="$PWD/.deploy/frontend"
+          LOCAL_BACKEND_DIR="$PWD/.deploy/backend"
 
           lftp -u "$FTP_USERNAME","$FTP_PASSWORD" -p "$FTP_PORT" "$FTP_SERVER" <<EOF
           set ftp:ssl-force true
@@ -154,7 +157,9 @@ jobs:
           set xfer:clobber true
           mkdir -p $FRONTEND_REMOTE_DIR
           mkdir -p $BACKEND_REMOTE_DIR
-          mirror -R --delete --verbose .deploy/frontend $FRONTEND_REMOTE_DIR
-          mirror -R --verbose .deploy/backend $BACKEND_REMOTE_DIR
+          lcd $LOCAL_FRONTEND_DIR
+          mirror -R --delete --verbose . $FRONTEND_REMOTE_DIR
+          lcd $LOCAL_BACKEND_DIR
+          mirror -R --verbose . $BACKEND_REMOTE_DIR
           bye
           EOF
