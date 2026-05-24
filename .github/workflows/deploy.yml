@@ -23,6 +23,7 @@ jobs:
       - name: Generate production backend environment file
         shell: bash
         run: |
+          mkdir -p backend/storage/app
           cat > backend/.env <<'EOF'
           APP_NAME="OnWay Rides Backend"
           APP_ENV=production
@@ -83,8 +84,13 @@ jobs:
           DEFAULT_CURRENCY="${{ vars.DEFAULT_CURRENCY != '' && vars.DEFAULT_CURRENCY || 'PKR' }}"
           CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS != '' && vars.CORS_ALLOWED_ORIGINS || 'https://onwayrides.com,https://www.onwayrides.com' }}"
           FIREBASE_PROJECT_ID="${{ vars.FIREBASE_PROJECT_ID != '' && vars.FIREBASE_PROJECT_ID || '' }}"
-          FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'
+          FIREBASE_CREDENTIALS="storage/app/firebase-service-account.json"
+          FIREBASE_CREDENTIALS_JSON=
           VITE_APP_NAME="OnWay Rides Backend"
+          EOF
+
+          cat > backend/storage/app/firebase-service-account.json <<'EOF'
+          ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
           EOF
 
       - name: Prepare backend runtime directories
