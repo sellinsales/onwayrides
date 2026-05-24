@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Logged-in OnWay Rides workspace for riders, driver applications, and fleet onboarding.">
+    <title>OnWay Rides | My Workspace</title>
+    <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500,0,0" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container header-row">
+          <a class="brand" href="../index.html" aria-label="OnWayRides home">
+            <img src="../assets/onwayrides_logo.png" alt="OnWayRides logo">
+          </a>
+          <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+          <nav class="site-nav" data-site-nav>
+            <a href="../index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="riders.html">Riders</a>
+            <a href="drivers.html">Drivers</a>
+            <a href="business.html">Business</a>
+            <a class="active" href="account.html">My Workspace</a>
+          </nav>
+          <div class="header-actions">
+            <a class="ghost-button" href="help.html">Support</a>
+            <button class="outline-button" type="button" id="workspace-signout-button">Sign Out</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-shell">
+        <div class="container admin-layout">
+          <section class="admin-panel light">
+            <span class="eyebrow">Logged In Workspace</span>
+            <h1 id="workspace-title">Welcome to OnWay Rides.</h1>
+            <p id="workspace-copy">Your web workspace helps you manage beta rider access, start driver onboarding, and register fleet interest from one clean dashboard.</p>
+            <div class="status-banner" style="margin-top:18px;" id="workspace-status-banner">
+              <strong>Beta account active</strong>
+              <p>Use this area to request your first rides, apply as a driver, or send fleet interest to the OnWay Rides team.</p>
+            </div>
+            <div class="summary-grid" id="workspace-summary-grid" style="margin-top:18px;"></div>
+          </section>
+
+          <section class="admin-panel">
+            <div class="inline-actions" style="justify-content:space-between; align-items:center;">
+              <div>
+                <span class="eyebrow">Action Center</span>
+                <h2 style="margin:16px 0 0; font-family:'Sora', 'Segoe UI', sans-serif;">Choose what you want to do next</h2>
+              </div>
+            </div>
+
+            <div class="workspace-grid" style="margin-top:18px;">
+              <article class="workspace-card">
+                <span class="material-symbols-outlined">local_taxi</span>
+                <h3>Book a beta ride</h3>
+                <p>Use the guided rider intake below to request your next trip, airport transfer, or scheduled booking during beta.</p>
+                <a class="primary-button" href="#ride-request-form">Open rider request</a>
+              </article>
+              <article class="workspace-card">
+                <span class="material-symbols-outlined">badge</span>
+                <h3>Apply as a driver</h3>
+                <p>Send your driver interest with your city, vehicle type, and readiness status so support can start your onboarding lane.</p>
+                <a class="outline-button" href="#driver-interest-form">Start driver application</a>
+              </article>
+              <article class="workspace-card">
+                <span class="material-symbols-outlined">directions_bus</span>
+                <h3>Add a fleet or business account</h3>
+                <p>Register your fleet, school route program, or company transport interest through one structured business intake.</p>
+                <a class="ghost-button" href="#fleet-interest-form">Open fleet intake</a>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <div class="container workspace-stack">
+          <section class="marketing-table-card" id="ride-request-form">
+            <div class="workspace-form-head">
+              <div>
+                <span class="eyebrow">Rider Workflow</span>
+                <h2>Request a beta ride or schedule support</h2>
+              </div>
+              <span class="pill warn">Beta limit: 3 rides/day</span>
+            </div>
+            <form class="onboarding-form" id="workspace-ride-form">
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="ride-city">City</label>
+                  <input id="ride-city" name="city" type="text" placeholder="Karachi" required>
+                </div>
+                <div class="field-group">
+                  <label for="ride-service">Service type</label>
+                  <select id="ride-service" name="service_type" required>
+                    <option value="ride">City ride</option>
+                    <option value="airport">Airport ride</option>
+                    <option value="prebooking">Scheduled booking</option>
+                    <option value="rental">Rental</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="ride-pickup">Pickup area</label>
+                  <input id="ride-pickup" name="pickup_area" type="text" placeholder="Gulshan Block 13" required>
+                </div>
+                <div class="field-group">
+                  <label for="ride-destination">Destination area</label>
+                  <input id="ride-destination" name="destination_area" type="text" placeholder="Jinnah Airport" required>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="ride-notes">Trip notes</label>
+                <textarea id="ride-notes" name="notes" rows="4" placeholder="Add pickup time, luggage, accessibility, or support notes."></textarea>
+              </div>
+              <div class="inline-actions">
+                <button class="primary-button" type="submit">Send rider request to support</button>
+                <a class="outline-button" href="riders.html">Read rider guide</a>
+              </div>
+              <div class="success-text" id="ride-form-success" hidden></div>
+            </form>
+          </section>
+
+          <section class="marketing-table-card" id="driver-interest-form">
+            <div class="workspace-form-head">
+              <div>
+                <span class="eyebrow">Driver Workflow</span>
+                <h2>Apply as a driver</h2>
+              </div>
+              <span class="pill dark">Approval required</span>
+            </div>
+            <form class="onboarding-form" id="workspace-driver-form">
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-city">City</label>
+                  <input id="driver-city" name="city" type="text" placeholder="Karachi" required>
+                </div>
+                <div class="field-group">
+                  <label for="driver-vehicle">Vehicle type</label>
+                  <input id="driver-vehicle" name="vehicle_type" type="text" placeholder="Bike, car, rickshaw" required>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-availability">Availability</label>
+                  <select id="driver-availability" name="availability" required>
+                    <option value="full_time">Full time</option>
+                    <option value="part_time">Part time</option>
+                    <option value="weekends">Weekends</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="driver-license">License status</label>
+                  <select id="driver-license" name="license_status" required>
+                    <option value="ready">Ready and valid</option>
+                    <option value="renewing">Renewing</option>
+                    <option value="need_help">Need onboarding help</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="driver-notes">Notes</label>
+                <textarea id="driver-notes" name="notes" rows="4" placeholder="Mention fleet link, city routes, or onboarding questions."></textarea>
+              </div>
+              <div class="inline-actions">
+                <button class="primary-button" type="submit">Send driver application intent</button>
+                <a class="outline-button" href="drivers.html">Read driver guide</a>
+              </div>
+              <div class="success-text" id="driver-form-success" hidden></div>
+            </form>
+          </section>
+
+          <section class="marketing-table-card" id="fleet-interest-form">
+            <div class="workspace-form-head">
+              <div>
+                <span class="eyebrow">Fleet Workflow</span>
+                <h2>Register fleet or business transport interest</h2>
+              </div>
+              <span class="pill dark">Support-guided</span>
+            </div>
+            <form class="onboarding-form" id="workspace-fleet-form">
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="fleet-company">Company / fleet name</label>
+                  <input id="fleet-company" name="company_name" type="text" placeholder="786 Mobility Fleet" required>
+                </div>
+                <div class="field-group">
+                  <label for="fleet-size">Fleet size</label>
+                  <input id="fleet-size" name="fleet_size" type="text" placeholder="12 vehicles" required>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="fleet-city">City</label>
+                  <input id="fleet-city" name="city" type="text" placeholder="Karachi" required>
+                </div>
+                <div class="field-group">
+                  <label for="fleet-model">Use case</label>
+                  <select id="fleet-model" name="use_case" required>
+                    <option value="fleet_owner">Fleet owner</option>
+                    <option value="school_routes">School routes</option>
+                    <option value="staff_transport">Staff transport</option>
+                    <option value="airport_program">Airport operations</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="fleet-notes">Notes</label>
+                <textarea id="fleet-notes" name="notes" rows="4" placeholder="Mention preferred model, city coverage, or business mobility requirements."></textarea>
+              </div>
+              <div class="inline-actions">
+                <button class="primary-button" type="submit">Send fleet interest</button>
+                <a class="outline-button" href="business.html">Read business mobility guide</a>
+              </div>
+              <div class="success-text" id="fleet-form-success" hidden></div>
+            </form>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-bottom">
+            <span>&copy; <span data-year></span> OnWay Rides. All rights reserved.</span>
+            <div class="footer-links-inline">
+              <a href="privacy.html">Privacy Policy</a>
+              <a href="terms.html">Terms of Service</a>
+              <a href="delete-account.html">Delete Account</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="../assets/js/onway-web-config.js"></script>
+    <script src="../app.js"></script>
+    <script type="module" src="../assets/js/account-dashboard.js"></script>
+  </body>
+</html>

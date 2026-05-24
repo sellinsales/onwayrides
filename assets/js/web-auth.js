@@ -59,6 +59,12 @@ let verifiedPhone = null;
 let lastSession = null;
 let emailMode = "signin";
 
+function goToDashboard(mode = "returning") {
+  const target = new URL("account.html", window.location.href);
+  target.searchParams.set("mode", mode);
+  window.location.href = target.toString();
+}
+
 function showAuthError(message) {
   authError.hidden = !message;
   authError.textContent = message ?? "";
@@ -249,8 +255,7 @@ async function refreshSession() {
     lastSession = session;
 
     if (session.requirements?.profile_complete) {
-      renderAccount(session);
-      setScreen("account");
+      goToDashboard("returning");
       return;
     }
 
@@ -420,8 +425,7 @@ async function saveOnboarding(event) {
     });
 
     lastSession = session;
-    renderAccount(session);
-    setScreen("account");
+    goToDashboard("new");
   } catch (error) {
     showOnboardingError(error.message ?? "Unable to save your profile.");
   }

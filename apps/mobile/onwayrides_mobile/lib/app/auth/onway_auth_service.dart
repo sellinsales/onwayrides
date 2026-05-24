@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -33,6 +34,9 @@ class OnWayPhoneVerificationChallenge {
 }
 
 class OnWayAuthService {
+  static const _requestTimeout = Duration(seconds: 20);
+  static const _productionApiBaseUrl = 'https://api.onwayrides.com/api';
+
   OnWayAuthService({
     FirebaseAuth? firebaseAuth,
     http.Client? httpClient,
@@ -63,7 +67,7 @@ class OnWayAuthService {
       return Uri.base.resolve('/api').toString().replaceAll(RegExp(r'/$'), '');
     }
 
-    return 'http://10.0.2.2:8000/api';
+    return _productionApiBaseUrl;
   }
 
   Future<void> signInWithEmail({
@@ -129,17 +133,20 @@ class OnWayAuthService {
     }
 
     final idToken = await user.getIdToken(true);
-    final response = await _httpClient.post(
-      Uri.parse('$apiBaseUrl/auth/login'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $idToken',
-      },
-      body: jsonEncode({
-        'role': role,
-        'platform': platform ?? _defaultPlatformLabel(),
-        'full_name': user.displayName,
-      }),
+    final response = await _performJsonRequest(
+      () => _httpClient.post(
+        Uri.parse('$apiBaseUrl/auth/login'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode({
+          'role': role,
+          'platform': platform ?? _defaultPlatformLabel(),
+          'full_name': user.displayName,
+        }),
+      ),
+      fallback: 'Unable to reach the OnWay Rides backend for sign-in sync.',
     );
 
     final responseBody = _decodeJsonBody(response.body);
@@ -168,21 +175,24 @@ class OnWayAuthService {
     }
 
     final idToken = await user.getIdToken(true);
-    final response = await _httpClient.patch(
-      Uri.parse('$apiBaseUrl/auth/onboarding'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $idToken',
-      },
-      body: jsonEncode({
-        'full_name': fullName.trim(),
-        'country_code': countryCode.trim(),
-        'phone': phone.trim(),
-        'accept_privacy_policy': acceptPrivacyPolicy,
-        'accept_terms': acceptTerms,
-        'sms_marketing_opt_in': smsMarketingOptIn,
-        'whatsapp_marketing_opt_in': whatsappMarketingOptIn,
-      }),
+    final response = await _performJsonRequest(
+      () => _httpClient.patch(
+        Uri.parse('$apiBaseUrl/auth/onboarding'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode({
+          'full_name': fullName.trim(),
+          'country_code': countryCode.trim(),
+          'phone': phone.trim(),
+          'accept_privacy_policy': acceptPrivacyPolicy,
+          'accept_terms': acceptTerms,
+          'sms_marketing_opt_in': smsMarketingOptIn,
+          'whatsapp_marketing_opt_in': whatsappMarketingOptIn,
+        }),
+      ),
+      fallback: 'Unable to reach the OnWay Rides backend while saving your profile.',
     );
 
     final responseBody = _decodeJsonBody(response.body);
@@ -410,6 +420,25 @@ class OnWayAuthService {
     }
 
     return defaultTargetPlatform.name;
+  }
+
+  Future<http.Response> _performJsonRequest(
+    Future<http.Response> Function() request, {
+    required String fallback,
+  }) async {
+    try {
+      return await request().timeout(_requestTimeout);
+    } on TimeoutException {
+      throw OnWayAuthException(
+        '$fallback Request timed out after ${_requestTimeout.inSeconds} seconds.',
+      );
+    } on SocketException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    } on http.ClientException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    } on FormatException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    }
   }
 
   Future<void> _linkOrUpdatePhoneCredential(
