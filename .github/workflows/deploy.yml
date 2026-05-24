@@ -24,12 +24,61 @@ jobs:
         shell: bash
         run: |
           mkdir -p backend/storage/app
-          cat > backend/.env <<'EOF'
+          sanitize_single_line() {
+            printf '%s' "$1" | tr -d '\r\n'
+          }
+
+          escape_env_value() {
+            sanitize_single_line "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+          }
+
+          APP_KEY_RAW='${{ secrets.LARAVEL_APP_KEY }}'
+          DB_HOST_RAW='${{ secrets.DB_HOST }}'
+          DB_PORT_RAW='${{ secrets.DB_PORT }}'
+          DB_DATABASE_RAW='${{ secrets.DB_DATABASE }}'
+          DB_USERNAME_RAW='${{ secrets.DB_USERNAME }}'
+          DB_PASSWORD_RAW='${{ secrets.DB_PASSWORD }}'
+          APP_URL_RAW='${{ vars.LARAVEL_APP_URL != '' && vars.LARAVEL_APP_URL || 'https://onwayrides.com' }}'
+          FRONTEND_URL_RAW='${{ vars.FRONTEND_URL != '' && vars.FRONTEND_URL || 'https://onwayrides.com' }}'
+          ADMIN_URL_RAW='${{ vars.ADMIN_URL != '' && vars.ADMIN_URL || 'https://admin.onwayrides.com' }}'
+          SUPPORT_EMAIL_RAW='${{ vars.SUPPORT_EMAIL != '' && vars.SUPPORT_EMAIL || 'support@onwayrides.com' }}'
+          SUPPORT_PHONE_RAW='${{ vars.SUPPORT_PHONE != '' && vars.SUPPORT_PHONE || '+92-300-0000000' }}'
+          WHATSAPP_BUSINESS_NUMBER_RAW='${{ vars.WHATSAPP_BUSINESS_NUMBER != '' && vars.WHATSAPP_BUSINESS_NUMBER || '+46793000786' }}'
+          WHATSAPP_CHANNEL_URL_RAW='${{ vars.WHATSAPP_CHANNEL_URL != '' && vars.WHATSAPP_CHANNEL_URL || '' }}'
+          DEFAULT_COUNTRY_CODE_RAW='${{ vars.DEFAULT_COUNTRY_CODE != '' && vars.DEFAULT_COUNTRY_CODE || '+92' }}'
+          DEFAULT_CURRENCY_RAW='${{ vars.DEFAULT_CURRENCY != '' && vars.DEFAULT_CURRENCY || 'PKR' }}'
+          CORS_ALLOWED_ORIGINS_RAW='${{ vars.CORS_ALLOWED_ORIGINS != '' && vars.CORS_ALLOWED_ORIGINS || 'https://onwayrides.com,https://www.onwayrides.com' }}'
+          FIREBASE_PROJECT_ID_RAW='${{ vars.FIREBASE_PROJECT_ID != '' && vars.FIREBASE_PROJECT_ID || '' }}'
+
+          APP_KEY="$(escape_env_value "$APP_KEY_RAW")"
+          DB_HOST="$(escape_env_value "$DB_HOST_RAW")"
+          DB_PORT="$(escape_env_value "$DB_PORT_RAW")"
+          DB_DATABASE="$(escape_env_value "$DB_DATABASE_RAW")"
+          DB_USERNAME="$(escape_env_value "$DB_USERNAME_RAW")"
+          DB_PASSWORD="$(escape_env_value "$DB_PASSWORD_RAW")"
+          APP_URL="$(escape_env_value "$APP_URL_RAW")"
+          FRONTEND_URL="$(escape_env_value "$FRONTEND_URL_RAW")"
+          ADMIN_URL="$(escape_env_value "$ADMIN_URL_RAW")"
+          SUPPORT_EMAIL="$(escape_env_value "$SUPPORT_EMAIL_RAW")"
+          SUPPORT_PHONE="$(escape_env_value "$SUPPORT_PHONE_RAW")"
+          WHATSAPP_BUSINESS_NUMBER="$(escape_env_value "$WHATSAPP_BUSINESS_NUMBER_RAW")"
+          WHATSAPP_CHANNEL_URL="$(escape_env_value "$WHATSAPP_CHANNEL_URL_RAW")"
+          DEFAULT_COUNTRY_CODE="$(escape_env_value "$DEFAULT_COUNTRY_CODE_RAW")"
+          DEFAULT_CURRENCY="$(escape_env_value "$DEFAULT_CURRENCY_RAW")"
+          CORS_ALLOWED_ORIGINS="$(escape_env_value "$CORS_ALLOWED_ORIGINS_RAW")"
+          FIREBASE_PROJECT_ID="$(escape_env_value "$FIREBASE_PROJECT_ID_RAW")"
+
+          if [[ -n "$APP_KEY" && "$APP_KEY" != base64:* ]]; then
+            echo "LARAVEL_APP_KEY must include the full base64:... value." >&2
+            exit 1
+          fi
+
+          cat > backend/.env <<EOF
           APP_NAME="OnWay Rides Backend"
           APP_ENV=production
-          APP_KEY="${{ secrets.LARAVEL_APP_KEY }}"
+          APP_KEY="$APP_KEY"
           APP_DEBUG=false
-          APP_URL="${{ vars.LARAVEL_APP_URL != '' && vars.LARAVEL_APP_URL || 'https://onwayrides.com' }}"
+          APP_URL="$APP_URL"
           APP_LOCALE=en
           APP_FALLBACK_LOCALE=en
           APP_FAKER_LOCALE=en_US
@@ -41,11 +90,11 @@ jobs:
           LOG_DEPRECATIONS_CHANNEL=null
           LOG_LEVEL=error
           DB_CONNECTION=mysql
-          DB_HOST="${{ secrets.DB_HOST }}"
-          DB_PORT="${{ secrets.DB_PORT }}"
-          DB_DATABASE="${{ secrets.DB_DATABASE }}"
-          DB_USERNAME="${{ secrets.DB_USERNAME }}"
-          DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+          DB_HOST="$DB_HOST"
+          DB_PORT="$DB_PORT"
+          DB_DATABASE="$DB_DATABASE"
+          DB_USERNAME="$DB_USERNAME"
+          DB_PASSWORD="$DB_PASSWORD"
           SESSION_DRIVER=file
           SESSION_LIFETIME=120
           SESSION_ENCRYPT=false
@@ -66,7 +115,7 @@ jobs:
           MAIL_PORT=2525
           MAIL_USERNAME=null
           MAIL_PASSWORD=null
-          MAIL_FROM_ADDRESS="${{ vars.SUPPORT_EMAIL != '' && vars.SUPPORT_EMAIL || 'support@onwayrides.com' }}"
+          MAIL_FROM_ADDRESS="$SUPPORT_EMAIL"
           MAIL_FROM_NAME="OnWay Rides Backend"
           AWS_ACCESS_KEY_ID=
           AWS_SECRET_ACCESS_KEY=
@@ -74,16 +123,16 @@ jobs:
           AWS_BUCKET=
           AWS_USE_PATH_STYLE_ENDPOINT=false
           ONWAYRIDES_API_VERSION=v1
-          FRONTEND_URL="${{ vars.FRONTEND_URL != '' && vars.FRONTEND_URL || 'https://onwayrides.com' }}"
-          ADMIN_URL="${{ vars.ADMIN_URL != '' && vars.ADMIN_URL || 'https://admin.onwayrides.com' }}"
-          SUPPORT_EMAIL="${{ vars.SUPPORT_EMAIL != '' && vars.SUPPORT_EMAIL || 'support@onwayrides.com' }}"
-          SUPPORT_PHONE="${{ vars.SUPPORT_PHONE != '' && vars.SUPPORT_PHONE || '+92-300-0000000' }}"
-          WHATSAPP_BUSINESS_NUMBER="${{ vars.WHATSAPP_BUSINESS_NUMBER != '' && vars.WHATSAPP_BUSINESS_NUMBER || '+46793000786' }}"
-          WHATSAPP_CHANNEL_URL="${{ vars.WHATSAPP_CHANNEL_URL != '' && vars.WHATSAPP_CHANNEL_URL || '' }}"
-          DEFAULT_COUNTRY_CODE="${{ vars.DEFAULT_COUNTRY_CODE != '' && vars.DEFAULT_COUNTRY_CODE || '+92' }}"
-          DEFAULT_CURRENCY="${{ vars.DEFAULT_CURRENCY != '' && vars.DEFAULT_CURRENCY || 'PKR' }}"
-          CORS_ALLOWED_ORIGINS="${{ vars.CORS_ALLOWED_ORIGINS != '' && vars.CORS_ALLOWED_ORIGINS || 'https://onwayrides.com,https://www.onwayrides.com' }}"
-          FIREBASE_PROJECT_ID="${{ vars.FIREBASE_PROJECT_ID != '' && vars.FIREBASE_PROJECT_ID || '' }}"
+          FRONTEND_URL="$FRONTEND_URL"
+          ADMIN_URL="$ADMIN_URL"
+          SUPPORT_EMAIL="$SUPPORT_EMAIL"
+          SUPPORT_PHONE="$SUPPORT_PHONE"
+          WHATSAPP_BUSINESS_NUMBER="$WHATSAPP_BUSINESS_NUMBER"
+          WHATSAPP_CHANNEL_URL="$WHATSAPP_CHANNEL_URL"
+          DEFAULT_COUNTRY_CODE="$DEFAULT_COUNTRY_CODE"
+          DEFAULT_CURRENCY="$DEFAULT_CURRENCY"
+          CORS_ALLOWED_ORIGINS="$CORS_ALLOWED_ORIGINS"
+          FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID"
           FIREBASE_CREDENTIALS="storage/app/firebase-service-account.json"
           FIREBASE_CREDENTIALS_JSON=
           VITE_APP_NAME="OnWay Rides Backend"
