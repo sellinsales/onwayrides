@@ -429,6 +429,7 @@ class OnboardingController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'country_code' => $user->country_code,
+                'national_id_number' => $user->national_id_number,
                 'role' => $user->role,
             ],
             'driver_application' => $driverProfile === null ? null : [
@@ -443,6 +444,9 @@ class OnboardingController extends Controller
                 'vehicle' => $primaryVehicle === null ? null : [
                     'id' => $primaryVehicle->id,
                     'plate_number' => $primaryVehicle->plate_number,
+                    'vehicle_category_id' => DB::table('vehicle_types')
+                        ->where('id', $primaryVehicle->vehicle_type_id)
+                        ->value('vehicle_category_id'),
                     'vehicle_type_id' => $primaryVehicle->vehicle_type_id,
                     'vehicle_make_id' => $primaryVehicle->vehicle_make_id,
                     'vehicle_model_id' => $primaryVehicle->vehicle_model_id,

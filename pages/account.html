@@ -92,16 +92,11 @@
               <div class="field-grid">
                 <div class="field-group">
                   <label for="ride-city">City</label>
-                  <input id="ride-city" name="city" type="text" placeholder="Karachi" required>
+                  <select id="ride-city" name="city" required></select>
                 </div>
                 <div class="field-group">
                   <label for="ride-service">Service type</label>
-                  <select id="ride-service" name="service_type" required>
-                    <option value="ride">City ride</option>
-                    <option value="airport">Airport ride</option>
-                    <option value="prebooking">Scheduled booking</option>
-                    <option value="rental">Rental</option>
-                  </select>
+                  <select id="ride-service" name="service_type" required></select>
                 </div>
               </div>
               <div class="field-grid">
@@ -112,6 +107,19 @@
                 <div class="field-group">
                   <label for="ride-destination">Destination area</label>
                   <input id="ride-destination" name="destination_area" type="text" placeholder="Jinnah Airport" required>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="ride-schedule">Timing</label>
+                  <select id="ride-schedule" name="timing" required>
+                    <option value="asap">As soon as possible</option>
+                    <option value="scheduled">Scheduled</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="ride-vehicle-note">Vehicle preference</label>
+                  <input id="ride-vehicle-note" name="vehicle_preference" type="text" placeholder="Sedan, van, bike, coaster">
                 </div>
               </div>
               <div class="field-group">
@@ -138,11 +146,79 @@
               <div class="field-grid">
                 <div class="field-group">
                   <label for="driver-city">City</label>
-                  <input id="driver-city" name="city" type="text" placeholder="Karachi" required>
+                  <select id="driver-city" name="city_id" required></select>
                 </div>
                 <div class="field-group">
-                  <label for="driver-vehicle">Vehicle type</label>
-                  <input id="driver-vehicle" name="vehicle_type" type="text" placeholder="Bike, car, rickshaw" required>
+                  <label for="driver-service-types">Service types</label>
+                  <div class="checkbox-list" id="driver-service-types"></div>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-license-number">License number</label>
+                  <input id="driver-license-number" name="license_number" type="text" placeholder="DL-1234567" required>
+                </div>
+                <div class="field-group">
+                  <label for="driver-national-id">National ID / CNIC</label>
+                  <input id="driver-national-id" name="national_id_number" type="text" placeholder="42101-1234567-1" required>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-vehicle-category">Vehicle category</label>
+                  <select id="driver-vehicle-category" name="vehicle_category_id"></select>
+                </div>
+                <div class="field-group">
+                  <label for="driver-vehicle-type">Vehicle type</label>
+                  <select id="driver-vehicle-type" name="vehicle_type_id"></select>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-vehicle-make">Vehicle make</label>
+                  <select id="driver-vehicle-make" name="vehicle_make_id"></select>
+                </div>
+                <div class="field-group">
+                  <label for="driver-vehicle-model">Vehicle model</label>
+                  <select id="driver-vehicle-model" name="vehicle_model_id"></select>
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-vehicle-make-other">Other vehicle make</label>
+                  <input id="driver-vehicle-make-other" name="vehicle_make_other" type="text" placeholder="Only if make is missing">
+                </div>
+                <div class="field-group">
+                  <label for="driver-vehicle-model-other">Other vehicle model</label>
+                  <input id="driver-vehicle-model-other" name="vehicle_model_other" type="text" placeholder="Only if model is missing">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-plate-number">Plate number</label>
+                  <input id="driver-plate-number" name="plate_number" type="text" placeholder="ABC-123">
+                </div>
+                <div class="field-group">
+                  <label for="driver-year">Year of manufacture</label>
+                  <input id="driver-year" name="year_of_manufacture" type="number" min="1990" max="2100" placeholder="2021">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="driver-seats">Seats</label>
+                  <input id="driver-seats" name="seats" type="number" min="1" max="99" placeholder="4">
+                </div>
+                <div class="field-group">
+                  <label for="driver-fuel-type">Fuel type</label>
+                  <select id="driver-fuel-type" name="fuel_type">
+                    <option value="">Select fuel</option>
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="electric">Electric</option>
+                    <option value="cng">CNG</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
               </div>
               <div class="field-grid">
@@ -168,11 +244,52 @@
                 <textarea id="driver-notes" name="notes" rows="4" placeholder="Mention fleet link, city routes, or onboarding questions."></textarea>
               </div>
               <div class="inline-actions">
-                <button class="primary-button" type="submit">Send driver application intent</button>
+                <button class="primary-button" type="submit">Save driver draft</button>
                 <a class="outline-button" href="drivers.html">Read driver guide</a>
               </div>
               <div class="success-text" id="driver-form-success" hidden></div>
             </form>
+
+            <div class="onboarding-form" style="margin-top:24px;">
+              <div class="workspace-form-head">
+                <div>
+                  <span class="eyebrow">Driver Documents</span>
+                  <h2>Upload one document at a time</h2>
+                </div>
+                <span class="pill dark">Secure upload</span>
+              </div>
+              <form class="onboarding-form" id="driver-document-form">
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="driver-document-type">Document type</label>
+                    <select id="driver-document-type" name="document_type" required></select>
+                  </div>
+                  <div class="field-group">
+                    <label for="driver-document-number">Document number</label>
+                    <input id="driver-document-number" name="document_number" type="text" placeholder="Optional reference number">
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label for="driver-document-expiry">Expiry date</label>
+                    <input id="driver-document-expiry" name="expiry_date" type="date">
+                  </div>
+                  <div class="field-group">
+                    <label for="driver-document-file">File</label>
+                    <input id="driver-document-file" name="document" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" required>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label for="driver-document-help">Upload guidance</label>
+                  <textarea id="driver-document-help" rows="3" disabled></textarea>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" type="submit">Upload document</button>
+                </div>
+                <div class="success-text" id="driver-document-success" hidden></div>
+              </form>
+              <div class="summary-grid" id="driver-document-summary" style="margin-top:18px;"></div>
+            </div>
           </section>
 
           <section class="marketing-table-card" id="fleet-interest-form">
@@ -197,7 +314,7 @@
               <div class="field-grid">
                 <div class="field-group">
                   <label for="fleet-city">City</label>
-                  <input id="fleet-city" name="city" type="text" placeholder="Karachi" required>
+                  <select id="fleet-city" name="city_id" required></select>
                 </div>
                 <div class="field-group">
                   <label for="fleet-model">Use case</label>
@@ -209,12 +326,30 @@
                   </select>
                 </div>
               </div>
+              <div class="field-grid">
+                <div class="field-group">
+                  <label for="fleet-business-model">Business model</label>
+                  <select id="fleet-business-model" name="business_model" required>
+                    <option value="commission">Commission</option>
+                    <option value="subscription">Subscription</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="fleet-support-phone">Support phone</label>
+                  <input id="fleet-support-phone" name="support_phone" type="text" placeholder="+92 300 1234567">
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="fleet-support-email">Support email</label>
+                <input id="fleet-support-email" name="support_email" type="email" placeholder="ops@company.com">
+              </div>
               <div class="field-group">
                 <label for="fleet-notes">Notes</label>
                 <textarea id="fleet-notes" name="notes" rows="4" placeholder="Mention preferred model, city coverage, or business mobility requirements."></textarea>
               </div>
               <div class="inline-actions">
-                <button class="primary-button" type="submit">Send fleet interest</button>
+                <button class="primary-button" type="submit">Save fleet draft</button>
                 <a class="outline-button" href="business.html">Read business mobility guide</a>
               </div>
               <div class="success-text" id="fleet-form-success" hidden></div>
