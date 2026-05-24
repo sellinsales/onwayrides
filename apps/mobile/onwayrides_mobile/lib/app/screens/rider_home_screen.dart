@@ -115,19 +115,32 @@ class RiderHomeScreen extends StatelessWidget {
                               CircleAvatar(
                                 radius: 28,
                                 backgroundColor: Colors.white10,
-                                backgroundImage: AssetImage(
-                                  activeTrip!.driver.avatarAsset,
-                                ),
+                                backgroundImage: activeTrip!.driver != null
+                                    ? AssetImage(
+                                        activeTrip!.driver!.avatarAsset,
+                                      )
+                                    : null,
+                                child: activeTrip!.driver == null
+                                    ? const Icon(
+                                        Icons.support_agent_rounded,
+                                        color: OnWayTheme.yellow,
+                                      )
+                                    : null,
                               ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(activeTrip!.driver.name),
+                                    Text(
+                                      activeTrip!.driver?.name ??
+                                          'OnWay dispatch is assigning your driver',
+                                    ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${activeTrip!.driver.vehicle}\n${activeTrip!.driver.eta}',
+                                      activeTrip!.driver != null
+                                          ? '${activeTrip!.driver!.vehicle}\n${activeTrip!.driver!.eta}'
+                                          : 'Your booking is live in the dispatch queue.',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodySmall,
@@ -289,8 +302,8 @@ class _SignalRow extends StatelessWidget {
           children: [
             _SignalCard(
               width: width,
-              title: '11 services',
-              subtitle: 'Rides, food, courier, airport, school, and rentals',
+              title: '10 services',
+              subtitle: 'Taxi, bike, rickshaw, courier, airport and rentals',
             ),
             _SignalCard(
               width: width,
@@ -351,13 +364,11 @@ class _ServiceGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth > 780
-            ? (constraints.maxWidth - 32) / 3
-            : (constraints.maxWidth - 16) / 2;
+        final width = (constraints.maxWidth - 24) / 3;
 
         return Wrap(
-          spacing: 16,
-          runSpacing: 16,
+          spacing: 12,
+          runSpacing: 12,
           children: [
             for (final service in services)
               SizedBox(

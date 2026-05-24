@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
+import '../onway_models.dart';
 import 'onway_auth_session.dart';
 
 class OnWayAuthException implements Exception {
@@ -192,7 +195,8 @@ class OnWayAuthService {
           'whatsapp_marketing_opt_in': whatsappMarketingOptIn,
         }),
       ),
-      fallback: 'Unable to reach the OnWay Rides backend while saving your profile.',
+      fallback:
+          'Unable to reach the OnWay Rides backend while saving your profile.',
     );
 
     final responseBody = _decodeJsonBody(response.body);
@@ -220,6 +224,571 @@ class OnWayAuthService {
     }
 
     return OnWayAuthSession.fromJson(responseBody);
+  }
+
+  Future<OnWayTripFeed> fetchTrips() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const OnWayAuthException('No signed-in Firebase user was found.');
+    }
+
+    final idToken = await user.getIdToken(true);
+    final response = await _performJsonRequest(
+      () => _httpClient.get(
+        Uri.parse('$apiBaseUrl/bookings'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+      ),
+      fallback: 'Unable to load your OnWay trips right now.',
+    );
+
+    final responseBody = _decodeJsonBody(response.body);
+    if (response.statusCode != 200) {
+      throw OnWayAuthException(
+        (responseBody['message'] as String?) ??
+            'Unable to load your bookings right now.',
+      );
+    }
+
+    final activeBooking = responseBody['active_booking'];
+    final history = responseBody['history'];
+
+    return OnWayTripFeed(
+      activeTrip: activeBooking is Map<String, dynamic>
+          ? _tripFromBookingJson(activeBooking)
+          : null,
+      history: history is List
+          ? history
+                .whereType<Map<String, dynamic>>()
+                .map(_historyItemFromBookingJson)
+                .toList(growable: false)
+          : const [],
+    );
+  }
+
+  Future<OnWayDriverWorkspaceBundle> fetchDriverWorkspace() async {
+    final referencesPayload = await _authorizedJsonRequest(
+      method: 'GET',
+      path: '/onboarding/reference-data',
+      fallback: 'Unable to load driver onboarding reference data.',
+    );
+    final workspacePayload = await _authorizedJsonRequest(
+      method: 'GET',
+      path: '/onboarding/workspace',
+      fallback: 'Unable to load your driver workspace.',
+    );
+
+    final workspace =
+        workspacePayload['workspace'] as Map<String, dynamic>? ?? const {};
+    final user = workspace['user'] as Map<String, dynamic>? ?? const {};
+    final driver = workspace['driver_application'] as Map<String, dynamic>?;
+    final vehicle = driver?['vehicle'] as Map<String, dynamic>?;
+
+    return OnWayDriverWorkspaceBundle(
+      user: OnWayDriverWorkspaceUser(
+        id: (user['id'] as num?)?.toInt() ?? 0,
+        fullName: (user['full_name'] as String?) ?? 'OnWay User',
+        role: (user['role'] as String?) ?? 'rider',
+        email: user['email'] as String?,
+        phone: user['phone'] as String?,
+        countryCode: user['country_code'] as String?,
+        nationalIdNumber: user['national_id_number'] as String?,
+      ),
+      cities: ((referencesPayload['cities'] as List?) ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (item) => OnWaySelectOption(
+              id: (item['id'] as num?)?.toInt() ?? 0,
+              label: (item['name'] as String?) ?? 'City',
+              slug: item['slug'] as String?,
+            ),
+          )
+          .toList(growable: false),
+      serviceTypes: ((referencesPayload['service_types'] as List?) ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (item) => OnWaySelectOption(
+              id: (item['id'] as num?)?.toInt() ?? 0,
+              label: (item['name'] as String?) ?? 'Service',
+              slug: item['slug'] as String?,
+            ),
+          )
+          .toList(growable: false),
+      vehicleCategories:
+          ((referencesPayload['vehicle_categories'] as List?) ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (item) => OnWaySelectOption(
+                  id: (item['id'] as num?)?.toInt() ?? 0,
+                  label: (item['name'] as String?) ?? 'Category',
+                  slug: item['slug'] as String?,
+                ),
+              )
+              .toList(growable: false),
+      vehicleTypes: ((referencesPayload['vehicle_types'] as List?) ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (item) => OnWayVehicleTypeOption(
+              id: (item['id'] as num?)?.toInt() ?? 0,
+              vehicleCategoryId:
+                  (item['vehicle_category_id'] as num?)?.toInt() ?? 0,
+              label: (item['name'] as String?) ?? 'Vehicle type',
+              seats: (item['seats'] as num?)?.toInt(),
+            ),
+          )
+          .toList(growable: false),
+      vehicleMakes: ((referencesPayload['vehicle_makes'] as List?) ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (item) => OnWaySelectOption(
+              id: (item['id'] as num?)?.toInt() ?? 0,
+              label: (item['name'] as String?) ?? 'Make',
+            ),
+          )
+          .toList(growable: false),
+      vehicleModels:
+          ((referencesPayload['vehicle_models'] as List?) ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (item) => OnWayVehicleModelOption(
+                  id: (item['id'] as num?)?.toInt() ?? 0,
+                  vehicleMakeId:
+                      (item['vehicle_make_id'] as num?)?.toInt() ?? 0,
+                  label: (item['name'] as String?) ?? 'Model',
+                ),
+              )
+              .toList(growable: false),
+      documentTypes:
+          ((referencesPayload['driver_document_types'] as List?) ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (item) => OnWayDriverDocumentTypeOption(
+                  value: (item['value'] as String?) ?? 'other',
+                  label: (item['label'] as String?) ?? 'Document',
+                ),
+              )
+              .toList(growable: false),
+      driverSamples: ((referencesPayload['driver_samples'] as Map?) ?? const {})
+          .map(
+            (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
+          ),
+      driverApplication: driver == null
+          ? null
+          : OnWayDriverApplication(
+              driverProfileId:
+                  (driver['driver_profile_id'] as num?)?.toInt() ?? 0,
+              driverCode: (driver['driver_code'] as String?) ?? '',
+              status: (driver['status'] as String?) ?? 'pending',
+              onboardingStatus:
+                  (driver['onboarding_status'] as String?) ?? 'draft',
+              cityId: (driver['city_id'] as num?)?.toInt(),
+              isOnline: (driver['is_online'] as bool?) ?? false,
+              isBusy: (driver['is_busy'] as bool?) ?? false,
+              acceptsCash: (driver['accepts_cash'] as bool?) ?? true,
+              acceptsWallet: (driver['accepts_wallet'] as bool?) ?? false,
+              acceptsCard: (driver['accepts_card'] as bool?) ?? false,
+              ratingAverage:
+                  (driver['rating_average'] as num?)?.toDouble() ?? 5,
+              ratingCount: (driver['rating_count'] as num?)?.toInt() ?? 0,
+              tripsCompleted: (driver['trips_completed'] as num?)?.toInt() ?? 0,
+              licenseNumber: driver['license_number'] as String?,
+              notes: driver['notes'] as String?,
+              serviceTypeIds:
+                  ((driver['service_type_ids'] as List?) ?? const [])
+                      .map((item) => (item as num).toInt())
+                      .toList(growable: false),
+              documents: ((driver['documents'] as List?) ?? const [])
+                  .whereType<Map<String, dynamic>>()
+                  .map(
+                    (item) => OnWayDriverDocumentSummary(
+                      id: (item['id'] as num?)?.toInt() ?? 0,
+                      documentType:
+                          (item['document_type'] as String?) ?? 'other',
+                      status: (item['status'] as String?) ?? 'pending',
+                      expiryDate: item['expiry_date'] as String?,
+                      updatedAt: item['updated_at'] as String?,
+                    ),
+                  )
+                  .toList(growable: false),
+              vehicle: vehicle == null
+                  ? null
+                  : OnWayVehicleDraft(
+                      id: (vehicle['id'] as num?)?.toInt() ?? 0,
+                      plateNumber: vehicle['plate_number'] as String?,
+                      vehicleCategoryId:
+                          (vehicle['vehicle_category_id'] as num?)?.toInt(),
+                      vehicleTypeId: (vehicle['vehicle_type_id'] as num?)
+                          ?.toInt(),
+                      vehicleMakeId: (vehicle['vehicle_make_id'] as num?)
+                          ?.toInt(),
+                      vehicleModelId: (vehicle['vehicle_model_id'] as num?)
+                          ?.toInt(),
+                      yearOfManufacture:
+                          (vehicle['year_of_manufacture'] as num?)?.toInt(),
+                      seats: (vehicle['seats'] as num?)?.toInt(),
+                      fuelType: vehicle['fuel_type'] as String?,
+                      status: vehicle['status'] as String?,
+                    ),
+            ),
+    );
+  }
+
+  Future<void> saveDriverApplicationDraft({
+    required int cityId,
+    required String licenseNumber,
+    required String nationalIdNumber,
+    required List<int> serviceTypeIds,
+    int? vehicleCategoryId,
+    int? vehicleTypeId,
+    int? vehicleMakeId,
+    int? vehicleModelId,
+    String? vehicleMakeOther,
+    String? vehicleModelOther,
+    String? plateNumber,
+    int? yearOfManufacture,
+    int? seats,
+    String? fuelType,
+    String? availability,
+    String? licenseStatus,
+    String? notes,
+  }) async {
+    await _authorizedJsonRequest(
+      method: 'PATCH',
+      path: '/onboarding/driver',
+      body: {
+        'city_id': cityId,
+        'license_number': licenseNumber.trim(),
+        'national_id_number': nationalIdNumber.trim(),
+        'vehicle_category_id': vehicleCategoryId,
+        'vehicle_type_id': vehicleTypeId,
+        'vehicle_make_id': vehicleMakeId,
+        'vehicle_model_id': vehicleModelId,
+        'vehicle_make_other': _nullableText(vehicleMakeOther),
+        'vehicle_model_other': _nullableText(vehicleModelOther),
+        'plate_number': _nullableText(plateNumber),
+        'year_of_manufacture': yearOfManufacture,
+        'seats': seats,
+        'fuel_type': fuelType,
+        'availability': availability,
+        'license_status': licenseStatus,
+        'notes': _nullableText(notes),
+        'service_type_ids': serviceTypeIds,
+      },
+      fallback: 'Unable to save your driver application right now.',
+    );
+  }
+
+  Future<void> updateDriverMode({
+    required bool isOnline,
+    required List<int> serviceTypeIds,
+  }) async {
+    await _authorizedJsonRequest(
+      method: 'PATCH',
+      path: '/driver/mode',
+      body: {'is_online': isOnline, 'service_type_ids': serviceTypeIds},
+      fallback: 'Unable to update driver mode right now.',
+    );
+  }
+
+  Future<OnWayDriverDocumentSummary> uploadDriverDocument({
+    required String documentType,
+    required PlatformFile file,
+    String? documentNumber,
+    DateTime? expiryDate,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const OnWayAuthException('No signed-in Firebase user was found.');
+    }
+
+    final idToken = await user.getIdToken(true);
+    final uri = Uri.parse('$apiBaseUrl/onboarding/driver-documents');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $idToken'
+      ..fields['document_type'] = documentType;
+
+    final normalizedDocumentNumber = _nullableText(documentNumber);
+    if (normalizedDocumentNumber != null) {
+      request.fields['document_number'] = normalizedDocumentNumber;
+    }
+    if (expiryDate != null) {
+      request.fields['expiry_date'] = expiryDate.toIso8601String();
+    }
+
+    final bytes = file.bytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'document',
+          bytes,
+          filename: file.name,
+          contentType: _mediaTypeForName(file.name),
+        ),
+      );
+    } else if (file.path != null && file.path!.trim().isNotEmpty) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'document',
+          file.path!,
+          filename: file.name,
+          contentType: _mediaTypeForName(file.name),
+        ),
+      );
+    } else {
+      throw const OnWayAuthException(
+        'The selected document file could not be read from this device.',
+      );
+    }
+
+    final response = await _performMultipartRequest(
+      request,
+      fallback: 'Unable to upload the driver document right now.',
+    );
+
+    final responseBody = _decodeJsonBody(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final errors = responseBody['errors'];
+      if (errors is Map<String, dynamic>) {
+        final firstError = errors.values
+            .whereType<List>()
+            .expand((messages) => messages.whereType<String>())
+            .cast<String?>()
+            .firstWhere(
+              (message) => message != null && message.isNotEmpty,
+              orElse: () => null,
+            );
+
+        if (firstError != null) {
+          throw OnWayAuthException(firstError);
+        }
+      }
+
+      throw OnWayAuthException(
+        (responseBody['message'] as String?) ??
+            'Unable to upload the driver document right now.',
+      );
+    }
+
+    final document = responseBody['document'];
+    if (document is! Map<String, dynamic>) {
+      throw const OnWayAuthException(
+        'The uploaded document response was incomplete.',
+      );
+    }
+
+    return OnWayDriverDocumentSummary(
+      id: (document['id'] as num?)?.toInt() ?? 0,
+      documentType: (document['document_type'] as String?) ?? documentType,
+      status: (document['status'] as String?) ?? 'pending',
+      expiryDate: document['expiry_date'] as String?,
+      updatedAt: document['updated_at'] as String?,
+    );
+  }
+
+  Future<OnWayDriverDispatchFeed> fetchDriverRequests() async {
+    final payload = await _authorizedJsonRequest(
+      method: 'GET',
+      path: '/driver/requests',
+      fallback: 'Unable to load live driver requests right now.',
+    );
+
+    final driverMode =
+        payload['driver_mode'] as Map<String, dynamic>? ?? const {};
+    final currentBooking = payload['current_booking'];
+    final requests = payload['requests'];
+
+    return OnWayDriverDispatchFeed(
+      isOnline: (driverMode['is_online'] as bool?) ?? false,
+      isBusy: (driverMode['is_busy'] as bool?) ?? false,
+      currentTrip: currentBooking is Map<String, dynamic>
+          ? OnWayDriverCurrentTrip(
+              id: (currentBooking['id'] as num?)?.toInt() ?? 0,
+              reference: (currentBooking['reference'] as String?) ?? '',
+              serviceTitle:
+                  (currentBooking['service_title'] as String?) ??
+                  'OnWay Request',
+              riderName: (currentBooking['rider_name'] as String?) ?? 'Rider',
+              pickup: (currentBooking['pickup'] as String?) ?? 'Pickup pending',
+              dropoff:
+                  (currentBooking['dropoff'] as String?) ?? 'Dropoff pending',
+              status: (currentBooking['status'] as String?) ?? 'accepted',
+              statusLabel:
+                  (currentBooking['status_label'] as String?) ?? 'Accepted',
+              fareLabel:
+                  (currentBooking['fare_label'] as String?) ??
+                  'Fare to confirm',
+              paymentLabel:
+                  (currentBooking['payment_label'] as String?) ?? 'Cash',
+              riderPhone: currentBooking['rider_phone'] as String?,
+            )
+          : null,
+      requests: requests is List
+          ? requests
+                .whereType<Map<String, dynamic>>()
+                .map(
+                  (item) => DriverRequest(
+                    id: (item['id'] as num?)?.toInt(),
+                    reference: item['reference'] as String?,
+                    serviceTitle:
+                        (item['service_title'] as String?) ?? 'OnWay Request',
+                    riderName: (item['rider_name'] as String?) ?? 'Rider',
+                    pickup: (item['pickup'] as String?) ?? 'Pickup pending',
+                    dropoff: (item['dropoff'] as String?) ?? 'Dropoff pending',
+                    fareLabel:
+                        (item['fare_label'] as String?) ?? 'Fare to confirm',
+                    distanceLabel:
+                        (item['distance_label'] as String?) ?? 'Nearby request',
+                    paymentLabel: (item['payment_label'] as String?) ?? 'Cash',
+                    canCounter: (item['can_counter'] as bool?) ?? false,
+                    status: (item['status'] as String?) ?? 'pending',
+                    statusLine:
+                        (item['status_line'] as String?) ??
+                        'Request ready for driver action.',
+                  ),
+                )
+                .toList(growable: false)
+          : const [],
+    );
+  }
+
+  Future<void> acceptDriverRequest(int bookingId) async {
+    await _authorizedJsonRequest(
+      method: 'POST',
+      path: '/driver/requests/$bookingId/accept',
+      fallback: 'Unable to accept this request right now.',
+    );
+  }
+
+  Future<void> rejectDriverRequest(int bookingId) async {
+    await _authorizedJsonRequest(
+      method: 'POST',
+      path: '/driver/requests/$bookingId/reject',
+      fallback: 'Unable to reject this request right now.',
+    );
+  }
+
+  Future<void> sendDriverCounterOffer({
+    required int bookingId,
+    required double amount,
+    String? note,
+  }) async {
+    await _authorizedJsonRequest(
+      method: 'POST',
+      path: '/driver/requests/$bookingId/counter-offer',
+      body: {'amount': amount, 'note': _nullableText(note)},
+      fallback: 'Unable to send a counter-offer right now.',
+    );
+  }
+
+  Future<ActiveTrip> updateBookingStatus({
+    required int bookingId,
+    required String status,
+    String? note,
+    String? cancellationReason,
+  }) async {
+    final responseBody = await _authorizedJsonRequest(
+      method: 'PATCH',
+      path: '/bookings/$bookingId/status',
+      body: {
+        'status': status,
+        'note': _nullableText(note),
+        'cancellation_reason': _nullableText(cancellationReason),
+      },
+      fallback: 'Unable to update this booking right now.',
+    );
+
+    final booking = responseBody['booking'];
+    if (booking is! Map<String, dynamic>) {
+      throw const OnWayAuthException(
+        'The updated booking response was incomplete.',
+      );
+    }
+
+    return _tripFromBookingJson(booking);
+  }
+
+  Future<void> sendTrackingPoint({
+    required int bookingId,
+    required double latitude,
+    required double longitude,
+    double? heading,
+    double? speedKmh,
+    DateTime? recordedAt,
+  }) async {
+    await _authorizedJsonRequest(
+      method: 'POST',
+      path: '/bookings/$bookingId/tracking-points',
+      body: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'heading': heading,
+        'speed_kmh': speedKmh,
+        'recorded_at': recordedAt?.toIso8601String(),
+      },
+      fallback: 'Unable to send live tracking right now.',
+    );
+  }
+
+  Future<ActiveTrip> createBooking({
+    required OnWayService service,
+    required String pickupAddress,
+    required String destinationAddress,
+    required FareOption fare,
+    required String paymentMethod,
+    required bool negotiated,
+    required String offeredFare,
+    DateTime? scheduledFor,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const OnWayAuthException('No signed-in Firebase user was found.');
+    }
+
+    final idToken = await user.getIdToken(true);
+    final response = await _performJsonRequest(
+      () => _httpClient.post(
+        Uri.parse('$apiBaseUrl/bookings'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode({
+          'service_slug': _serviceSlugForType(service.type),
+          'pickup_address': pickupAddress.trim(),
+          'destination_address': destinationAddress.trim(),
+          'payment_method': paymentMethod.toLowerCase(),
+          'estimated_fare': _parseCurrencyLabel(fare.priceLabel),
+          'offered_fare': negotiated ? _parseLooseAmount(offeredFare) : null,
+          'scheduled_for': scheduledFor?.toIso8601String(),
+          'metadata': {
+            'mobile_service_title': service.title,
+            'mobile_service_subtitle': service.subtitle,
+            'mobile_fare_title': fare.title,
+            'negotiated': negotiated,
+          },
+        }),
+      ),
+      fallback: 'Unable to create your booking right now.',
+    );
+
+    final responseBody = _decodeJsonBody(response.body);
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw OnWayAuthException(
+        (responseBody['message'] as String?) ??
+            'Unable to create your booking right now.',
+      );
+    }
+
+    final booking = responseBody['booking'];
+    if (booking is! Map<String, dynamic>) {
+      throw const OnWayAuthException(
+        'The booking response from the backend was incomplete.',
+      );
+    }
+
+    return _tripFromBookingJson(booking);
   }
 
   Future<OnWayPhoneVerificationChallenge> startPhoneVerification({
@@ -441,6 +1010,91 @@ class OnWayAuthService {
     }
   }
 
+  Future<http.Response> _performMultipartRequest(
+    http.MultipartRequest request, {
+    required String fallback,
+  }) async {
+    try {
+      final streamed = await request.send().timeout(_requestTimeout);
+      return http.Response.fromStream(streamed);
+    } on TimeoutException {
+      throw OnWayAuthException(
+        '$fallback Request timed out after ${_requestTimeout.inSeconds} seconds.',
+      );
+    } on SocketException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    } on http.ClientException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    } on FormatException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> _authorizedJsonRequest({
+    required String method,
+    required String path,
+    Map<String, dynamic>? body,
+    required String fallback,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const OnWayAuthException('No signed-in Firebase user was found.');
+    }
+
+    final idToken = await user.getIdToken(true);
+    final response = await _performJsonRequest(() {
+      final uri = Uri.parse('$apiBaseUrl$path');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $idToken',
+      };
+
+      switch (method) {
+        case 'GET':
+          return _httpClient.get(uri, headers: headers);
+        case 'POST':
+          return _httpClient.post(
+            uri,
+            headers: headers,
+            body: jsonEncode(body ?? const {}),
+          );
+        case 'PATCH':
+          return _httpClient.patch(
+            uri,
+            headers: headers,
+            body: jsonEncode(body ?? const {}),
+          );
+        default:
+          throw UnsupportedError('Unsupported HTTP method: $method');
+      }
+    }, fallback: fallback);
+
+    final responseBody = _decodeJsonBody(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final errors = responseBody['errors'];
+      if (errors is Map<String, dynamic>) {
+        final firstError = errors.values
+            .whereType<List>()
+            .expand((messages) => messages.whereType<String>())
+            .cast<String?>()
+            .firstWhere(
+              (message) => message != null && message.isNotEmpty,
+              orElse: () => null,
+            );
+
+        if (firstError != null) {
+          throw OnWayAuthException(firstError);
+        }
+      }
+
+      throw OnWayAuthException(
+        (responseBody['message'] as String?) ?? fallback,
+      );
+    }
+
+    return responseBody;
+  }
+
   Future<void> _linkOrUpdatePhoneCredential(
     PhoneAuthCredential credential, {
     required String expectedPhoneNumber,
@@ -506,5 +1160,174 @@ class OnWayAuthService {
       default:
         return error.message ?? fallback;
     }
+  }
+
+  ActiveTrip _tripFromBookingJson(Map<String, dynamic> json) {
+    final service = json['service'] as Map<String, dynamic>? ?? const {};
+
+    return ActiveTrip(
+      bookingId: (json['id'] as num?)?.toInt(),
+      bookingReference: json['reference'] as String?,
+      status: json['status'] as String?,
+      serviceTitle: (service['name'] as String?) ?? 'OnWay Booking',
+      pickup: (json['pickup_address'] as String?) ?? 'Pickup pending',
+      destination:
+          (json['destination_address'] as String?) ?? 'Destination pending',
+      statusLine:
+          (json['status_line'] as String?) ?? 'Booking created successfully',
+      routeLine: (json['route_line'] as String?) ?? '',
+      paymentLabel: (json['payment_label'] as String?) ?? 'Cash payment',
+      fareLabel: (json['fare_label'] as String?) ?? 'Fare to confirm',
+      driver: _driverFromBookingJson(json['driver']),
+    );
+  }
+
+  TripHistoryItem _historyItemFromBookingJson(Map<String, dynamic> json) {
+    final service = json['service'] as Map<String, dynamic>? ?? const {};
+
+    return TripHistoryItem(
+      reference: json['reference'] as String?,
+      title: (service['name'] as String?) ?? 'OnWay Booking',
+      dateLabel: _bookingDateLabel(
+        json['scheduled_for'] as String?,
+        json['requested_at'] as String?,
+      ),
+      route: (json['route_line'] as String?) ?? '',
+      amount: (json['fare_label'] as String?) ?? 'Fare to confirm',
+      status: (json['status_label'] as String?) ?? 'Pending',
+    );
+  }
+
+  DriverProfile? _driverFromBookingJson(Object? json) {
+    if (json is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final name = json['name'] as String?;
+    if (name == null || name.trim().isEmpty) {
+      return null;
+    }
+
+    return DriverProfile(
+      name: name,
+      rating: (json['rating'] as String?) ?? '--',
+      vehicle: (json['vehicle'] as String?) ?? 'Vehicle pending',
+      plate: (json['plate'] as String?) ?? 'Plate pending',
+      phone: (json['phone'] as String?) ?? 'Phone pending',
+      distanceAway: (json['distance_away'] as String?) ?? 'Dispatch pending',
+      eta: (json['eta'] as String?) ?? 'Assigning driver',
+      avatarAsset: 'assets/showcase/driver_profile.png',
+    );
+  }
+
+  String _bookingDateLabel(String? scheduledFor, String? requestedAt) {
+    final source = scheduledFor?.trim().isNotEmpty == true
+        ? scheduledFor!.trim()
+        : requestedAt?.trim();
+
+    if (source == null || source.isEmpty) {
+      return 'Just now';
+    }
+
+    final parsed = DateTime.tryParse(source)?.toLocal();
+    if (parsed == null) {
+      return source;
+    }
+
+    final month = _monthLabel(parsed.month);
+    final hour = parsed.hour % 12 == 0 ? 12 : parsed.hour % 12;
+    final meridiem = parsed.hour >= 12 ? 'PM' : 'AM';
+
+    return '${parsed.day} $month, $hour:${parsed.minute.toString().padLeft(2, '0')} $meridiem';
+  }
+
+  String _monthLabel(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    final safeIndex = month < 1
+        ? 0
+        : month > months.length
+        ? months.length - 1
+        : month - 1;
+
+    return months[safeIndex];
+  }
+
+  String _serviceSlugForType(ServiceType type) {
+    switch (type) {
+      case ServiceType.courier:
+        return 'courier';
+      case ServiceType.rentCar:
+        return 'rental';
+      case ServiceType.foodDelivery:
+        return 'food';
+      case ServiceType.schoolOffice:
+        return 'school';
+      case ServiceType.airport:
+        return 'airport';
+      case ServiceType.prebooking:
+        return 'prebooking';
+      case ServiceType.rideShare:
+      case ServiceType.taxi:
+      case ServiceType.bikeTaxi:
+      case ServiceType.rickshawTaxi:
+      case ServiceType.cityToCity:
+        return 'ride';
+    }
+  }
+
+  double? _parseCurrencyLabel(String value) {
+    final digits = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (digits.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(digits);
+  }
+
+  double? _parseLooseAmount(String value) {
+    final digits = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    if (digits.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(digits);
+  }
+
+  String? _nullableText(String? value) {
+    if (value == null) {
+      return null;
+    }
+
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  MediaType _mediaTypeForName(String fileName) {
+    final lowerName = fileName.toLowerCase();
+    if (lowerName.endsWith('.png')) {
+      return MediaType('image', 'png');
+    }
+    if (lowerName.endsWith('.webp')) {
+      return MediaType('image', 'webp');
+    }
+    if (lowerName.endsWith('.pdf')) {
+      return MediaType('application', 'pdf');
+    }
+
+    return MediaType('image', 'jpeg');
   }
 }

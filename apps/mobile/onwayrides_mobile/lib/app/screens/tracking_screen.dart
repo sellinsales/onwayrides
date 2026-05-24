@@ -1,22 +1,114 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../auth/onway_auth_service.dart';
 import '../onway_models.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
 
-class TrackingScreen extends StatelessWidget {
-  const TrackingScreen({super.key, required this.trip});
+class TrackingScreen extends StatefulWidget {
+  const TrackingScreen({super.key, required this.trip, this.authService});
 
   final ActiveTrip trip;
+  final OnWayAuthService? authService;
 
-  void _showTodo(BuildContext context, String action) {
+  @override
+  State<TrackingScreen> createState() => _TrackingScreenState();
+}
+
+class _TrackingScreenState extends State<TrackingScreen> {
+  static const _refreshInterval = Duration(seconds: 10);
+
+  late ActiveTrip _trip;
+  Timer? _refreshTimer;
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _trip = widget.trip;
+    if (widget.authService != null) {
+      _refreshTimer = Timer.periodic(_refreshInterval, (_) {
+        unawaited(_refreshTrip());
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refreshTrip() async {
+    if (_refreshing || widget.authService == null) {
+      return;
+    }
+
+    _refreshing = true;
+    try {
+      final feed = await widget.authService!.fetchTrips();
+      final active = feed.activeTrip;
+      if (!mounted || active == null) {
+        return;
+      }
+
+      final sameBooking = active.bookingId != null && _trip.bookingId != null
+          ? active.bookingId == _trip.bookingId
+          : active.bookingReference == _trip.bookingReference;
+
+      if (sameBooking) {
+        setState(() => _trip = active);
+      }
+    } on OnWayAuthException {
+      // Keep the last known rider view on screen.
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  Future<void> _cancelRide() async {
+    final bookingId = _trip.bookingId;
+    if (bookingId == null || widget.authService == null) {
+      _showMessage('Live cancellation is not available in preview mode.');
+      return;
+    }
+
+    try {
+      final updatedTrip = await widget.authService!.updateBookingStatus(
+        bookingId: bookingId,
+        status: 'cancelled',
+        note: 'Cancelled by rider from tracking screen.',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _trip = updatedTrip);
+      _showMessage('Booking cancelled.');
+    } on OnWayAuthException catch (error) {
+      _showMessage(error.message);
+    }
+  }
+
+  void _showTodo(String action) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$action will connect to live APIs next.')),
     );
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final driver = _trip.driver;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Live tracking')),
       body: ListView(
@@ -54,11 +146,11 @@ class TrackingScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        trip.statusLine,
+                        _trip.statusLine,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 8),
-                      Text(trip.routeLine),
+                      Text(_trip.routeLine),
                     ],
                   ),
                 ),
@@ -80,17 +172,27 @@ class TrackingScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: Colors.white10,
-                      backgroundImage: AssetImage(trip.driver.avatarAsset),
+                      backgroundImage: driver != null
+                          ? AssetImage(driver.avatarAsset)
+                          : null,
+                      child: driver == null
+                          ? const Icon(
+                              Icons.support_agent_rounded,
+                              color: OnWayTheme.yellow,
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(trip.driver.name),
+                          Text(driver?.name ?? 'OnWay dispatch'),
                           const SizedBox(height: 4),
                           Text(
-                            '${trip.driver.vehicle}\n${trip.driver.plate} • ${trip.driver.distanceAway}',
+                            driver != null
+                                ? '${driver.vehicle}\n${driver.plate} | ${driver.distanceAway}'
+                                : 'Your booking is in the dispatch queue.\nDriver details will appear here once assigned.',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -98,7 +200,7 @@ class TrackingScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      trip.driver.rating,
+                      driver?.rating ?? '--',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: OnWayTheme.yellow,
                       ),
@@ -110,7 +212,9 @@ class TrackingScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton.icon(
-                        onPressed: () => _showTodo(context, 'Call'),
+                        onPressed: driver == null
+                            ? null
+                            : () => _showTodo('Call'),
                         icon: const Icon(Icons.call_rounded),
                         label: const Text('Call'),
                       ),
@@ -118,7 +222,9 @@ class TrackingScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _showTodo(context, 'Chat'),
+                        onPressed: driver == null
+                            ? null
+                            : () => _showTodo('Chat'),
                         icon: const Icon(Icons.chat_bubble_outline_rounded),
                         label: const Text('Chat'),
                       ),
@@ -127,9 +233,13 @@ class TrackingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => _showTodo(context, 'Cancel ride'),
+                  onPressed: _trip.status == 'cancelled' ? null : _cancelRide,
                   icon: const Icon(Icons.close_rounded),
-                  label: const Text('Cancel ride'),
+                  label: Text(
+                    _trip.status == 'cancelled'
+                        ? 'Ride cancelled'
+                        : 'Cancel ride',
+                  ),
                 ),
               ],
             ),
@@ -144,11 +254,16 @@ class TrackingScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 14),
-                _SummaryRow(label: 'Service', value: trip.serviceTitle),
-                _SummaryRow(label: 'Pickup', value: trip.pickup),
-                _SummaryRow(label: 'Destination', value: trip.destination),
-                _SummaryRow(label: 'Payment', value: trip.paymentLabel),
-                _SummaryRow(label: 'Fare', value: trip.fareLabel),
+                _SummaryRow(label: 'Service', value: _trip.serviceTitle),
+                if (_trip.bookingReference != null)
+                  _SummaryRow(
+                    label: 'Reference',
+                    value: _trip.bookingReference!,
+                  ),
+                _SummaryRow(label: 'Pickup', value: _trip.pickup),
+                _SummaryRow(label: 'Destination', value: _trip.destination),
+                _SummaryRow(label: 'Payment', value: _trip.paymentLabel),
+                _SummaryRow(label: 'Fare', value: _trip.fareLabel),
               ],
             ),
           ),

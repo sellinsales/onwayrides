@@ -18,26 +18,20 @@ class BrandHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset('assets/brand/road_pin.png', width: 34, height: 34),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Image.asset(
-                    'assets/brand/onwayrides_logo.png',
-                    height: 24,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    caption,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white54),
-                  ),
-                ],
+              Image.asset(
+                'assets/brand/onwayrides_logo.png',
+                height: 26,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                caption,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white54),
               ),
             ],
           ),
@@ -124,7 +118,7 @@ class ServiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: Ink(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -132,26 +126,26 @@ class ServiceCard extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [OnWayTheme.charcoal, Colors.black.withValues(alpha: 0.94)],
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white10),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 24,
-              offset: const Offset(0, 12),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 child: AspectRatio(
-                  aspectRatio: 1.2,
+                  aspectRatio: 1.08,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -169,19 +163,19 @@ class ServiceCard extends StatelessWidget {
                         ),
                       ),
                       Positioned(
-                        top: 10,
-                        left: 10,
+                        top: 8,
+                        left: 8,
                         child: Container(
-                          width: 34,
-                          height: 34,
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.72),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             service.icon,
                             color: OnWayTheme.yellow,
-                            size: 18,
+                            size: 14,
                           ),
                         ),
                       ),
@@ -189,17 +183,21 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 service.title,
-                style: Theme.of(context).textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 service.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   _Tag(
@@ -207,19 +205,13 @@ class ServiceCard extends StatelessWidget {
                     backgroundColor: Colors.white10,
                     foregroundColor: Colors.white70,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   if (service.negotiable)
                     const _Tag(
-                      label: 'Offer fare',
+                      label: 'Offer',
                       backgroundColor: Color(0x29FFC107),
                       foregroundColor: OnWayTheme.yellow,
                     ),
-                  const Spacer(),
-                  const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white54,
-                    size: 18,
-                  ),
                 ],
               ),
             ],

@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\BootstrapController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\DriverRequestController;
+use App\Http\Controllers\Api\DriverModeController;
 use App\Http\Controllers\Api\DriverDocumentController;
 use App\Http\Controllers\Api\AdminMarketingController;
 use App\Http\Controllers\Api\AuthController;
@@ -10,6 +13,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class)->name('api.health');
 Route::get('/bootstrap', BootstrapController::class)->name('api.bootstrap');
+Route::get('/bookings', [BookingController::class, 'index'])->name('api.bookings.index');
+Route::post('/bookings', [BookingController::class, 'store'])->name('api.bookings.store');
+Route::patch('/bookings/{booking}/status', [BookingController::class, 'updateStatus'])->name('api.bookings.status.update');
+Route::post('/bookings/{booking}/tracking-points', [BookingController::class, 'storeTrackingPoint'])->name('api.bookings.tracking.store');
+Route::patch('/driver/mode', [DriverModeController::class, 'update'])->name('api.driver.mode.update');
+Route::get('/driver/requests', [DriverRequestController::class, 'index'])->name('api.driver.requests.index');
+Route::post('/driver/requests/{booking}/accept', [DriverRequestController::class, 'accept'])->name('api.driver.requests.accept');
+Route::post('/driver/requests/{booking}/reject', [DriverRequestController::class, 'reject'])->name('api.driver.requests.reject');
+Route::post('/driver/requests/{booking}/counter-offer', [DriverRequestController::class, 'counterOffer'])->name('api.driver.requests.counter-offer');
 Route::get('/onboarding/reference-data', [OnboardingController::class, 'referenceData'])->name('api.onboarding.reference-data');
 Route::get('/onboarding/workspace', [OnboardingController::class, 'workspace'])->name('api.onboarding.workspace');
 Route::patch('/onboarding/driver', [OnboardingController::class, 'saveDriverDraft'])->name('api.onboarding.driver');

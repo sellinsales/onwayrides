@@ -72,19 +72,29 @@ class TripsScreen extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         backgroundColor: Colors.white10,
-                        backgroundImage: AssetImage(
-                          activeTrip!.driver.avatarAsset,
-                        ),
+                        backgroundImage: activeTrip!.driver != null
+                            ? AssetImage(activeTrip!.driver!.avatarAsset)
+                            : null,
+                        child: activeTrip!.driver == null
+                            ? const Icon(
+                                Icons.support_agent_rounded,
+                                color: OnWayTheme.yellow,
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(activeTrip!.driver.name),
+                            Text(
+                              activeTrip!.driver?.name ??
+                                  'Dispatch is matching your booking',
+                            ),
                             const SizedBox(height: 4),
                             Text(
-                              activeTrip!.driver.vehicle,
+                              activeTrip!.driver?.vehicle ??
+                                  'Driver details will appear here once assigned.',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],

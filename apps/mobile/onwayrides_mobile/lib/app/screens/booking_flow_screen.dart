@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../auth/onway_auth_service.dart';
 import '../onway_mock_data.dart';
 import '../onway_models.dart';
 import '../onway_theme.dart';
@@ -8,12 +9,16 @@ import '../onway_widgets.dart';
 class BookingFlowScreen extends StatefulWidget {
   const BookingFlowScreen({
     super.key,
+    required this.authService,
     required this.services,
     this.initialService,
+    this.previewMode = false,
   });
 
+  final OnWayAuthService authService;
   final List<OnWayService> services;
   final OnWayService? initialService;
+  final bool previewMode;
 
   @override
   State<BookingFlowScreen> createState() => _BookingFlowScreenState();
@@ -27,8 +32,10 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
   late FareOption _selectedFare;
   bool _isNegotiated = false;
   bool _isPrebooked = false;
+  bool _submitting = false;
   String _paymentMethod = 'Cash';
   String _scheduleLabel = 'Today, ASAP';
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -55,25 +62,78 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     _isNegotiated = _selectedService.negotiable && _selectedFare.negotiable;
   }
 
-  void _confirmBooking() {
-    // TODO: replace this mock booking confirmation with the real create-booking API.
-    final trip = OnWayMockData.tripForService(_selectedService);
-    Navigator.of(context).pop(
-      ActiveTrip(
-        serviceTitle: _selectedFare.title,
-        pickup: _pickupController.text,
-        destination: _destinationController.text,
-        statusLine: _isPrebooked
-            ? 'Booking scheduled for $_scheduleLabel'
-            : trip.statusLine,
-        routeLine: trip.routeLine,
-        paymentLabel: '$_paymentMethod payment',
-        fareLabel: _isNegotiated
-            ? 'PKR ${_offerController.text}'
-            : _selectedFare.priceLabel,
-        driver: trip.driver,
-      ),
-    );
+  Future<void> _confirmBooking() async {
+    if (_pickupController.text.trim().isEmpty ||
+        _destinationController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Enter both pickup and destination.');
+      return;
+    }
+
+    if (_isNegotiated && _offerController.text.trim().isEmpty) {
+      setState(() => _errorMessage = 'Enter your offered fare.');
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      if (widget.previewMode) {
+        final trip = OnWayMockData.tripForService(_selectedService);
+        if (!mounted) {
+          return;
+        }
+
+        Navigator.of(context).pop(
+          ActiveTrip(
+            serviceTitle: _selectedFare.title,
+            pickup: _pickupController.text,
+            destination: _destinationController.text,
+            statusLine: _isPrebooked
+                ? 'Booking scheduled for $_scheduleLabel'
+                : trip.statusLine,
+            routeLine: trip.routeLine,
+            paymentLabel: '$_paymentMethod payment',
+            fareLabel: _isNegotiated
+                ? 'PKR ${_offerController.text}'
+                : _selectedFare.priceLabel,
+            driver: trip.driver,
+          ),
+        );
+        return;
+      }
+
+      final scheduledFor = _isPrebooked
+          ? DateTime.now().add(const Duration(days: 1, hours: 7, minutes: 30))
+          : null;
+
+      final trip = await widget.authService.createBooking(
+        service: _selectedService,
+        pickupAddress: _pickupController.text,
+        destinationAddress: _destinationController.text,
+        fare: _selectedFare,
+        paymentMethod: _paymentMethod,
+        negotiated: _isNegotiated,
+        offeredFare: _offerController.text,
+        scheduledFor: scheduledFor,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pop(trip);
+    } on OnWayAuthException catch (error) {
+      if (mounted) {
+        setState(() => _errorMessage = error.message);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
+    }
   }
 
   @override
@@ -297,6 +357,15 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
               prefixIcon: Icon(Icons.price_change_outlined),
             ),
           ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.red.shade300),
+            ),
+          ],
           const SizedBox(height: 20),
           const SectionHeading(
             title: 'Payment method',
@@ -320,9 +389,11 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(20, 8, 20, 20),
         child: FilledButton(
-          onPressed: _confirmBooking,
+          onPressed: _submitting ? null : _confirmBooking,
           child: Text(
-            _isNegotiated
+            _submitting
+                ? 'Creating booking...'
+                : _isNegotiated
                 ? 'Confirm offer for PKR ${_offerController.text}'
                 : 'Confirm ${_selectedFare.priceLabel}',
           ),

@@ -41,6 +41,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
   bool _sendingCode = false;
   bool _verifyingCode = false;
   bool _phoneVerified = false;
+  int _currentStep = 0;
   String? _verifiedPhoneNumber;
   OnWayPhoneVerificationChallenge? _verificationChallenge;
   String? _errorMessage;
@@ -242,6 +243,55 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
     }
   }
 
+  void _nextStep() {
+    final validationMessage = _validateCurrentStep();
+    if (validationMessage != null) {
+      setState(() => _errorMessage = validationMessage);
+      return;
+    }
+
+    setState(() {
+      _errorMessage = null;
+      if (_currentStep < 2) {
+        _currentStep += 1;
+      }
+    });
+  }
+
+  void _previousStep() {
+    setState(() {
+      _errorMessage = null;
+      if (_currentStep > 0) {
+        _currentStep -= 1;
+      }
+    });
+  }
+
+  String? _validateCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        if (_fullNameController.text.trim().length < 3) {
+          return 'Enter your full name to continue.';
+        }
+        return null;
+      case 1:
+        if (!_phoneFieldsLookValid()) {
+          return 'Enter a valid country code and phone number.';
+        }
+        if (widget.session.phoneVerificationRequired && !_phoneVerified) {
+          return 'Verify your phone number before continuing.';
+        }
+        return null;
+      case 2:
+        if (!_acceptPrivacyPolicy || !_acceptTerms) {
+          return 'Accept the Privacy Policy and Terms of Service to continue.';
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -254,14 +304,16 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
               children: [
                 BrandHeader(
                   caption: widget.session.needsPhoneNumber
-                      ? 'Complete rider beta onboarding before entering the app'
+                      ? 'Complete your OnWay setup before entering the app'
                       : 'Confirm your phone and consent settings',
                   trailing: TextButton(
                     onPressed: _submitting ? null : () => widget.onSignOut(),
                     child: const Text('Sign out'),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+                _StepStrip(currentStep: _currentStep),
+                const SizedBox(height: 20),
                 OnWayPanel(
                   child: Form(
                     key: _formKey,
@@ -269,213 +321,16 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Complete your rider profile',
+                          _stepTitle(),
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          widget.session.phoneVerificationRequired
-                              ? 'Google and email/password are the preferred beta login methods. Before you can request rides, OnWay Rides currently requires a verified phone number for operational contact, service updates, and any optional future marketing you explicitly allow.'
-                              : 'Google and email/password are the preferred beta login methods. During this beta, add a working phone number for operational contact and future messaging. OTP verification is available, but not required until the full version rollout.',
+                          _stepSubtitle(),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 18),
-                        TextFormField(
-                          controller: _fullNameController,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(
-                            labelText: 'Full name',
-                            hintText: 'Enter your full name',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().length < 3) {
-                              return 'Enter your full name.';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 110,
-                              child: TextFormField(
-                                controller: _countryCodeController,
-                                keyboardType: TextInputType.phone,
-                                decoration: const InputDecoration(
-                                  labelText: 'Code',
-                                  hintText: '+92',
-                                ),
-                                validator: (value) {
-                                  final normalized = value?.trim() ?? '';
-                                  if (!RegExp(
-                                    r'^\+?[0-9]{1,4}$',
-                                  ).hasMatch(normalized)) {
-                                    return 'Use +92';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _phoneController,
-                                keyboardType: TextInputType.phone,
-                                decoration: const InputDecoration(
-                                  labelText: 'Phone number',
-                                  hintText: '3001234567',
-                                ),
-                                validator: (value) {
-                                  final digits =
-                                      value?.replaceAll(RegExp(r'\D+'), '') ??
-                                      '';
-                                  if (digits.length < 7 || digits.length > 15) {
-                                    return 'Enter a real phone number.';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          _phoneVerified
-                              ? 'This phone number has been verified with Firebase and can now be saved to your OnWay Rides profile.'
-                              : widget.session.phoneVerificationRequired
-                              ? 'Send a verification code and confirm the OTP before you can continue.'
-                              : 'Phone verification is optional during beta. You can continue without OTP for now and verify later for the full version.',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: 14),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            if (_phoneVerified)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0x29FFC107),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  'Phone verified',
-                                  style: TextStyle(
-                                    color: OnWayTheme.yellow,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              )
-                            else
-                              OutlinedButton.icon(
-                                onPressed:
-                                    (_sendingCode ||
-                                        _verifyingCode ||
-                                        _submitting)
-                                    ? null
-                                    : _sendCode,
-                                icon: Icon(
-                                  _verificationChallenge == null
-                                      ? Icons.sms_outlined
-                                      : Icons.refresh_rounded,
-                                ),
-                                label: Text(
-                                  _sendingCode
-                                      ? 'Sending...'
-                                      : _verificationChallenge == null
-                                      ? 'Send code'
-                                      : 'Resend code',
-                                ),
-                              ),
-                            if (!_phoneVerified &&
-                                _verificationChallenge != null)
-                              SizedBox(
-                                width: 180,
-                                child: TextFormField(
-                                  controller: _smsCodeController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'OTP code',
-                                    hintText: '6-digit code',
-                                  ),
-                                ),
-                              ),
-                            if (!_phoneVerified &&
-                                _verificationChallenge != null)
-                              FilledButton.tonalIcon(
-                                onPressed:
-                                    (_verifyingCode ||
-                                        _sendingCode ||
-                                        _submitting)
-                                    ? null
-                                    : _verifyCode,
-                                icon: const Icon(Icons.verified_rounded),
-                                label: Text(
-                                  _verifyingCode
-                                      ? 'Verifying...'
-                                      : 'Verify code',
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        _ConsentTile(
-                          value: _acceptPrivacyPolicy,
-                          title: 'I accept the Privacy Policy',
-                          subtitle:
-                              'Required. Covers Firebase auth, ride/location usage, support, and data handling.',
-                          onChanged: (value) {
-                            setState(
-                              () => _acceptPrivacyPolicy = value ?? false,
-                            );
-                          },
-                          onOpenLink: () => _openExternalLink(
-                            context,
-                            OnWayLinks.privacyPolicy,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _ConsentTile(
-                          value: _acceptTerms,
-                          title: 'I accept the Terms of Service',
-                          subtitle:
-                              'Required. Includes beta ride limits, account rules, and driver approval conditions.',
-                          onChanged: (value) {
-                            setState(() => _acceptTerms = value ?? false);
-                          },
-                          onOpenLink: () => _openExternalLink(
-                            context,
-                            OnWayLinks.termsOfService,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        _ConsentTile(
-                          value: _smsMarketingOptIn,
-                          title: 'Allow promotional SMS updates',
-                          subtitle:
-                              'Optional. Service messages can still be sent when necessary for active trips or support.',
-                          onChanged: (value) {
-                            setState(() => _smsMarketingOptIn = value ?? false);
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _ConsentTile(
-                          value: _whatsappMarketingOptIn,
-                          title: 'Allow WhatsApp marketing updates',
-                          subtitle:
-                              'Optional. Useful for launch offers, city announcements, and beta campaigns if you want them.',
-                          onChanged: (value) {
-                            setState(
-                              () => _whatsappMarketingOptIn = value ?? false,
-                            );
-                          },
-                        ),
+                        _buildCurrentStep(context),
                         if (_errorMessage != null) ...[
                           const SizedBox(height: 16),
                           Text(
@@ -485,18 +340,44 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                           ),
                         ],
                         const SizedBox(height: 20),
-                        FilledButton.icon(
-                          onPressed: _submitting ? null : _submit,
-                          icon: const Icon(Icons.verified_user_outlined),
-                          label: Text(
-                            _submitting ? 'Saving...' : 'Save and continue',
-                          ),
+                        Row(
+                          children: [
+                            if (_currentStep > 0)
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _submitting ? null : _previousStep,
+                                  child: const Text('Back'),
+                                ),
+                              ),
+                            if (_currentStep > 0) const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: _submitting
+                                    ? null
+                                    : _currentStep == 2
+                                    ? _submit
+                                    : _nextStep,
+                                icon: Icon(
+                                  _currentStep == 2
+                                      ? Icons.verified_user_outlined
+                                      : Icons.arrow_forward_rounded,
+                                ),
+                                label: Text(
+                                  _submitting
+                                      ? 'Saving...'
+                                      : _currentStep == 2
+                                      ? 'Save and continue'
+                                      : 'Continue',
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 const OnWayPanel(
                   backgroundColor: OnWayTheme.slate,
                   child: Column(
@@ -515,7 +396,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Full operational access for drivers and broader rollout features stays gated behind document approval and later verification steps.',
+                        'Driver operations and broader rollout features stay gated behind document approval and later verification steps.',
                       ),
                     ],
                   ),
@@ -544,6 +425,303 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
     return widget.authService.normalizePhoneNumber(
       countryCode: _countryCodeController.text,
       phone: _phoneController.text,
+    );
+  }
+
+  String _stepTitle() {
+    switch (_currentStep) {
+      case 0:
+        return 'Set up your account';
+      case 1:
+        return 'Add your working phone';
+      case 2:
+        return 'Confirm policies and preferences';
+      default:
+        return 'Complete your rider profile';
+    }
+  }
+
+  String _stepSubtitle() {
+    switch (_currentStep) {
+      case 0:
+        return 'Keep onboarding short and production-ready. Start with your visible account identity.';
+      case 1:
+        return widget.session.phoneVerificationRequired
+            ? 'Add the number you will actually use for ride coordination and verify it before entering the app.'
+            : 'Add the number you will actually use for ride coordination. OTP is available now and can be enforced later.';
+      case 2:
+        return 'Accept the required platform policies and choose whether you want optional updates later.';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildCurrentStep(BuildContext context) {
+    switch (_currentStep) {
+      case 0:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: _fullNameController,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Full name',
+                hintText: 'Enter your full name',
+              ),
+              validator: (value) {
+                if (value == null || value.trim().length < 3) {
+                  return 'Enter your full name.';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            OnWayPanel(
+              backgroundColor: OnWayTheme.slate,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'What happens next',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'You will add a working phone number, confirm the required policies, then enter the app with rider access. Driver and fleet tools stay in the same app for later use.',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      case 1:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: TextFormField(
+                    controller: _countryCodeController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Code',
+                      hintText: '+92',
+                    ),
+                    validator: (value) {
+                      final normalized = value?.trim() ?? '';
+                      if (!RegExp(r'^\+?[0-9]{1,4}$').hasMatch(normalized)) {
+                        return 'Use +92';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone number',
+                      hintText: '3001234567',
+                    ),
+                    validator: (value) {
+                      final digits =
+                          value?.replaceAll(RegExp(r'\D+'), '') ?? '';
+                      if (digits.length < 7 || digits.length > 15) {
+                        return 'Enter a real phone number.';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _phoneVerified
+                  ? 'This phone number has been verified with Firebase and can now be saved to your OnWay profile.'
+                  : widget.session.phoneVerificationRequired
+                  ? 'Send a verification code and confirm the OTP before you can continue.'
+                  : 'Phone verification is optional during beta. Continue without OTP for now and verify later for the full version.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (_phoneVerified)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0x29FFC107),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Phone verified',
+                      style: TextStyle(
+                        color: OnWayTheme.yellow,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: (_sendingCode || _verifyingCode || _submitting)
+                        ? null
+                        : _sendCode,
+                    icon: Icon(
+                      _verificationChallenge == null
+                          ? Icons.sms_outlined
+                          : Icons.refresh_rounded,
+                    ),
+                    label: Text(
+                      _sendingCode
+                          ? 'Sending...'
+                          : _verificationChallenge == null
+                          ? 'Send code'
+                          : 'Resend code',
+                    ),
+                  ),
+                if (!_phoneVerified && _verificationChallenge != null)
+                  SizedBox(
+                    width: 180,
+                    child: TextFormField(
+                      controller: _smsCodeController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'OTP code',
+                        hintText: '6-digit code',
+                      ),
+                    ),
+                  ),
+                if (!_phoneVerified && _verificationChallenge != null)
+                  FilledButton.tonalIcon(
+                    onPressed: (_verifyingCode || _sendingCode || _submitting)
+                        ? null
+                        : _verifyCode,
+                    icon: const Icon(Icons.verified_rounded),
+                    label: Text(
+                      _verifyingCode ? 'Verifying...' : 'Verify code',
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      case 2:
+        return Column(
+          children: [
+            _ConsentTile(
+              value: _acceptPrivacyPolicy,
+              title: 'I accept the Privacy Policy',
+              subtitle:
+                  'Required. Covers Firebase auth, ride usage, support, and data handling.',
+              onChanged: (value) {
+                setState(() => _acceptPrivacyPolicy = value ?? false);
+              },
+              onOpenLink: () =>
+                  _openExternalLink(context, OnWayLinks.privacyPolicy),
+            ),
+            const SizedBox(height: 10),
+            _ConsentTile(
+              value: _acceptTerms,
+              title: 'I accept the Terms of Service',
+              subtitle:
+                  'Required. Includes beta ride limits, account rules, and driver approval conditions.',
+              onChanged: (value) {
+                setState(() => _acceptTerms = value ?? false);
+              },
+              onOpenLink: () =>
+                  _openExternalLink(context, OnWayLinks.termsOfService),
+            ),
+            const SizedBox(height: 10),
+            _ConsentTile(
+              value: _smsMarketingOptIn,
+              title: 'Allow promotional SMS updates',
+              subtitle:
+                  'Optional. Service updates can still be sent when needed for active trips or support.',
+              onChanged: (value) {
+                setState(() => _smsMarketingOptIn = value ?? false);
+              },
+            ),
+            const SizedBox(height: 10),
+            _ConsentTile(
+              value: _whatsappMarketingOptIn,
+              title: 'Allow WhatsApp marketing updates',
+              subtitle:
+                  'Optional. Useful for launch offers, city announcements and beta campaigns.',
+              onChanged: (value) {
+                setState(() => _whatsappMarketingOptIn = value ?? false);
+              },
+            ),
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+}
+
+class _StepStrip extends StatelessWidget {
+  const _StepStrip({required this.currentStep});
+
+  final int currentStep;
+
+  @override
+  Widget build(BuildContext context) {
+    const steps = ['Account', 'Phone', 'Consent'];
+
+    return Row(
+      children: List.generate(steps.length, (index) {
+        final active = currentStep == index;
+        final complete = currentStep > index;
+
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: index == steps.length - 1 ? 0 : 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: active
+                    ? const Color(0x29FFC107)
+                    : complete
+                    ? Colors.white10
+                    : OnWayTheme.charcoal,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: active ? OnWayTheme.yellow : Colors.white10,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${index + 1}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: active ? OnWayTheme.yellow : Colors.white54,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    steps[index],
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

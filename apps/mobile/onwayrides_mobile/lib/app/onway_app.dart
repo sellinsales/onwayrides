@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'auth/onway_auth_service.dart';
@@ -42,11 +44,13 @@ class OnWayApp extends StatelessWidget {
 class OnWayShell extends StatefulWidget {
   const OnWayShell({
     super.key,
+    this.authService,
     this.session,
     this.onSignOut,
     this.previewMode = false,
-  });
+  }) : assert(previewMode || authService != null);
 
+  final OnWayAuthService? authService;
   final OnWayAuthSession? session;
   final Future<void> Function()? onSignOut;
   final bool previewMode;
@@ -56,21 +60,102 @@ class OnWayShell extends StatefulWidget {
 }
 
 class _OnWayShellState extends State<OnWayShell> {
+  static const _tripRefreshInterval = Duration(seconds: 10);
+
   int _currentIndex = 0;
-  ActiveTrip? _activeTrip = OnWayMockData.activeTrip;
+  ActiveTrip? _activeTrip;
+  List<TripHistoryItem> _tripHistory = const [];
+  Timer? _tripRefreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.previewMode) {
+      _activeTrip = OnWayMockData.activeTrip;
+      _tripHistory = OnWayMockData.tripHistory;
+    } else {
+      _startTripRefresh();
+      unawaited(_refreshTrips());
+    }
+  }
+
+  @override
+  void dispose() {
+    _tripRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant OnWayShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.previewMode && !oldWidget.previewMode) {
+      _tripRefreshTimer?.cancel();
+      setState(() {
+        _activeTrip = OnWayMockData.activeTrip;
+        _tripHistory = OnWayMockData.tripHistory;
+      });
+      return;
+    }
+
+    if (!widget.previewMode &&
+        (oldWidget.previewMode ||
+            oldWidget.session?.userId != widget.session?.userId)) {
+      _startTripRefresh();
+      unawaited(_refreshTrips());
+    }
+  }
+
+  void _startTripRefresh() {
+    _tripRefreshTimer?.cancel();
+    _tripRefreshTimer = Timer.periodic(_tripRefreshInterval, (_) {
+      if (!mounted || widget.previewMode) {
+        return;
+      }
+      unawaited(_refreshTrips());
+    });
+  }
+
+  Future<void> _refreshTrips() async {
+    try {
+      final feed = await widget.authService!.fetchTrips();
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _activeTrip = feed.activeTrip;
+        _tripHistory = feed.history;
+      });
+    } on OnWayAuthException {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _activeTrip = null;
+        _tripHistory = const [];
+      });
+    }
+  }
 
   Future<void> _openBooking([OnWayService? service]) async {
     final trip = await Navigator.of(context).push<ActiveTrip>(
       MaterialPageRoute(
         builder: (_) => BookingFlowScreen(
+          authService: widget.authService!,
           services: OnWayMockData.services,
           initialService: service,
+          previewMode: widget.previewMode,
         ),
       ),
     );
 
     if (trip != null && mounted) {
       setState(() => _activeTrip = trip);
+      if (!widget.previewMode) {
+        unawaited(_refreshTrips());
+      }
       _openTracking(trip);
     }
   }
@@ -79,7 +164,12 @@ class _OnWayShellState extends State<OnWayShell> {
     final currentTrip = trip ?? _activeTrip;
     if (currentTrip == null) return;
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TrackingScreen(trip: currentTrip)),
+      MaterialPageRoute(
+        builder: (_) => TrackingScreen(
+          trip: currentTrip,
+          authService: widget.previewMode ? null : widget.authService,
+        ),
+      ),
     );
   }
 
@@ -100,10 +190,13 @@ class _OnWayShellState extends State<OnWayShell> {
       ),
       TripsScreen(
         activeTrip: _activeTrip,
-        history: OnWayMockData.tripHistory,
+        history: _tripHistory,
         onOpenTracking: _openTracking,
       ),
       DriverModeScreen(
+        authService: widget.authService,
+        session: widget.session,
+        previewMode: widget.previewMode,
         stats: OnWayMockData.driverStats,
         requests: OnWayMockData.driverRequests,
         services: OnWayMockData.services,

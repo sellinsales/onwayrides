@@ -33,8 +33,8 @@ class ProfileScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
         children: [
-          const BrandHeader(caption: 'Account, support and fleet access'),
-          const SizedBox(height: 24),
+          const BrandHeader(caption: 'Account, support and business access'),
+          const SizedBox(height: 20),
           OnWayPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,32 +124,51 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const SectionHeading(
-            title: 'Account shortcuts',
-            subtitle: 'Keep the account area simple and extendable.',
+            title: 'Quick shortcuts',
+            subtitle: 'Keep the account area clean, fast and production-ready.',
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _ShortcutCard(
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'Wallet',
+                subtitle: 'Cash now, cards later',
+                onTap: () {},
+              ),
+              _ShortcutCard(
+                icon: Icons.place_outlined,
+                title: 'Saved places',
+                subtitle: 'Home, office, airport',
+                onTap: () {},
+              ),
+              _ShortcutCard(
+                icon: Icons.support_agent_rounded,
+                title: 'Support',
+                subtitle: 'Help and complaints',
+                onTap: () => _openExternalLink(
+                  context,
+                  OnWayLinks.supportCenter,
+                  fallback: OnWayLinks.supportEmail,
+                ),
+              ),
+              _ShortcutCard(
+                icon: Icons.groups_rounded,
+                title: 'Fleet center',
+                subtitle: 'Drivers and vehicles',
+                onTap: onOpenFleetOwner,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const SectionHeading(
+            title: 'Trust and policies',
+            subtitle:
+                'Everything needed for support, compliance and store review.',
           ),
           const SizedBox(height: 12),
-          _ActionTile(
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'Wallet',
-            subtitle: 'Cash now, wallet and card rails later',
-            onTap: () {},
-          ),
-          _ActionTile(
-            icon: Icons.place_outlined,
-            title: 'Saved places',
-            subtitle: 'Home, office, school and airport shortcuts',
-            onTap: () {},
-          ),
-          _ActionTile(
-            icon: Icons.support_agent_rounded,
-            title: 'Support',
-            subtitle: 'Complaints, lost items, beta help and support center',
-            onTap: () => _openExternalLink(
-              context,
-              OnWayLinks.supportCenter,
-              fallback: OnWayLinks.supportEmail,
-            ),
-          ),
           _ActionTile(
             icon: Icons.policy_outlined,
             title: 'Privacy policy',
@@ -174,12 +193,6 @@ class ProfileScreen extends StatelessWidget {
               fallback: OnWayLinks.deleteAccountEmail,
             ),
           ),
-          _ActionTile(
-            icon: Icons.groups_rounded,
-            title: 'Fleet Owner center',
-            subtitle: 'Open fleet dashboard, drivers and vehicles',
-            onTap: onOpenFleetOwner,
-          ),
           if (onSignOut != null) ...[
             const SizedBox(height: 12),
             FilledButton.tonalIcon(
@@ -199,6 +212,57 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ShortcutCard extends StatelessWidget {
+  const _ShortcutCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: MediaQuery.sizeOf(context).width > 560 ? 180 : 158,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: OnWayTheme.charcoal,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: OnWayTheme.yellow),
+              ),
+              const SizedBox(height: 14),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
       ),
     );
   }

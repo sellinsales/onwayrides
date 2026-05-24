@@ -52,6 +52,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   Widget build(BuildContext context) {
     if (_previewMode) {
       return OnWayShell(
+        authService: widget.authService,
         previewMode: true,
         onSignOut: () async {
           if (mounted) {
@@ -125,7 +126,11 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
               );
             }
 
-            return OnWayShell(session: session, onSignOut: _signOut);
+            return OnWayShell(
+              authService: widget.authService,
+              session: session,
+              onSignOut: _signOut,
+            );
           },
         );
       },
@@ -147,13 +152,16 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _introController = PageController(viewportFraction: 0.92);
 
   bool _registerMode = false;
   bool _loading = false;
+  int _introIndex = 0;
   String? _errorMessage;
 
   @override
   void dispose() {
+    _introController.dispose();
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -224,9 +232,17 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
               children: [
                 const BrandHeader(
-                  caption: 'Firebase auth for rider beta access',
+                  caption: 'Rides, rentals and deliveries from one app',
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 22),
+                _IntroCarousel(
+                  controller: _introController,
+                  currentIndex: _introIndex,
+                  onPageChanged: (value) {
+                    setState(() => _introIndex = value);
+                  },
+                ),
+                const SizedBox(height: 20),
                 OnWayPanel(
                   child: Form(
                     key: _formKey,
@@ -235,15 +251,15 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                       children: [
                         Text(
                           _registerMode
-                              ? 'Create rider beta account'
+                              ? 'Create your OnWay account'
                               : 'Sign in to OnWay Rides',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _registerMode
-                              ? 'Create a Firebase account, then the backend will sync your rider profile automatically.'
-                              : 'Use your Firebase email and password. The app will sync your user record with Laravel after sign-in.',
+                              ? 'Set up one account for rider bookings now, with driver and fleet access available from the same app later.'
+                              : 'Sign in once and keep your rider profile, driver onboarding and support access in one place.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 20),
@@ -367,14 +383,14 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Phone-based login stays limited during beta. Sign in with Google or email first, then add your real phone number before entering the app.',
+                          'Phone-based sign-in stays limited during beta. Use Google or email first, then add your working phone number inside the onboarding steps.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 const OnWayPanel(
                   backgroundColor: OnWayTheme.slate,
                   child: Column(
@@ -389,11 +405,11 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'Free beta users can currently test the rider app with a maximum of 3 rides per day.',
+                        'Free beta riders can currently test with a maximum of 3 rides per day.',
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Drivers and operational users require document approval before broader access is enabled.',
+                        'Drivers and operational users unlock broader access after document approval.',
                       ),
                     ],
                   ),
@@ -478,6 +494,109 @@ class _FirebaseSetupScreen extends StatelessWidget {
   }
 }
 
+class _IntroCarousel extends StatelessWidget {
+  const _IntroCarousel({
+    required this.controller,
+    required this.currentIndex,
+    required this.onPageChanged,
+  });
+
+  final PageController controller;
+  final int currentIndex;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const slides = [
+      (
+        title: 'Book local rides fast',
+        body:
+            'Everyday rides, airport transfers and city-to-city travel across Pakistan and Azad Kashmir.',
+        icon: Icons.local_taxi_rounded,
+      ),
+      (
+        title: 'Rentals and courier in one flow',
+        body:
+            'Keep recurring trips, rentals and courier demand inside the same clean customer account.',
+        icon: Icons.inventory_2_rounded,
+      ),
+      (
+        title: 'Apply as driver later',
+        body:
+            'Use the same app account for rider bookings today and driver onboarding when you are ready.',
+        icon: Icons.badge_rounded,
+      ),
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 172,
+          child: PageView.builder(
+            controller: controller,
+            itemCount: slides.length,
+            onPageChanged: onPageChanged,
+            itemBuilder: (context, index) {
+              final slide = slides[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index == slides.length - 1 ? 0 : 12,
+                ),
+                child: OnWayPanel(
+                  backgroundColor: OnWayTheme.slate,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0x29FFC107),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(slide.icon, color: OnWayTheme.yellow),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        slide.title,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        slide.body,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            slides.length,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: currentIndex == index ? 22 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: currentIndex == index
+                    ? OnWayTheme.yellow
+                    : Colors.white24,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _AuthLoadingScreen extends StatelessWidget {
   const _AuthLoadingScreen({required this.message});
 
@@ -491,6 +610,12 @@ class _AuthLoadingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Image.asset(
+                'assets/brand/onwayrides_logo.png',
+                height: 28,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 18),
               const CircularProgressIndicator(color: OnWayTheme.yellow),
               const SizedBox(height: 16),
               Text(message),
