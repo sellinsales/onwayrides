@@ -172,13 +172,13 @@ button {
 }
 
 .hero {
-  padding: 42px 0 30px;
+  padding: 24px 0 18px;
 }
 
 .hero-panel {
   position: relative;
   overflow: hidden;
-  border-radius: 38px;
+  border-radius: 34px;
   border: 1px solid var(--line);
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.94) 0%, rgba(4, 4, 4, 0.82) 36%, rgba(8, 8, 8, 0.34) 100%),
@@ -204,11 +204,11 @@ button {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 18px;
-  min-height: 640px;
+  min-height: 500px;
 }
 
 .hero-copy {
-  padding: 74px 64px 64px;
+  padding: 50px 50px 42px;
 }
 
 .eyebrow {
@@ -244,7 +244,8 @@ button {
 }
 
 .hero-title {
-  font-size: clamp(3rem, 7vw, 5.4rem);
+  font-size: clamp(2.6rem, 5vw, 4.35rem);
+  max-width: 12ch;
 }
 
 .page-hero h1 {
@@ -257,28 +258,32 @@ button {
 }
 
 .hero-text {
-  max-width: 36rem;
+  max-width: 34rem;
   color: var(--muted);
-  font-size: 1.16rem;
-  line-height: 1.72;
+  font-size: 1.02rem;
+  line-height: 1.64;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 34px;
+  margin-top: 24px;
 }
 
 .hero-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  margin-top: 34px;
+  margin-top: 22px;
+}
+
+.hero-meta-compact .hero-stat strong {
+  font-size: 1.12rem;
 }
 
 .hero-stat {
-  padding: 18px;
+  padding: 16px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
@@ -288,17 +293,17 @@ button {
   display: block;
   margin-bottom: 6px;
   font-family: "Sora", "Segoe UI", sans-serif;
-  font-size: 1.7rem;
+  font-size: 1.28rem;
 }
 
 .hero-stat span {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .hero-visual {
   position: relative;
-  padding: 52px 36px 42px 0;
+  padding: 38px 24px 26px 0;
   display: flex;
   align-items: center;
   justify-content: end;
@@ -307,9 +312,9 @@ button {
 .hero-device-frame {
   position: relative;
   z-index: 1;
-  width: min(100%, 560px);
+  width: min(100%, 490px);
   margin-left: auto;
-  border-radius: 32px;
+  border-radius: 28px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 34px 80px rgba(0, 0, 0, 0.48);
@@ -322,15 +327,15 @@ button {
 
 .hero-floating-card {
   position: absolute;
-  left: -32px;
-  bottom: 44px;
+  left: -18px;
+  bottom: 28px;
   z-index: 2;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 14px;
   align-items: center;
-  width: min(320px, calc(100% - 48px));
-  padding: 18px;
+  width: min(300px, calc(100% - 48px));
+  padding: 16px;
   border-radius: 24px;
   background: rgba(7, 7, 8, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -356,23 +361,23 @@ button {
 
 .hero-service-rail {
   position: absolute;
-  right: 28px;
-  top: 28px;
+  right: 18px;
+  top: 18px;
   z-index: 2;
   display: flex;
   flex-wrap: wrap;
   justify-content: end;
-  gap: 10px;
-  max-width: 320px;
+  gap: 8px;
+  max-width: 280px;
 }
 
 .hero-service-rail span {
-  padding: 9px 12px;
+  padding: 8px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(6, 6, 7, 0.72);
   color: var(--gold-soft);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
   backdrop-filter: blur(12px);
 }
@@ -1111,6 +1116,14 @@ button {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.coverage-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.jobs-grid {
+  margin-top: 8px;
+}
+
 .launch-card {
   padding: 28px;
   border: 1px solid var(--line);
@@ -1244,6 +1257,12 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
+}
+
+.field-group select option,
+.field-group select optgroup {
+  color: var(--ink);
+  background: #ffffff;
 }
 
 .auth-panel.light .field-group input,
@@ -1512,6 +1531,7 @@ button {
 
   .signal-grid,
   .launch-grid,
+  .coverage-grid,
   .benefits-bar,
   .icon-card-grid,
   .legal-grid,
@@ -1635,6 +1655,7 @@ button {
   .services-grid,
   .signal-grid,
   .launch-grid,
+  .coverage-grid,
   .benefits-bar,
   .icon-card-grid,
   .legal-grid,

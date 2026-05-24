@@ -183,7 +183,9 @@ function clearSelect(select, placeholder, options, selectedValue = "") {
 
   const first = document.createElement("option");
   first.value = "";
-  first.textContent = placeholder;
+  first.textContent = options.length ? placeholder : "No options loaded yet";
+  first.disabled = !options.length;
+  first.selected = !options.length || selectedValue === "";
   select.appendChild(first);
 
   options.forEach((option) => {
@@ -219,6 +221,13 @@ function renderRideServiceOptions() {
 
 function renderDriverServiceCheckboxes(selectedIds = []) {
   const selected = new Set((selectedIds ?? []).map((id) => String(id)));
+
+  if (!(referenceData?.service_types ?? []).length) {
+    driverServiceTypes.innerHTML = `
+      <div class="helper-text">No service types are loaded yet. Import the OnWay Rides seed data first.</div>
+    `;
+    return;
+  }
 
   driverServiceTypes.innerHTML = (referenceData?.service_types ?? [])
     .map(
@@ -413,6 +422,14 @@ function populateReferenceDrivenFields(session, workspace) {
   renderDriverDocuments(workspace);
 }
 
+function referencesAreSeeded() {
+  return Boolean(
+    (referenceData?.cities ?? []).length &&
+    (referenceData?.service_types ?? []).length &&
+    (referenceData?.vehicle_categories ?? []).length,
+  );
+}
+
 function buildSupportMessage(title, fields) {
   const message = buildMessageBlock(title, fields);
   const encoded = encodeURIComponent(message);
@@ -580,6 +597,11 @@ onAuthStateChanged(auth, async (user) => {
     referenceData = references;
     renderWorkspace(session, workspace);
     populateReferenceDrivenFields(session, workspace);
+
+    if (!referencesAreSeeded()) {
+      workspaceStatusBanner.querySelector("p").textContent =
+        "Reference dropdown data is missing. Import the OnWay Rides SQL seed so cities, service types, and vehicle lists load correctly.";
+    }
   } catch {
     window.location.href = "login.html";
   }
