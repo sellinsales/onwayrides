@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Contracts\Auth\FirebaseTokenVerifier;
-use App\Data\FirebaseIdentity;
-use App\Exceptions\FirebaseAuthenticationException;
-use App\Exceptions\FirebaseConfigurationException;
+use App\Http\Controllers\Api\Concerns\ResolvesAdminRequestUser;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\FirebaseUserSyncService;
@@ -16,6 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminMarketingController extends Controller
 {
+    use ResolvesAdminRequestUser;
+
     public function index(
         Request $request,
         FirebaseTokenVerifier $tokenVerifier,
@@ -128,53 +128,6 @@ class AdminMarketingController extends Controller
         }, $fileName, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
-    }
-
-    private function resolveAdminUser(
-        Request $request,
-        FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
-    ): User|JsonResponse {
-        try {
-            $identity = $tokenVerifier->verify($this->extractIdToken($request));
-            $user = $userSyncService->syncFromIdentity($identity, [
-                'platform' => 'web-admin',
-            ], false);
-        } catch (FirebaseConfigurationException $exception) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $exception->getMessage(),
-            ], 503);
-        } catch (FirebaseAuthenticationException $exception) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $exception->getMessage(),
-            ], 401);
-        }
-
-        if (! in_array($user->role, ['admin', 'support'], true)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Only admin or support accounts can access the marketing audience.',
-            ], 403);
-        }
-
-        return $user;
-    }
-
-    private function extractIdToken(Request $request): string
-    {
-        $bearerToken = $request->bearerToken();
-        if (is_string($bearerToken) && trim($bearerToken) !== '') {
-            return trim($bearerToken);
-        }
-
-        $requestToken = $request->string('id_token')->trim()->value();
-        if ($requestToken !== '') {
-            return $requestToken;
-        }
-
-        throw new FirebaseAuthenticationException('A Firebase ID token is required.');
     }
 
     private function marketingAudienceQuery(array $filters): Builder

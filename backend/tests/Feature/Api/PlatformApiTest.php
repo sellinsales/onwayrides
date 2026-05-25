@@ -92,4 +92,26 @@ class PlatformApiTest extends TestCase
                 'message' => 'A Firebase ID token is required.',
             ]);
     }
+
+    public function test_admin_driver_applications_require_a_firebase_token(): void
+    {
+        $this->getJson('/api/admin/drivers/applications')
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
+
+    public function test_admin_driver_document_review_requires_a_firebase_token(): void
+    {
+        $this->patchJson('/api/admin/driver-documents/1/status', [
+            'status' => 'approved',
+        ])
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
 }
