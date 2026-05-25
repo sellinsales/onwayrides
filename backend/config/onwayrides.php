@@ -4,6 +4,7 @@ return [
     'api_version' => env('ONWAYRIDES_API_VERSION', 'v1'),
     'frontend_url' => env('FRONTEND_URL', 'https://onwayrides.com'),
     'admin_url' => env('ADMIN_URL', 'https://admin.onwayrides.com'),
+    'super_admin_email' => env('SUPER_ADMIN_EMAIL', 'akeelpmajk@gmail.com'),
     'support_email' => env('SUPPORT_EMAIL', 'support@onwayrides.com'),
     'support_phone' => env('SUPPORT_PHONE', '+92-300-0000000'),
     'whatsapp_business_number' => env('WHATSAPP_BUSINESS_NUMBER', '+46793000786'),

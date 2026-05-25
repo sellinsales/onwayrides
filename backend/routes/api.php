@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DriverModeController;
 use App\Http\Controllers\Api\DriverDocumentController;
 use App\Http\Controllers\Api\AdminMarketingController;
 use App\Http\Controllers\Api\AdminDriverApprovalController;
+use App\Http\Controllers\Api\AdminUserRoleController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OnboardingController;
@@ -41,3 +42,5 @@ Route::get('/admin/drivers/applications', [AdminDriverApprovalController::class,
 Route::get('/admin/drivers/applications/{driverProfile}', [AdminDriverApprovalController::class, 'show'])->name('api.admin.drivers.applications.show');
 Route::patch('/admin/drivers/applications/{driverProfile}/status', [AdminDriverApprovalController::class, 'updateApplicationStatus'])->name('api.admin.drivers.applications.status.update');
 Route::patch('/admin/driver-documents/{documentId}/status', [AdminDriverApprovalController::class, 'updateDocumentStatus'])->name('api.admin.driver-documents.status.update');
+Route::get('/admin/users', [AdminUserRoleController::class, 'index'])->name('api.admin.users.index');
+Route::patch('/admin/users/{userId}/role', [AdminUserRoleController::class, 'updateRole'])->name('api.admin.users.role.update');

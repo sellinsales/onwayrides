@@ -41,6 +41,8 @@ class BootstrapController extends Controller
             ],
             'admin_operations' => [
                 'driver_applications_endpoint' => route('api.admin.drivers.applications.index', absolute: false),
+                'user_roles_endpoint' => route('api.admin.users.index', absolute: false),
+                'primary_admin_email' => config('onwayrides.super_admin_email'),
             ],
             'roles' => config('onwayrides.platform.roles'),
             'service_categories' => config('onwayrides.platform.service_categories'),

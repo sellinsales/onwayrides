@@ -25,6 +25,14 @@ const filterForm = document.querySelector("#ops-filter-form");
 const summaryGrid = document.querySelector("#ops-summary-grid");
 const tableBody = document.querySelector("#ops-table-body");
 const tableError = document.querySelector("#ops-table-error");
+const roleManagementCard = document.querySelector("#ops-role-management-card");
+const roleSearchForm = document.querySelector("#ops-role-search-form");
+const roleSearchInput = document.querySelector("#ops-role-search");
+const roleNoteInput = document.querySelector("#ops-role-note");
+const rolePrimaryAdminPill = document.querySelector("#ops-primary-admin-pill");
+const roleTableBody = document.querySelector("#ops-role-table-body");
+const roleError = document.querySelector("#ops-role-error");
+const roleSuccess = document.querySelector("#ops-role-success");
 const detailCard = document.querySelector("#ops-detail-card");
 const detailTitle = document.querySelector("#ops-detail-title");
 const detailSummary = document.querySelector("#ops-detail-summary");
@@ -41,6 +49,9 @@ const reopenDriverButton = document.querySelector("#ops-reopen-driver-button");
 const suspendDriverButton = document.querySelector("#ops-suspend-driver-button");
 
 let currentApplication = null;
+let currentViewer = null;
+let roleManagementConfig = null;
+let manageableRoles = ["rider", "support", "admin"];
 
 function buildApiUrl(path, params = new URLSearchParams()) {
   const apiBaseUrl = String(config.apiBaseUrl ?? `${window.location.origin}/api`).replace(/\/$/, "");
@@ -72,6 +83,16 @@ function showAuthError(message) {
 function showTableError(message) {
   tableError.hidden = !message;
   tableError.textContent = message ?? "";
+}
+
+function showRoleError(message) {
+  roleError.hidden = !message;
+  roleError.textContent = message ?? "";
+}
+
+function showRoleSuccess(message) {
+  roleSuccess.hidden = !message;
+  roleSuccess.textContent = message ?? "";
 }
 
 function showDetailError(message) {
@@ -176,6 +197,79 @@ function renderRows(rows = []) {
   });
 }
 
+function renderRoleManagement(payload = {}) {
+  currentViewer = payload.viewer ?? currentViewer;
+  roleManagementConfig = payload.role_management ?? roleManagementConfig;
+
+  const enabled = Boolean(payload.viewer?.can_manage_admins && payload.role_management?.enabled);
+  roleManagementCard.hidden = !enabled;
+
+  if (!enabled) {
+    showRoleError("");
+    showRoleSuccess("");
+    roleTableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="helper-text">Only the primary admin can manage admin access.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  rolePrimaryAdminPill.textContent = `Primary admin: ${payload.role_management?.primary_admin_email ?? "akeelpmajk@gmail.com"}`;
+}
+
+function renderRoleRows(rows = []) {
+  if (!rows.length) {
+    roleTableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="helper-text">No users matched this search.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  roleTableBody.innerHTML = rows.map((user) => {
+    const options = manageableRoles.map((role) => `
+      <option value="${role}" ${user.role === role ? "selected" : ""}>${role}</option>
+    `).join("");
+
+    const helper = user.is_primary_admin
+      ? "Primary admin account"
+      : user.can_promote_to_admin
+        ? `${user.status} | last login ${user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "never"}`
+        : "Operational account: use a separate admin email instead of replacing this role.";
+
+    return `
+      <tr>
+        <td>
+          <strong>${user.full_name ?? "OnWay User"}</strong><br>
+          <span class="helper-text">${user.email ?? "No email"}${user.phone ? ` | ${user.phone}` : ""}</span>
+        </td>
+        <td>
+          <strong>${user.role}</strong><br>
+          <span class="helper-text">${helper}</span>
+        </td>
+        <td>
+          <select data-role-select="${user.id}" ${user.is_primary_admin ? "disabled" : ""}>
+            ${options}
+          </select>
+        </td>
+        <td>
+          <button class="primary-button" type="button" data-role-update="${user.id}" ${user.is_primary_admin ? "disabled" : ""}>Save access</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  roleTableBody.querySelectorAll("[data-role-update]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const userId = button.getAttribute("data-role-update");
+      const select = roleTableBody.querySelector(`[data-role-select="${userId}"]`);
+      updateUserRole(userId, select?.value ?? "rider");
+    });
+  });
+}
+
 async function loadQueue() {
   showTableError("");
 
@@ -195,9 +289,14 @@ async function loadQueue() {
       return data;
     });
 
+    renderRoleManagement(payload);
     renderSummary(payload.summary);
     renderRows(payload.data);
     setScreen("dashboard");
+
+    if (payload.viewer?.can_manage_admins && payload.role_management?.enabled) {
+      await loadRoleCandidates();
+    }
   } catch (error) {
     showTableError(error.message ?? "Unable to load the driver queue.");
   }
@@ -439,6 +538,78 @@ async function updateDriverStatus(decision, note = "") {
   }
 }
 
+async function loadRoleCandidates() {
+  if (!currentViewer?.can_manage_admins) {
+    return;
+  }
+
+  showRoleError("");
+  showRoleSuccess("");
+
+  const params = new URLSearchParams();
+  const search = roleSearchInput?.value.trim() ?? "";
+
+  if (search) {
+    params.set("q", search);
+  }
+
+  try {
+    const payload = await withIdToken(async (idToken) => {
+      const endpoint = roleManagementConfig?.users_endpoint ?? "/admin/users";
+      const response = await fetch(buildApiUrl(endpoint.replace(/^\/api/, ""), params), {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message ?? "Unable to load admin access users.");
+      }
+
+      return data;
+    });
+
+    manageableRoles = payload.available_roles ?? manageableRoles;
+    renderRoleRows(payload.data ?? []);
+  } catch (error) {
+    showRoleError(error.message ?? "Unable to load admin access users.");
+  }
+}
+
+async function updateUserRole(userId, role) {
+  showRoleError("");
+  showRoleSuccess("");
+
+  try {
+    const payload = await withIdToken(async (idToken) => {
+      const response = await fetch(buildApiUrl(`/admin/users/${userId}/role`), {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          role,
+          note: roleNoteInput?.value.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message ?? "Unable to update user access.");
+      }
+
+      return data;
+    });
+
+    showRoleSuccess(payload.message ?? "User access updated.");
+    await loadRoleCandidates();
+  } catch (error) {
+    showRoleError(error.message ?? "Unable to update user access.");
+  }
+}
+
 async function handleAuth(event, mode = "email") {
   event.preventDefault();
   showAuthError("");
@@ -466,9 +637,15 @@ filterForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   loadQueue();
 });
+roleSearchForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadRoleCandidates();
+});
 signoutButton?.addEventListener("click", async () => {
   await signOut(auth);
   currentApplication = null;
+  currentViewer = null;
+  roleManagementConfig = null;
   detailCard.hidden = true;
   setScreen("auth");
 });

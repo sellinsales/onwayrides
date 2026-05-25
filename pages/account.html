@@ -27,8 +27,10 @@
             <a href="drivers.html">Drivers</a>
             <a href="business.html">Business</a>
             <a class="active" href="account.html">My Workspace</a>
+            <a href="admin-operations.html" id="workspace-admin-nav-link" hidden>Admin Operations</a>
           </nav>
           <div class="header-actions">
+            <a class="ghost-button" href="admin-operations.html" id="workspace-admin-shortcut" hidden>Admin Panel</a>
             <a class="ghost-button" href="help.html">Support</a>
             <button class="outline-button" type="button" id="workspace-signout-button">Sign Out</button>
           </div>
@@ -44,6 +46,10 @@
             <div class="status-banner" style="margin-top:18px;" id="workspace-status-banner">
               <strong>Beta account active</strong>
               <p>Use this area to request your first rides, apply as a driver, or send fleet interest to the OnWay Rides team.</p>
+            </div>
+            <div class="status-banner" style="margin-top:18px;" id="workspace-admin-banner" hidden>
+              <strong>Admin access unlocked</strong>
+              <p>This account can open marketplace operations tools from the admin panel link in this workspace.</p>
             </div>
             <div class="summary-grid" id="workspace-summary-grid" style="margin-top:18px;"></div>
           </section>
@@ -74,6 +80,12 @@
                 <h3>Add a fleet or business account</h3>
                 <p>Register your fleet, school route program, or company transport interest through one structured business intake.</p>
                 <a class="ghost-button" href="#fleet-interest-form">Open fleet intake</a>
+              </article>
+              <article class="workspace-card" id="workspace-admin-card" hidden>
+                <span class="material-symbols-outlined">admin_panel_settings</span>
+                <h3>Open admin panel</h3>
+                <p>Review driver approvals, operational queues, and marketplace controls available to this account.</p>
+                <a class="primary-button" href="admin-operations.html">Open admin operations</a>
               </article>
             </div>
           </section>

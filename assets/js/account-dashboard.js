@@ -15,8 +15,12 @@ await setPersistence(auth, browserLocalPersistence);
 const workspaceTitle = document.querySelector("#workspace-title");
 const workspaceCopy = document.querySelector("#workspace-copy");
 const workspaceStatusBanner = document.querySelector("#workspace-status-banner");
+const workspaceAdminBanner = document.querySelector("#workspace-admin-banner");
 const workspaceSummaryGrid = document.querySelector("#workspace-summary-grid");
 const workspaceSignoutButton = document.querySelector("#workspace-signout-button");
+const workspaceAdminNavLink = document.querySelector("#workspace-admin-nav-link");
+const workspaceAdminShortcut = document.querySelector("#workspace-admin-shortcut");
+const workspaceAdminCard = document.querySelector("#workspace-admin-card");
 
 const rideForm = document.querySelector("#workspace-ride-form");
 const driverForm = document.querySelector("#workspace-driver-form");
@@ -70,6 +74,10 @@ function workspaceMessage(mode) {
     banner:
       "Your beta account is active. Drafts and profile changes save to the shared backend used by the app.",
   };
+}
+
+function userHasAdminAccess(user = {}) {
+  return ["admin", "support"].includes(String(user?.role ?? ""));
 }
 
 function buildMessageBlock(title, fields) {
@@ -334,7 +342,27 @@ function renderWorkspace(session, workspace) {
   workspaceTitle.textContent = `${welcome.title}, ${firstName}.`;
   workspaceCopy.textContent = welcome.copy;
   workspaceStatusBanner.querySelector("p").textContent = welcome.banner;
+  renderAdminAccess(session);
   renderSummary(session, workspace);
+}
+
+function renderAdminAccess(session) {
+  const user = session?.user ?? {};
+  const hasAccess = userHasAdminAccess(user);
+
+  workspaceAdminNavLink?.toggleAttribute("hidden", !hasAccess);
+  workspaceAdminShortcut?.toggleAttribute("hidden", !hasAccess);
+  workspaceAdminCard?.toggleAttribute("hidden", !hasAccess);
+  workspaceAdminBanner?.toggleAttribute("hidden", !hasAccess);
+
+  if (!hasAccess || !workspaceAdminBanner) {
+    return;
+  }
+
+  const roleLabel = String(user.role ?? "admin");
+  workspaceAdminBanner.querySelector("p").textContent = roleLabel === "support"
+    ? "This support account can open the admin panel to review marketplace operations and driver approvals."
+    : "This admin account can open the admin panel to review marketplace operations, driver approvals, and protected tools.";
 }
 
 function prefillDriverForm(workspace) {

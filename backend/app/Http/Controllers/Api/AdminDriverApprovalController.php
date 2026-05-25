@@ -50,11 +50,17 @@ class AdminDriverApprovalController extends Controller
                 'id' => $admin->id,
                 'email' => $admin->email,
                 'role' => $admin->role,
+                'can_manage_admins' => $this->isSuperAdmin($admin),
             ],
             'filters' => [
                 'q' => $filters['q'] ?? null,
                 'state' => $filters['state'] ?? 'pending',
                 'city_id' => isset($filters['city_id']) ? (int) $filters['city_id'] : null,
+            ],
+            'role_management' => [
+                'enabled' => $this->isSuperAdmin($admin),
+                'primary_admin_email' => config('onwayrides.super_admin_email'),
+                'users_endpoint' => route('api.admin.users.index', absolute: false),
             ],
             'summary' => $this->buildSummary(),
             'data' => $profiles->map(fn (object $profile): array => $this->serializeListItem($profile))->all(),

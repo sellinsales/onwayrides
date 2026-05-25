@@ -111,6 +111,59 @@
 
               <div class="summary-grid" id="ops-summary-grid"></div>
 
+              <div class="marketing-table-card" id="ops-role-management-card" hidden>
+                <div class="inline-actions" style="justify-content:space-between; align-items:flex-start; gap:16px;">
+                  <div>
+                    <span class="eyebrow">Primary Admin Control</span>
+                    <h2 style="margin:10px 0 0;">Admin access management</h2>
+                  </div>
+                  <span class="pill dark" id="ops-primary-admin-pill">Only the primary admin can use this.</span>
+                </div>
+                <div class="helper-text" style="margin-top:12px;">
+                  Search an existing user and grant or remove website admin access. This panel is intentionally hidden from every account except the designated primary admin.
+                </div>
+                <div class="helper-text" style="margin-top:8px;">
+                  Safety rule: operational roles such as driver, fleet owner, and merchant are not promoted here because the current schema uses one role per account.
+                </div>
+
+                <form class="admin-filter-form" id="ops-role-search-form" style="margin-top:18px;">
+                  <div class="field-grid">
+                    <div class="field-group">
+                      <label for="ops-role-search">Search user</label>
+                      <input id="ops-role-search" name="q" type="text" placeholder="Email, name, or phone">
+                    </div>
+                    <div class="field-group">
+                      <label for="ops-role-note">Audit note</label>
+                      <input id="ops-role-note" name="note" type="text" placeholder="Optional note for the audit log">
+                    </div>
+                  </div>
+                  <div class="marketing-actions">
+                    <button class="primary-button" type="submit">Search users</button>
+                  </div>
+                </form>
+
+                <div class="success-text" id="ops-role-success" hidden></div>
+                <div class="error-text" id="ops-role-error" hidden></div>
+
+                <div class="table-wrap" style="margin-top:18px;">
+                  <table class="marketing-table">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Current access</th>
+                        <th>Next access</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ops-role-table-body">
+                      <tr>
+                        <td colspan="4" class="helper-text">Search for a user to manage admin access.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               <div class="marketing-table-card">
                 <h2>Driver applications</h2>
                 <div class="helper-text" style="margin-bottom:14px;">Select a driver application to inspect documents and make approval decisions.</div>
