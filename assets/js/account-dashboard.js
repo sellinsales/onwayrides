@@ -17,6 +17,7 @@ const workspaceCopy = document.querySelector("#workspace-copy");
 const workspaceStatusBanner = document.querySelector("#workspace-status-banner");
 const workspaceAdminBanner = document.querySelector("#workspace-admin-banner");
 const workspaceSummaryGrid = document.querySelector("#workspace-summary-grid");
+const workspaceJourneyGrid = document.querySelector("#workspace-journey-grid");
 const workspaceSignoutButton = document.querySelector("#workspace-signout-button");
 const workspaceAdminNavLink = document.querySelector("#workspace-admin-nav-link");
 const workspaceAdminShortcut = document.querySelector("#workspace-admin-shortcut");
@@ -32,6 +33,7 @@ const driverFormSuccess = document.querySelector("#driver-form-success");
 const fleetFormSuccess = document.querySelector("#fleet-form-success");
 const driverDocumentSuccess = document.querySelector("#driver-document-success");
 const driverDocumentSummary = document.querySelector("#driver-document-summary");
+const driverDocumentLockedBanner = document.querySelector("#driver-document-locked-banner");
 
 const rideCity = document.querySelector("#ride-city");
 const rideService = document.querySelector("#ride-service");
@@ -59,25 +61,54 @@ function getQueryMode() {
 function workspaceMessage(mode) {
   if (mode === "new") {
     return {
-      title: "Welcome to your OnWay Rides workspace",
+      title: "Welcome to your OnWay Rides hub",
       copy:
-        "Your account setup is complete. From here you can request beta rides, save a driver application draft, upload documents, or register fleet interest without going back through login.",
+        "Your account setup is complete. From here you can request a ride, continue driver onboarding, or register a fleet account without signing in again.",
       banner:
-        "Your new account is active. Continue as a rider, driver, or fleet operator from the modules below.",
+        "Your account is active. Choose the path that matches your next trip, driver application, or business setup.",
     };
   }
 
   return {
     title: "Welcome back to OnWay Rides",
     copy:
-      "Your web and mobile account stay synced here. Use the workspace to manage rider requests, driver onboarding, and fleet drafts from one place.",
+      "Your web and mobile account stay connected here. Use this space to manage rider requests, driver onboarding, and fleet setup from one place.",
     banner:
-      "Your beta account is active. Drafts and profile changes save to the shared backend used by the app.",
+      "Your account is ready. Continue with the guided steps below and your latest details stay saved for the next visit.",
   };
 }
 
 function userHasAdminAccess(user = {}) {
   return ["admin", "support"].includes(String(user?.role ?? ""));
+}
+
+function hasDriverDraft(workspace = {}) {
+  const driver = workspace?.driver_application;
+
+  return Boolean(driver && (driver.id || driver.city_id || driver.license_number));
+}
+
+function documentStatusSummary(documents = []) {
+  const total = documents.length;
+  const approved = documents.filter((document) => document.status === "approved").length;
+  const pending = documents.filter((document) => document.status !== "approved").length;
+
+  return { total, approved, pending };
+}
+
+function setFormEnabled(form, enabled) {
+  if (!form) {
+    return;
+  }
+
+  form.querySelectorAll("input, select, textarea, button").forEach((element) => {
+    if (element.id === "driver-document-help") {
+      element.disabled = true;
+      return;
+    }
+
+    element.disabled = !enabled;
+  });
 }
 
 function buildMessageBlock(title, fields) {
@@ -232,7 +263,7 @@ function renderDriverServiceCheckboxes(selectedIds = []) {
 
   if (!(referenceData?.service_types ?? []).length) {
     driverServiceTypes.innerHTML = `
-      <div class="helper-text">No service types are loaded yet. Import the OnWay Rides seed data first.</div>
+      <div class="helper-text">Service types are not available right now. Please try again shortly.</div>
     `;
     return;
   }
@@ -312,10 +343,13 @@ function renderSummary(session, workspace) {
   const consents = session.consents ?? {};
   const driver = workspace?.driver_application;
   const fleet = workspace?.fleet_application;
+  const documents = workspace?.driver_application?.documents ?? [];
+  const documentSummary = documentStatusSummary(documents);
   const cards = [
     ["Logged in as", user.email ?? "Email not set"],
-    ["Phone status", user.phone_verified_at ? "Verified" : user.phone ? "Saved for beta" : "Missing"],
+    ["Phone status", user.phone_verified_at ? "Verified" : user.phone ? "Saved" : "Missing"],
     ["Driver draft", driver ? driver.onboarding_status ?? driver.status ?? "In progress" : "Not started"],
+    ["Driver documents", documents.length ? `${documentSummary.approved}/${documentSummary.total} reviewed` : "Not uploaded"],
     ["Fleet draft", fleet ? fleet.status ?? "Pending" : "Not started"],
     ["WhatsApp updates", consents.whatsapp_marketing_opt_in ? "Opted in" : "Optional"],
     ["SMS updates", consents.sms_marketing_opt_in ? "Opted in" : "Optional"],
@@ -344,6 +378,7 @@ function renderWorkspace(session, workspace) {
   workspaceStatusBanner.querySelector("p").textContent = welcome.banner;
   renderAdminAccess(session);
   renderSummary(session, workspace);
+  renderJourney(session, workspace);
 }
 
 function renderAdminAccess(session) {
@@ -361,8 +396,71 @@ function renderAdminAccess(session) {
 
   const roleLabel = String(user.role ?? "admin");
   workspaceAdminBanner.querySelector("p").textContent = roleLabel === "support"
-    ? "This support account can open the admin panel to review marketplace operations and driver approvals."
-    : "This admin account can open the admin panel to review marketplace operations, driver approvals, and protected tools.";
+    ? "This support account can open the operations panel to review onboarding and service activity."
+    : "This admin account can open the operations panel to review onboarding, service activity, and protected tools.";
+}
+
+function renderJourney(session, workspace) {
+  if (!workspaceJourneyGrid) {
+    return;
+  }
+
+  const user = session?.user ?? {};
+  const driverDraft = hasDriverDraft(workspace);
+  const documents = workspace?.driver_application?.documents ?? [];
+  const documentSummary = documentStatusSummary(documents);
+  const fleet = workspace?.fleet_application;
+
+  const steps = [
+    {
+      title: "Account ready",
+      value: user.phone ? "Complete" : "Needs phone",
+      copy: user.phone
+        ? "Your account can be used across web and mobile."
+        : "Add your contact details to keep ride and support updates accurate.",
+    },
+    {
+      title: "Rider request",
+      value: "Available now",
+      copy: "You can share pickup, destination, schedule, and trip notes anytime.",
+    },
+    {
+      title: "Driver application",
+      value: driverDraft ? "Saved" : "Start here",
+      copy: driverDraft
+        ? "Your driver application is saved. Continue with document upload below."
+        : "Complete your city, services, and vehicle details first.",
+    },
+    {
+      title: "Driver documents",
+      value: documents.length ? `${documentSummary.approved}/${documentSummary.total}` : "Waiting",
+      copy: documents.length
+        ? "Keep uploading or reviewing required documents until everything is approved."
+        : "Document upload opens after you save the driver application.",
+    },
+    {
+      title: "Fleet setup",
+      value: fleet ? "Saved" : "Optional",
+      copy: fleet
+        ? "Your business or fleet enquiry is saved for follow-up."
+        : "Use this if you manage multiple vehicles or company transport.",
+    },
+  ];
+
+  workspaceJourneyGrid.innerHTML = steps.map((step) => `
+    <article>
+      <strong>${step.value}</strong>
+      <span>${step.title}</span>
+      <div class="helper-text" style="margin-top:8px;">${step.copy}</div>
+    </article>
+  `).join("");
+}
+
+function renderDriverDocumentState(workspace) {
+  const unlocked = hasDriverDraft(workspace);
+
+  driverDocumentLockedBanner?.toggleAttribute("hidden", unlocked);
+  setFormEnabled(driverDocumentForm, unlocked);
 }
 
 function prefillDriverForm(workspace) {
@@ -418,6 +516,7 @@ function renderDriverDocuments(workspace) {
         <span>Upload your selfie, license, CNIC, and vehicle files one at a time.</span>
       </article>
     `;
+    renderDriverDocumentState(workspace);
     return;
   }
 
@@ -431,6 +530,8 @@ function renderDriverDocuments(workspace) {
       `,
     )
     .join("");
+
+  renderDriverDocumentState(workspace);
 }
 
 function populateReferenceDrivenFields(session, workspace) {
@@ -475,7 +576,7 @@ rideForm?.addEventListener("submit", (event) => {
   hideSuccess(rideFormSuccess);
 
   const data = new FormData(rideForm);
-  const support = buildSupportMessage("OnWay Rides beta rider request", [
+  const support = buildSupportMessage("OnWay Rides rider request", [
     ["City", rideCity.options[rideCity.selectedIndex]?.textContent ?? ""],
     ["Service type", rideService.options[rideService.selectedIndex]?.textContent ?? ""],
     ["Pickup area", data.get("pickup_area")],
@@ -488,9 +589,9 @@ rideForm?.addEventListener("submit", (event) => {
   showSuccess(
     rideFormSuccess,
     successMarkup(
-      "Prepared your rider request for support review.",
+      "Your trip details are ready to send.",
       support.whatsappUrl,
-      "Send on WhatsApp",
+      "Continue on WhatsApp",
     ),
   );
 });
@@ -543,8 +644,9 @@ driverForm?.addEventListener("submit", async (event) => {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+    renderWorkspace(lastSession, response.workspace);
     renderDriverDocuments(response.workspace);
-    showSuccess(driverFormSuccess, "Driver onboarding draft saved to the shared backend.");
+    showSuccess(driverFormSuccess, "Driver application saved. You can continue with document upload now.");
   } catch (error) {
     showSuccess(driverFormSuccess, error.message);
   }
@@ -563,8 +665,9 @@ driverDocumentForm?.addEventListener("submit", async (event) => {
     });
 
     const workspace = await loadWorkspacePayload();
+    renderWorkspace(lastSession, workspace);
     renderDriverDocuments(workspace);
-    showSuccess(driverDocumentSuccess, "Driver document uploaded securely.");
+    showSuccess(driverDocumentSuccess, "Document uploaded successfully.");
     driverDocumentForm.reset();
     renderDocumentTypeOptions();
   } catch (error) {
@@ -588,11 +691,12 @@ fleetForm?.addEventListener("submit", async (event) => {
   };
 
   try {
-    await fetchJson("/onboarding/fleet", {
+    const response = await fetchJson("/onboarding/fleet", {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
-    showSuccess(fleetFormSuccess, "Fleet onboarding draft saved to the shared backend.");
+    renderWorkspace(lastSession, response.workspace);
+    showSuccess(fleetFormSuccess, "Fleet details saved. The team can continue your business onboarding from here.");
   } catch (error) {
     showSuccess(fleetFormSuccess, error.message);
   }
@@ -628,7 +732,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!referencesAreSeeded()) {
       workspaceStatusBanner.querySelector("p").textContent =
-        "Reference dropdown data is missing. Import the OnWay Rides SQL seed so cities, service types, and vehicle lists load correctly.";
+        "Some setup lists are not available yet. Add cities, service types, and vehicle lists so every onboarding form loads correctly.";
     }
   } catch {
     window.location.href = "login.html";

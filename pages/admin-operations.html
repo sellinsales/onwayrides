@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="OnWay Rides admin operations page for driver document review and driver approval decisions.">
+    <meta name="description" content="OnWay Rides operations panel for driver review, approvals, and service management.">
     <title>OnWay Rides | Admin Operations</title>
     <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +28,7 @@
             <a href="help.html">Help</a>
           </nav>
           <div class="header-actions">
-            <a class="ghost-button" href="auth-diagnostics.html">Diagnostics</a>
+            <a class="ghost-button" href="help.html">Support</a>
             <a class="outline-button" href="login.html">User Login</a>
           </div>
         </div>
@@ -37,16 +37,16 @@
       <main class="admin-shell">
         <div class="container admin-layout">
           <section class="admin-panel light">
-            <span class="eyebrow">Operations Control</span>
-            <h1>Driver approval and document review.</h1>
-            <p>Review pending driver applications, inspect secure uploads, approve or reject documents, and control when a driver can join the marketplace.</p>
+            <span class="eyebrow">Operations Panel</span>
+            <h1>Review driver onboarding with clarity and control.</h1>
+            <p>Use this panel to inspect applications, review submitted documents, and move drivers through approval with a consistent process.</p>
             <div class="status-banner" style="margin-top:18px;">
-              <strong>Who can use this page</strong>
-              <p>Only local users with the role `admin` or `support` can access operational review actions.</p>
+              <strong>For authorized team members</strong>
+              <p>Operations tools are available only to approved internal accounts.</p>
             </div>
             <div class="status-banner" style="margin-top:18px;">
-              <strong>Approval rule</strong>
-              <p>Drivers should only be approved after required documents are reviewed. This page enforces the required minimum set before final approval.</p>
+              <strong>Approval standard</strong>
+              <p>Approve drivers only after the required documents have been reviewed and the application details are complete.</p>
             </div>
             <div class="helper-text" style="margin-top:18px;">
               Required documents for driver approval: profile photo, license, CNIC, and vehicle registration when a vehicle is assigned.
@@ -57,8 +57,8 @@
             <div class="auth-stack" id="ops-auth-screen">
               <div>
                 <span class="eyebrow">Secure Sign In</span>
-                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Use your admin Firebase account</h2>
-                <p>The operations page verifies your Firebase session first, then checks your local role in Laravel before enabling any approval actions.</p>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Sign in with your approved team account</h2>
+                <p>Continue with the account assigned to you for operations work and approval decisions.</p>
               </div>
               <form class="auth-form" id="ops-auth-form">
                 <div class="field-group">
@@ -120,10 +120,10 @@
                   <span class="pill dark" id="ops-primary-admin-pill">Only the primary admin can use this.</span>
                 </div>
                 <div class="helper-text" style="margin-top:12px;">
-                  Search an existing user and grant or remove website admin access. This panel is intentionally hidden from every account except the designated primary admin.
+                  Search an existing user and grant or remove operations access. This panel is intentionally limited to the primary admin account.
                 </div>
                 <div class="helper-text" style="margin-top:8px;">
-                  Safety rule: operational roles such as driver, fleet owner, and merchant are not promoted here because the current schema uses one role per account.
+                  Best practice: keep marketplace operator accounts separate from office admin accounts so service activity and internal access remain clearly separated.
                 </div>
 
                 <form class="admin-filter-form" id="ops-role-search-form" style="margin-top:18px;">
@@ -166,7 +166,7 @@
 
               <div class="marketing-table-card">
                 <h2>Driver applications</h2>
-                <div class="helper-text" style="margin-bottom:14px;">Select a driver application to inspect documents and make approval decisions.</div>
+                <div class="helper-text" style="margin-bottom:14px;">Select a driver application to inspect documents, review details, and make the next decision.</div>
                 <div class="table-wrap">
                   <table class="marketing-table">
                     <thead>
@@ -218,7 +218,7 @@
 
                 <div style="margin-top:22px;">
                   <h3 style="font-family:'Sora', 'Segoe UI', sans-serif;">Documents</h3>
-                  <div class="helper-text" style="margin-top:8px;">Approve each uploaded document before granting full driver access.</div>
+                  <div class="helper-text" style="margin-top:8px;">Review each uploaded document carefully before granting driver access.</div>
                   <div id="ops-documents-list" style="display:grid; gap:14px; margin-top:16px;"></div>
                 </div>
 

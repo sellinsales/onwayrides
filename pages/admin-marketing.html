@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="OnWay Rides admin marketing audience page for exportable WhatsApp and SMS consented user lists across web and mobile logins.">
+    <meta name="description" content="OnWay Rides audience panel for reviewing opted-in WhatsApp and SMS contacts.">
     <title>OnWay Rides | Admin Marketing Audience</title>
     <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +28,7 @@
             <a href="help.html">Help</a>
           </nav>
           <div class="header-actions">
-            <a class="ghost-button" href="auth-diagnostics.html">Diagnostics</a>
+            <a class="ghost-button" href="help.html">Support</a>
             <a class="outline-button" href="login.html">User Login</a>
           </div>
         </div>
@@ -37,26 +37,26 @@
       <main class="admin-shell">
         <div class="container admin-layout">
           <section class="admin-panel light">
-            <span class="eyebrow">Admin Access</span>
-            <h1>Marketing audience for web and mobile.</h1>
-            <p>This page reads the shared `users` table through Laravel and lets admin or support accounts review who opted into WhatsApp or SMS outreach.</p>
+            <span class="eyebrow">Audience Panel</span>
+            <h1>Review contact audiences clearly.</h1>
+            <p>Use this page to review users who opted into WhatsApp or SMS communication and export filtered contact lists when needed.</p>
             <div class="status-banner" style="margin-top:18px;">
               <strong>WhatsApp sender</strong>
               <p>Configured business number: <span data-whatsapp-number></span></p>
             </div>
             <div class="status-banner" style="margin-top:18px;">
-              <strong>Who can use this page</strong>
-              <p>Only local users with the role `admin` or `support` can open the marketing audience API.</p>
+              <strong>For authorized team members</strong>
+              <p>Audience tools are available only to approved internal accounts.</p>
             </div>
-            <div class="helper-text" style="margin-top:18px;">If your admin email exists in the backend seed but not in Firebase yet, create the same email in Firebase Auth first so the backend can link it.</div>
+            <div class="helper-text" style="margin-top:18px;">Use your approved office account to access marketing and audience tools.</div>
           </section>
 
           <section class="admin-panel" id="admin-root">
             <div class="auth-stack" id="admin-auth-screen">
               <div>
                 <span class="eyebrow">Secure Sign In</span>
-                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Use your admin Firebase account</h2>
-                <p>The web page verifies your Firebase session and then checks your local role in Laravel.</p>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Sign in with your approved team account</h2>
+                <p>Continue with the account assigned to you for marketing review and audience export.</p>
               </div>
               <form class="auth-form" id="admin-auth-form">
                 <div class="field-group">

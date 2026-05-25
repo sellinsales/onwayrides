@@ -98,13 +98,13 @@ function configureEmailScreen(mode = "signin") {
   if (mode === "register") {
     emailStepLabel.textContent = "Step 1 of 3";
     emailScreenTitle.textContent = "Create your OnWay Rides account";
-    emailScreenCopy.textContent = "Register first with email and password, then continue to complete your rider profile.";
+    emailScreenCopy.textContent = "Create your email login, then continue to finish your account details.";
     emailSubmitButton.textContent = "Create account";
     document.querySelector("#auth-full-name").required = true;
   } else {
     emailStepLabel.textContent = "Step 1 of 3";
     emailScreenTitle.textContent = "Sign in with email";
-    emailScreenCopy.textContent = "Enter your email and password, then continue to your profile step.";
+    emailScreenCopy.textContent = "Enter your email and password, then continue to the account details step.";
     emailSubmitButton.textContent = "Sign in";
     document.querySelector("#auth-full-name").required = false;
   }
@@ -216,7 +216,6 @@ function populateOnboarding(session) {
 function renderAccount(session) {
   const user = session.user ?? {};
   const consents = session.consents ?? {};
-  const beta = session.beta ?? {};
   const firstName = user.full_name?.trim()?.split(/\s+/)[0] ?? "there";
   const fields = [
     ["Full name", user.full_name ?? "Not set"],
@@ -226,13 +225,13 @@ function renderAccount(session) {
     ["WhatsApp marketing", consents.whatsapp_marketing_opt_in ? "Opted in" : "Not opted in"],
     ["SMS marketing", consents.sms_marketing_opt_in ? "Opted in" : "Not opted in"],
     ["Role", user.role ?? "rider"],
-    ["Beta rides per day", String(beta.daily_rides_limit ?? 3)],
+    ["Account status", user.status ?? "active"],
   ];
 
   accountWelcomeTitle.textContent = `Welcome, ${firstName}`;
   accountWelcomeCopy.textContent = user.phone_verified_at
     ? "Your profile is fully synced across web and mobile, and your phone number is already verified."
-    : "Your profile is synced across web and mobile. During beta, you can continue even if phone verification is still pending.";
+    : "Your profile is synced across web and mobile. Add or verify your phone number whenever you want clearer ride and support updates.";
 
   accountDataGrid.innerHTML = fields
     .map(
@@ -354,7 +353,7 @@ async function sendOtp() {
   if (user.phoneNumber === e164Phone) {
     verifiedPhone = e164Phone;
     updatePhoneStatus("good", "Phone verified");
-    showOnboardingSuccess("This phone number is already verified in Firebase.");
+    showOnboardingSuccess("This phone number is already verified on your account.");
     return;
   }
 

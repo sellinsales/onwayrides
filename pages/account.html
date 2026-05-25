@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Logged-in OnWay Rides workspace for riders, driver applications, and fleet onboarding.">
+    <meta name="description" content="Your OnWay Rides account hub for rider requests, driver onboarding, and fleet setup.">
     <title>OnWay Rides | My Workspace</title>
     <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,16 +40,16 @@
       <main class="admin-shell">
         <div class="container admin-layout">
           <section class="admin-panel light">
-            <span class="eyebrow">Logged In Workspace</span>
+            <span class="eyebrow">Your Account Hub</span>
             <h1 id="workspace-title">Welcome to OnWay Rides.</h1>
-            <p id="workspace-copy">Your web workspace helps you manage beta rider access, start driver onboarding, and register fleet interest from one clean dashboard.</p>
+            <p id="workspace-copy">Use this space to request a ride, start driver onboarding, or register a fleet account with clear next steps.</p>
             <div class="status-banner" style="margin-top:18px;" id="workspace-status-banner">
-              <strong>Beta account active</strong>
-              <p>Use this area to request your first rides, apply as a driver, or send fleet interest to the OnWay Rides team.</p>
+              <strong>Account ready</strong>
+              <p>Choose the service path you need today and continue through a guided onboarding flow.</p>
             </div>
             <div class="status-banner" style="margin-top:18px;" id="workspace-admin-banner" hidden>
-              <strong>Admin access unlocked</strong>
-              <p>This account can open marketplace operations tools from the admin panel link in this workspace.</p>
+              <strong>Team tools available</strong>
+              <p>This account can open the operations panel from the admin link in this workspace.</p>
             </div>
             <div class="summary-grid" id="workspace-summary-grid" style="margin-top:18px;"></div>
           </section>
@@ -57,48 +57,59 @@
           <section class="admin-panel">
             <div class="inline-actions" style="justify-content:space-between; align-items:center;">
               <div>
-                <span class="eyebrow">Action Center</span>
-                <h2 style="margin:16px 0 0; font-family:'Sora', 'Segoe UI', sans-serif;">Choose what you want to do next</h2>
+                <span class="eyebrow">Choose Your Path</span>
+                <h2 style="margin:16px 0 0; font-family:'Sora', 'Segoe UI', sans-serif;">Start the journey that matches your role</h2>
               </div>
             </div>
 
             <div class="workspace-grid" style="margin-top:18px;">
               <article class="workspace-card">
                 <span class="material-symbols-outlined">local_taxi</span>
-                <h3>Book a beta ride</h3>
-                <p>Use the guided rider intake below to request your next trip, airport transfer, or scheduled booking during beta.</p>
-                <a class="primary-button" href="#ride-request-form">Open rider request</a>
+                <h3>Request a ride</h3>
+                <p>Share your pickup, destination, and timing so your trip can move forward quickly.</p>
+                <a class="primary-button" href="#ride-request-form">Start rider request</a>
               </article>
               <article class="workspace-card">
                 <span class="material-symbols-outlined">badge</span>
                 <h3>Apply as a driver</h3>
-                <p>Send your driver interest with your city, vehicle type, and readiness status so support can start your onboarding lane.</p>
+                <p>Complete your profile, add vehicle details, and upload documents in the correct order.</p>
                 <a class="outline-button" href="#driver-interest-form">Start driver application</a>
               </article>
               <article class="workspace-card">
                 <span class="material-symbols-outlined">directions_bus</span>
-                <h3>Add a fleet or business account</h3>
-                <p>Register your fleet, school route program, or company transport interest through one structured business intake.</p>
-                <a class="ghost-button" href="#fleet-interest-form">Open fleet intake</a>
+                <h3>Register a fleet</h3>
+                <p>Introduce your company, operating city, and transport model so the team can continue onboarding.</p>
+                <a class="ghost-button" href="#fleet-interest-form">Open fleet setup</a>
               </article>
               <article class="workspace-card" id="workspace-admin-card" hidden>
                 <span class="material-symbols-outlined">admin_panel_settings</span>
-                <h3>Open admin panel</h3>
-                <p>Review driver approvals, operational queues, and marketplace controls available to this account.</p>
-                <a class="primary-button" href="admin-operations.html">Open admin operations</a>
+                <h3>Open operations panel</h3>
+                <p>Review approvals, queues, and protected marketplace controls available to this account.</p>
+                <a class="primary-button" href="admin-operations.html">Open operations</a>
               </article>
             </div>
           </section>
         </div>
 
         <div class="container workspace-stack">
+          <section class="marketing-table-card" id="workspace-journey-panel">
+            <div class="workspace-form-head">
+              <div>
+                <span class="eyebrow">Guided Setup</span>
+                <h2>Your next steps</h2>
+              </div>
+              <span class="pill dark">Managed onboarding</span>
+            </div>
+            <div class="summary-grid" id="workspace-journey-grid" style="margin-top:18px;"></div>
+          </section>
+
           <section class="marketing-table-card" id="ride-request-form">
             <div class="workspace-form-head">
               <div>
-                <span class="eyebrow">Rider Workflow</span>
-                <h2>Request a beta ride or schedule support</h2>
+                <span class="eyebrow">Rider Journey</span>
+                <h2>Share your trip details</h2>
               </div>
-              <span class="pill warn">Beta limit: 3 rides/day</span>
+              <span class="pill warn">Quick request</span>
             </div>
             <form class="onboarding-form" id="workspace-ride-form">
               <div class="field-grid">
@@ -139,7 +150,7 @@
                 <textarea id="ride-notes" name="notes" rows="4" placeholder="Add pickup time, luggage, accessibility, or support notes."></textarea>
               </div>
               <div class="inline-actions">
-                <button class="primary-button" type="submit">Send rider request to support</button>
+                <button class="primary-button" type="submit">Prepare ride request</button>
                 <a class="outline-button" href="riders.html">Read rider guide</a>
               </div>
               <div class="success-text" id="ride-form-success" hidden></div>
@@ -149,10 +160,13 @@
           <section class="marketing-table-card" id="driver-interest-form">
             <div class="workspace-form-head">
               <div>
-                <span class="eyebrow">Driver Workflow</span>
+                <span class="eyebrow">Driver Journey</span>
                 <h2>Apply as a driver</h2>
               </div>
-              <span class="pill dark">Approval required</span>
+              <span class="pill dark">Step 1: Profile and vehicle</span>
+            </div>
+            <div class="helper-text" style="margin-bottom:18px;">
+              Start with your city, service type, and vehicle information. Save the application first, then continue to document upload.
             </div>
             <form class="onboarding-form" id="workspace-driver-form">
               <div class="field-grid">
@@ -256,7 +270,7 @@
                 <textarea id="driver-notes" name="notes" rows="4" placeholder="Mention fleet link, city routes, or onboarding questions."></textarea>
               </div>
               <div class="inline-actions">
-                <button class="primary-button" type="submit">Save driver draft</button>
+                <button class="primary-button" type="submit">Save application and continue</button>
                 <a class="outline-button" href="drivers.html">Read driver guide</a>
               </div>
               <div class="success-text" id="driver-form-success" hidden></div>
@@ -265,10 +279,14 @@
             <div class="onboarding-form" style="margin-top:24px;">
               <div class="workspace-form-head">
                 <div>
-                  <span class="eyebrow">Driver Documents</span>
-                  <h2>Upload one document at a time</h2>
+                  <span class="eyebrow">Driver Journey</span>
+                  <h2>Step 2: Upload your documents</h2>
                 </div>
                 <span class="pill dark">Secure upload</span>
+              </div>
+              <div class="status-banner" id="driver-document-locked-banner" style="margin-bottom:18px;" hidden>
+                <strong>Save your application first</strong>
+                <p>Complete the driver application above before uploading documents so everything stays linked to the right profile.</p>
               </div>
               <form class="onboarding-form" id="driver-document-form">
                 <div class="field-grid">
@@ -307,10 +325,13 @@
           <section class="marketing-table-card" id="fleet-interest-form">
             <div class="workspace-form-head">
               <div>
-                <span class="eyebrow">Fleet Workflow</span>
-                <h2>Register fleet or business transport interest</h2>
+                <span class="eyebrow">Fleet Journey</span>
+                <h2>Register business or fleet transport</h2>
               </div>
-              <span class="pill dark">Support-guided</span>
+              <span class="pill dark">Step 1: Business details</span>
+            </div>
+            <div class="helper-text" style="margin-bottom:18px;">
+              Tell us about your company, fleet size, and operating model so onboarding can continue with the right team.
             </div>
             <form class="onboarding-form" id="workspace-fleet-form">
               <div class="field-grid">
@@ -361,7 +382,7 @@
                 <textarea id="fleet-notes" name="notes" rows="4" placeholder="Mention preferred model, city coverage, or business mobility requirements."></textarea>
               </div>
               <div class="inline-actions">
-                <button class="primary-button" type="submit">Save fleet draft</button>
+                <button class="primary-button" type="submit">Save fleet enquiry</button>
                 <a class="outline-button" href="business.html">Read business mobility guide</a>
               </div>
               <div class="success-text" id="fleet-form-success" hidden></div>

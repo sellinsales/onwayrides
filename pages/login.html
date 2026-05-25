@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Sign in to OnWay Rides on the web, complete onboarding, manage your consent preferences, and stay connected across mobile and website.">
+    <meta name="description" content="Sign in to OnWay Rides on the web, complete your account setup, and stay connected across app and website.">
     <title>OnWay Rides | Web Login</title>
     <link rel="icon" href="../assets/onwayrides_icon_1024.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,8 +29,8 @@
           </nav>
           <div class="header-actions">
             <a class="lang-pill" href="help.html">EN</a>
-            <a class="ghost-button" href="auth-diagnostics.html">Diagnostics</a>
-            <a class="outline-button" href="admin-marketing.html">Admin</a>
+            <a class="ghost-button" href="help.html">Support</a>
+            <a class="outline-button" href="../index.html#download">Get the App</a>
           </div>
         </div>
       </header>
@@ -38,17 +38,17 @@
       <main class="auth-shell">
         <div class="container auth-layout">
           <section class="auth-panel light">
-            <span class="eyebrow">Unified Access</span>
-            <h1>One account for web and mobile.</h1>
-            <p>Sign in with Google or email, sync into the shared OnWay Rides user table, add your working phone number, and keep your contact preferences under one profile.</p>
+            <span class="eyebrow">Welcome Back</span>
+            <h1>One account for rides, deliveries, and daily travel.</h1>
+            <p>Sign in once, complete your contact details, and keep your OnWay Rides profile ready across the website and mobile app.</p>
             <ul class="auth-hint-list">
-              <li>New registrations are stored in the same backend `users` table used by the mobile app.</li>
-              <li>WhatsApp and SMS marketing remain optional and are stored with consent timestamps.</li>
-              <li>Your phone number helps with trip updates, support follow-up, and future business messaging. Verification stays optional during beta.</li>
+              <li>Use Google or email to access the same account across web and mobile.</li>
+              <li>Add the phone number you want us to use for trip updates and support.</li>
+              <li>Choose whether you want optional WhatsApp or SMS offers alongside essential service communication.</li>
             </ul>
             <div class="status-banner" style="margin-top:18px;">
               <strong>WhatsApp updates</strong>
-              <p>OnWay Rides uses the business sender number <span data-whatsapp-number></span> for direct customer communication. Group auto-enrollment is intentionally not used.</p>
+              <p>OnWay Rides uses <span data-whatsapp-number></span> for direct service communication and optional marketing updates when you opt in.</p>
             </div>
           </section>
 
@@ -62,8 +62,8 @@
             <div class="auth-stack" id="auth-choice-screen">
               <div>
                 <span class="eyebrow">Step 1 of 3</span>
-                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Choose how you want to access the beta</h2>
-                <p>Start with one clean action. After sign-in, we guide you through phone details and consent in the next step.</p>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Choose how you want to sign in</h2>
+                <p>Start with Google or email. After sign-in, we guide you through the final account details in the next step.</p>
               </div>
 
               <div class="auth-choice-grid">
@@ -79,12 +79,12 @@
                 </article>
                 <article class="auth-choice-card">
                   <strong>Create account</strong>
-                  <p>Register a new rider account first, then complete your beta profile.</p>
+                  <p>Create your OnWay Rides account and finish setup in a few guided steps.</p>
                   <button class="ghost-button" type="button" id="email-register-button">Create Email Account</button>
                 </article>
               </div>
 
-              <div class="helper-text">Phone login stays limited during beta. Sign in first, then verify or save your real phone number.</div>
+              <div class="helper-text">Use the sign-in method that is easiest for you. You can add or confirm your phone number in the next step.</div>
             </div>
 
             <div class="auth-stack" id="email-screen" hidden>
@@ -121,8 +121,8 @@
             <div class="auth-stack" id="onboarding-screen" hidden>
               <div>
                 <span class="eyebrow">Step 2 of 3</span>
-                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Complete your beta profile</h2>
-                <p>Now add the phone number you actually use, then choose your consent preferences. OTP verification remains optional during beta and can be enforced later for the full version.</p>
+                <h2 style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Complete your account</h2>
+                <p>Add the phone number you actually use, then choose your communication preferences so rides and support stay smooth.</p>
               </div>
 
               <form class="onboarding-form" id="onboarding-form">
@@ -191,12 +191,12 @@
               <div>
                 <span class="eyebrow">Step 3 of 3</span>
                 <h2 id="account-welcome-title" style="margin:16px 0 12px; font-family:'Sora', 'Segoe UI', sans-serif;">Welcome to OnWay Rides Web</h2>
-                <p id="account-welcome-copy">You are signed in successfully. This shared profile is synced for web and mobile, and the consent values below drive future outreach lists.</p>
+                <p id="account-welcome-copy">You are signed in successfully. Your account details stay available across the website and mobile app.</p>
               </div>
 
               <div class="status-banner">
                 <strong>Login complete</strong>
-                <p>Your account is active on the web beta now. You can review your profile, open direct support contact, or continue using the mobile app with the same account.</p>
+                <p>Your account is ready. Review your details, contact support, or continue in the mobile app with the same login.</p>
               </div>
 
               <div class="account-grid" id="account-data-grid"></div>
@@ -243,8 +243,7 @@
               <div class="footer-title">Access</div>
               <div class="footer-links">
                 <a href="login.html">Web Login</a>
-                <a href="auth-diagnostics.html">Diagnostics</a>
-                <a href="admin-marketing.html">Admin Marketing</a>
+                <a href="drivers.html">Driver Guide</a>
                 <a href="help.html">Support</a>
               </div>
             </div>
