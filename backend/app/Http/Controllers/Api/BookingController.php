@@ -8,6 +8,7 @@ use App\Exceptions\FirebaseConfigurationException;
 use App\Http\Controllers\Api\Concerns\ResolvesFirebaseRequestUser;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\FirebaseUserSyncService;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -71,7 +72,8 @@ class BookingController extends Controller
     public function store(
         Request $request,
         FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
+        FirebaseUserSyncService $userSyncService,
+        PushNotificationService $pushNotificationService
     ): JsonResponse {
         $payload = $request->validate([
             'service_slug' => [
@@ -175,6 +177,24 @@ class BookingController extends Controller
             ->where('b.id', $bookingId)
             ->first();
 
+        $driverUserIds = $this->matchingDriverUserIds(
+            cityId: isset($payload['city_id']) ? (int) $payload['city_id'] : null,
+            serviceTypeId: (int) $serviceType->id
+        );
+
+        $pushNotificationService->sendToUsers(
+            $driverUserIds,
+            title: 'New rider request nearby',
+            body: trim((string) $payload['pickup_address']) . ' to ' . trim((string) $payload['destination_address']),
+            data: [
+                'channel' => 'driver_dispatch',
+                'type' => 'new_booking',
+                'booking_id' => $bookingId,
+                'service_slug' => $serviceType->slug,
+                'city_id' => $payload['city_id'] ?? '',
+            ],
+        );
+
         return response()->json([
             'status' => 'ok',
             'message' => 'Booking created successfully.',
@@ -186,7 +206,8 @@ class BookingController extends Controller
         Request $request,
         int $bookingId,
         FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
+        FirebaseUserSyncService $userSyncService,
+        PushNotificationService $pushNotificationService
     ): JsonResponse {
         $payload = $request->validate([
             'status' => [
@@ -330,6 +351,33 @@ class BookingController extends Controller
                 ->where('b.id', $bookingId)
                 ->first();
         });
+
+        if ($booking !== null) {
+            $driverProfile = DB::table('driver_profiles')
+                ->where('id', DB::table('bookings')->where('id', $bookingId)->value('driver_profile_id'))
+                ->first(['user_id']);
+
+            $recipientUserIds = [];
+            if ((string) $payload['status'] === 'cancelled' && $driverProfile?->user_id !== null) {
+                $recipientUserIds[] = (int) $driverProfile->user_id;
+            } else {
+                $recipientUserIds[] = $user->id === (int) DB::table('bookings')->where('id', $bookingId)->value('rider_user_id')
+                    ? (int) ($driverProfile->user_id ?? 0)
+                    : (int) DB::table('bookings')->where('id', $bookingId)->value('rider_user_id');
+            }
+
+            $pushNotificationService->sendToUsers(
+                $recipientUserIds,
+                title: 'Trip status updated',
+                body: $this->humanizeStatus((string) $payload['status']),
+                data: [
+                    'channel' => 'trip_updates',
+                    'type' => 'booking_status_changed',
+                    'booking_id' => $bookingId,
+                    'status' => (string) $payload['status'],
+                ],
+            );
+        }
 
         return response()->json([
             'status' => 'ok',
@@ -530,6 +578,29 @@ class BookingController extends Controller
     private function humanizeStatus(string $status): string
     {
         return Str::headline(str_replace('_', ' ', $status));
+    }
+
+    /**
+     * @return array<int>
+     */
+    private function matchingDriverUserIds(?int $cityId, int $serviceTypeId): array
+    {
+        return DB::table('driver_profiles as dp')
+            ->join('driver_service_enablements as dse', 'dse.driver_profile_id', '=', 'dp.id')
+            ->where('dp.status', 'active')
+            ->where('dp.onboarding_status', 'approved')
+            ->where('dp.is_online', 1)
+            ->where('dp.is_busy', 0)
+            ->where('dse.service_type_id', $serviceTypeId)
+            ->where('dse.is_enabled', 1)
+            ->when($cityId !== null, function ($query) use ($cityId) {
+                $query->where('dp.city_id', $cityId);
+            })
+            ->pluck('dp.user_id')
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

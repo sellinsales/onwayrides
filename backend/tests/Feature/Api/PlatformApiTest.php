@@ -67,4 +67,29 @@ class PlatformApiTest extends TestCase
                 'message' => 'A Firebase ID token is required.',
             ]);
     }
+
+    public function test_device_token_registration_requires_a_firebase_token(): void
+    {
+        $this->postJson('/api/devices/token', [
+            'token' => 'sample-token',
+            'platform' => 'android',
+        ])
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
+
+    public function test_device_token_removal_requires_a_firebase_token(): void
+    {
+        $this->deleteJson('/api/devices/token', [
+            'token' => 'sample-token',
+        ])
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
 }

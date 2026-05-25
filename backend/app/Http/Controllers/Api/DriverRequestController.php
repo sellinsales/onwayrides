@@ -8,6 +8,7 @@ use App\Exceptions\FirebaseConfigurationException;
 use App\Http\Controllers\Api\Concerns\ResolvesFirebaseRequestUser;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\FirebaseUserSyncService;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +71,8 @@ class DriverRequestController extends Controller
         Request $request,
         int $bookingId,
         FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
+        FirebaseUserSyncService $userSyncService,
+        PushNotificationService $pushNotificationService
     ): JsonResponse {
         try {
             [$user, $driverProfile] = $this->resolveApprovedDriver($request, $tokenVerifier, $userSyncService);
@@ -172,6 +174,22 @@ class DriverRequestController extends Controller
                 ->first();
         });
 
+        $riderUserId = DB::table('bookings')
+            ->where('id', $bookingId)
+            ->value('rider_user_id');
+
+        $pushNotificationService->sendToUsers(
+            [(int) $riderUserId],
+            title: 'Driver assigned',
+            body: 'A driver accepted your booking and is preparing for pickup.',
+            data: [
+                'channel' => 'rider_trip',
+                'type' => 'driver_accepted',
+                'booking_id' => $bookingId,
+                'status' => 'accepted',
+            ],
+        );
+
         return response()->json([
             'status' => 'ok',
             'message' => 'Request accepted successfully.',
@@ -260,7 +278,8 @@ class DriverRequestController extends Controller
         Request $request,
         int $bookingId,
         FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
+        FirebaseUserSyncService $userSyncService,
+        PushNotificationService $pushNotificationService
     ): JsonResponse {
         $payload = $request->validate([
             'amount' => ['required', 'numeric', 'min:1'],
@@ -337,6 +356,23 @@ class DriverRequestController extends Controller
                 'created_at' => $now,
             ]);
         });
+
+        $riderUserId = DB::table('bookings')
+            ->where('id', $bookingId)
+            ->value('rider_user_id');
+
+        $pushNotificationService->sendToUsers(
+            [(int) $riderUserId],
+            title: 'Driver sent a counter-offer',
+            body: 'Open the trip to review the updated fare offer.',
+            data: [
+                'channel' => 'rider_trip',
+                'type' => 'driver_counter_offer',
+                'booking_id' => $bookingId,
+                'status' => 'offered',
+                'counter_amount' => (float) $payload['amount'],
+            ],
+        );
 
         return response()->json([
             'status' => 'ok',

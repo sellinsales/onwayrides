@@ -8,7 +8,7 @@ window.ONWAYRIDES_WEB_CONFIG = {
   supportEmail: "support@onwayrides.com",
   supportPhone: "+46793000786",
   whatsappBusinessNumber: "+46793000786",
-  whatsappChannelUrl: "https://whatsapp.com/channel/replace-me",
+  whatsappChannelUrl: "",
   firebase: {
     apiKey: "AIzaSyCtZYFp9a3-Wl_4ykpC-erNuMsFb2EUFvs",
     authDomain: "onwayrides.firebaseapp.com",

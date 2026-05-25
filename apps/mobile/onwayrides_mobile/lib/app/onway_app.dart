@@ -66,6 +66,7 @@ class _OnWayShellState extends State<OnWayShell> {
   ActiveTrip? _activeTrip;
   List<TripHistoryItem> _tripHistory = const [];
   Timer? _tripRefreshTimer;
+  StreamSubscription<OnWayRealtimeEvent>? _realtimeSubscription;
 
   @override
   void initState() {
@@ -74,6 +75,7 @@ class _OnWayShellState extends State<OnWayShell> {
       _activeTrip = OnWayMockData.activeTrip;
       _tripHistory = OnWayMockData.tripHistory;
     } else {
+      _bindRealtimeUpdates();
       _startTripRefresh();
       unawaited(_refreshTrips());
     }
@@ -81,6 +83,7 @@ class _OnWayShellState extends State<OnWayShell> {
 
   @override
   void dispose() {
+    _realtimeSubscription?.cancel();
     _tripRefreshTimer?.cancel();
     super.dispose();
   }
@@ -90,6 +93,7 @@ class _OnWayShellState extends State<OnWayShell> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.previewMode && !oldWidget.previewMode) {
+      _realtimeSubscription?.cancel();
       _tripRefreshTimer?.cancel();
       setState(() {
         _activeTrip = OnWayMockData.activeTrip;
@@ -101,9 +105,23 @@ class _OnWayShellState extends State<OnWayShell> {
     if (!widget.previewMode &&
         (oldWidget.previewMode ||
             oldWidget.session?.userId != widget.session?.userId)) {
+      _bindRealtimeUpdates();
       _startTripRefresh();
       unawaited(_refreshTrips());
     }
+  }
+
+  void _bindRealtimeUpdates() {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = widget.authService?.realtimeEvents.listen((event) {
+      if (!mounted) {
+        return;
+      }
+
+      if (event.channel == 'rider_trip' || event.channel == 'trip_updates') {
+        unawaited(_refreshTrips());
+      }
+    });
   }
 
   void _startTripRefresh() {

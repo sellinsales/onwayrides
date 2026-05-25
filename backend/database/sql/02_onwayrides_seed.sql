@@ -213,6 +213,12 @@ INSERT INTO users (
     '$2y$12$eqKwsKx9xcgdGaBpKfLh9OcZ1.R4D4NHWKLER.zDLWqRymqWsKSbK',
     'admin', 'active', NULL, NULL, 'ONWAYADMIN', NULL, NOW(), NOW(), NULL,
     JSON_OBJECT('seeded', TRUE, 'notes', 'Initial platform administrator')
+  ),
+  (
+    2, NULL, 'Demo Driver', 'Demo', 'Driver', 'demo.driver@onwayrides.com', '+923000000002', '+92',
+    '$2y$12$eqKwsKx9xcgdGaBpKfLh9OcZ1.R4D4NHWKLER.zDLWqRymqWsKSbK',
+    'driver', 'active', NULL, '35202-1234567-8', 'ONWAYDEMO', NULL, NOW(), NOW(), NULL,
+    JSON_OBJECT('seeded', TRUE, 'demo_account', TRUE, 'notes', 'Shared approved driver for QA demos')
   )
 ON DUPLICATE KEY UPDATE
   full_name = VALUES(full_name),
@@ -230,9 +236,96 @@ ON DUPLICATE KEY UPDATE
   metadata = VALUES(metadata),
   updated_at = CURRENT_TIMESTAMP;
 
+INSERT INTO driver_profiles (
+  id, user_id, fleet_owner_id, city_id, driver_code, license_number, business_model,
+  status, onboarding_status, is_online, is_busy, accepts_cash, accepts_wallet,
+  accepts_card, rating_average, rating_count, trips_completed, wallet_hold_amount,
+  last_latitude, last_longitude, last_location_at, notes
+) VALUES
+  (
+    1, 2, NULL, 1, 'DRV-DEMO01', 'LIC-DEMO-001', 'commission',
+    'active', 'approved', 0, 0, 1, 0,
+    0, 4.90, 48, 126, 0.00,
+    31.5204000, 74.3587000, NOW(), 'Shared demo driver account for testers.'
+  )
+ON DUPLICATE KEY UPDATE
+  city_id = VALUES(city_id),
+  driver_code = VALUES(driver_code),
+  license_number = VALUES(license_number),
+  business_model = VALUES(business_model),
+  status = VALUES(status),
+  onboarding_status = VALUES(onboarding_status),
+  is_online = VALUES(is_online),
+  is_busy = VALUES(is_busy),
+  accepts_cash = VALUES(accepts_cash),
+  accepts_wallet = VALUES(accepts_wallet),
+  accepts_card = VALUES(accepts_card),
+  rating_average = VALUES(rating_average),
+  rating_count = VALUES(rating_count),
+  trips_completed = VALUES(trips_completed),
+  wallet_hold_amount = VALUES(wallet_hold_amount),
+  last_latitude = VALUES(last_latitude),
+  last_longitude = VALUES(last_longitude),
+  last_location_at = VALUES(last_location_at),
+  notes = VALUES(notes),
+  updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO vehicles (
+  id, fleet_owner_id, registered_owner_user_id, vehicle_type_id, vehicle_make_id,
+  vehicle_model_id, plate_number, color, year_of_manufacture, seats, fuel_type,
+  status, insurance_expiry_date, inspection_expiry_date, metadata
+) VALUES
+  (
+    1, NULL, 2, 1, 1,
+    1, 'LEA-DEMO-01', 'White', 2022, 4, 'petrol',
+    'active', DATE_ADD(CURDATE(), INTERVAL 12 MONTH), DATE_ADD(CURDATE(), INTERVAL 6 MONTH),
+    JSON_OBJECT('seeded', TRUE, 'demo_vehicle', TRUE)
+  )
+ON DUPLICATE KEY UPDATE
+  registered_owner_user_id = VALUES(registered_owner_user_id),
+  vehicle_type_id = VALUES(vehicle_type_id),
+  vehicle_make_id = VALUES(vehicle_make_id),
+  vehicle_model_id = VALUES(vehicle_model_id),
+  color = VALUES(color),
+  year_of_manufacture = VALUES(year_of_manufacture),
+  seats = VALUES(seats),
+  fuel_type = VALUES(fuel_type),
+  status = VALUES(status),
+  insurance_expiry_date = VALUES(insurance_expiry_date),
+  inspection_expiry_date = VALUES(inspection_expiry_date),
+  metadata = VALUES(metadata),
+  updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO driver_vehicle_assignments (
+  id, driver_profile_id, vehicle_id, assigned_by_user_id, starts_at, ends_at, is_current, notes
+) VALUES
+  (
+    1, 1, 1, 1, NOW(), NULL, 1, 'Default assigned demo vehicle for QA driver.'
+  )
+ON DUPLICATE KEY UPDATE
+  vehicle_id = VALUES(vehicle_id),
+  assigned_by_user_id = VALUES(assigned_by_user_id),
+  starts_at = VALUES(starts_at),
+  ends_at = VALUES(ends_at),
+  is_current = VALUES(is_current),
+  notes = VALUES(notes),
+  updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO driver_service_enablements (
+  id, driver_profile_id, service_type_id, is_enabled, approved_by_user_id
+) VALUES
+  (1, 1, 1, 1, 1),
+  (2, 1, 2, 1, 1),
+  (3, 1, 6, 1, 1)
+ON DUPLICATE KEY UPDATE
+  is_enabled = VALUES(is_enabled),
+  approved_by_user_id = VALUES(approved_by_user_id),
+  updated_at = CURRENT_TIMESTAMP;
+
 INSERT INTO wallets (id, user_id, wallet_type, currency, balance, hold_balance, status)
 VALUES
-  (1, 1, 'main', 'PKR', 0.00, 0.00, 'active')
+  (1, 1, 'main', 'PKR', 0.00, 0.00, 'active'),
+  (2, 2, 'main', 'PKR', 2500.00, 0.00, 'active')
 ON DUPLICATE KEY UPDATE
   currency = VALUES(currency),
   balance = VALUES(balance),
@@ -242,7 +335,8 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO notification_preferences (id, user_id, push_enabled, sms_enabled, email_enabled, marketing_enabled)
 VALUES
-  (1, 1, 1, 1, 1, 0)
+  (1, 1, 1, 1, 1, 0),
+  (2, 2, 1, 1, 1, 0)
 ON DUPLICATE KEY UPDATE
   push_enabled = VALUES(push_enabled),
   sms_enabled = VALUES(sms_enabled),

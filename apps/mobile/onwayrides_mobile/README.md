@@ -50,3 +50,20 @@ Inside `apps/mobile/onwayrides_mobile`:
 - Android and Web are the Firebase-configured target platforms in this repo
 - preview mode still exists when Firebase config is missing, so UI review is not blocked
 - driver and fleet onboarding still require additional backend endpoints after auth
+
+## Shared demo driver
+
+The backend seed now includes a shared approved driver profile:
+
+- email: `demo.driver@onwayrides.com`
+- role: `driver`
+- city: `Lahore`
+- status: `active`
+- onboarding: `approved`
+
+Important:
+
+- This account is intended for QA demos, not production operations.
+- If the matching Firebase Auth user does not exist yet, create it once with the same email using the app register flow or Firebase Console.
+- On first sign-in, Laravel will bind that Firebase identity to the seeded approved driver record automatically.
+- Multiple testers can use it, but they will share the same live driver state, current booking state, and push notifications.

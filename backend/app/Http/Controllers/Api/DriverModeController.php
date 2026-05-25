@@ -68,13 +68,37 @@ class DriverModeController extends Controller
                     ]);
 
                 if ($enabledIds !== []) {
-                    DB::table('driver_service_enablements')
+                    $existingEnabledIds = DB::table('driver_service_enablements')
                         ->where('driver_profile_id', $driverProfile->id)
                         ->whereIn('service_type_id', $enabledIds)
+                        ->pluck('service_type_id')
+                        ->map(fn ($id): int => (int) $id)
+                        ->all();
+
+                    DB::table('driver_service_enablements')
+                        ->where('driver_profile_id', $driverProfile->id)
+                        ->whereIn('service_type_id', $existingEnabledIds)
                         ->update([
                             'is_enabled' => 1,
                             'updated_at' => $now,
                         ]);
+
+                    $missingEnabledIds = array_values(array_diff($enabledIds, $existingEnabledIds));
+
+                    if ($missingEnabledIds !== []) {
+                        DB::table('driver_service_enablements')->insert(
+                            array_map(
+                                fn (int $serviceTypeId): array => [
+                                    'driver_profile_id' => $driverProfile->id,
+                                    'service_type_id' => $serviceTypeId,
+                                    'is_enabled' => 1,
+                                    'created_at' => $now,
+                                    'updated_at' => $now,
+                                ],
+                                $missingEnabledIds
+                            )
+                        );
+                    }
                 }
             }
         } catch (FirebaseConfigurationException $exception) {

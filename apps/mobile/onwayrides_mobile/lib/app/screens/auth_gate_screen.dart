@@ -148,6 +148,8 @@ class _EmailAuthScreen extends StatefulWidget {
 }
 
 class _EmailAuthScreenState extends State<_EmailAuthScreen> {
+  static const _demoDriverEmail = 'demo.driver@onwayrides.com';
+
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -219,6 +221,14 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  void _useDemoDriverEmail() {
+    setState(() {
+      _registerMode = false;
+      _errorMessage = null;
+      _emailController.text = _demoDriverEmail;
+    });
   }
 
   @override
@@ -388,6 +398,37 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                OnWayPanel(
+                  backgroundColor: OnWayTheme.slate,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Shared demo driver',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Use the seeded approved driver account to test dispatch, request acceptance, and live trip flow from the same app shell.',
+                      ),
+                      const SizedBox(height: 12),
+                      SelectableText(
+                        _demoDriverEmail,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sign in with the shared Firebase password configured for this account. All testers will share the same live driver state and notifications.',
+                      ),
+                      const SizedBox(height: 14),
+                      FilledButton.tonal(
+                        onPressed: _loading ? null : _useDemoDriverEmail,
+                        child: const Text('Use demo driver email'),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),

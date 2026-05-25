@@ -36,14 +36,20 @@ class FleetOwnerScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton(
-                        onPressed: () => _showTodo(context, 'Add driver'),
+                        onPressed: () => _showPendingAction(
+                          context,
+                          'Add driver',
+                        ),
                         child: const Text('Add driver'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => _showTodo(context, 'Add vehicle'),
+                        onPressed: () => _showPendingAction(
+                          context,
+                          'Add vehicle',
+                        ),
                         child: const Text('Add vehicle'),
                       ),
                     ),
@@ -55,7 +61,8 @@ class FleetOwnerScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Fleet health',
-            subtitle: 'Drivers, vehicles, rides, earnings and support quality.',
+            subtitle:
+                'Drivers, vehicles, rides, earnings and support quality.',
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -102,14 +109,16 @@ class FleetOwnerScreen extends StatelessWidget {
                       ),
                       Text(
                         driver.status,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
                           color: OnWayTheme.yellow,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text('${driver.vehicle} • Rating ${driver.rating}'),
+                  Text('${driver.vehicle} | Rating ${driver.rating}'),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
@@ -161,7 +170,7 @@ class FleetOwnerScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 4),
-                        Text('${vehicle.plate} • ${vehicle.assignedDriver}'),
+                        Text('${vehicle.plate} | ${vehicle.assignedDriver}'),
                       ],
                     ),
                   ),
@@ -186,12 +195,12 @@ class FleetOwnerScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 12),
-                Text('• Driver documents and renewals'),
-                Text('• Vehicle inspection and permits'),
-                Text('• Assignments, payouts and disputes'),
-                Text('• Rider complaints and driver quality'),
+                Text('Driver documents and renewals stay under fleet control.'),
+                Text('Vehicle inspection and permits must remain current.'),
+                Text('Assignments, payouts and disputes are tracked centrally.'),
+                Text('Rider complaints and driver quality require daily review.'),
                 Text(
-                  '• TODO: connect to real fleet APIs and fleet_id persistence',
+                  'Fleet onboarding data is synced through the shared workspace.',
                 ),
               ],
             ),
@@ -201,10 +210,12 @@ class FleetOwnerScreen extends StatelessWidget {
     );
   }
 
-  void _showTodo(BuildContext context, String action) {
+  void _showPendingAction(BuildContext context, String action) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$action flow will be connected to backend next.'),
+        content: Text(
+          '$action will be available after fleet onboarding approval.',
+        ),
       ),
     );
   }

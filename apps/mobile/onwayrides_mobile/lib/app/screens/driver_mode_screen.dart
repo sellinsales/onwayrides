@@ -39,6 +39,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   Future<OnWayDriverWorkspaceBundle>? _workspaceFuture;
   Future<OnWayDriverDispatchFeed>? _dispatchFuture;
   Timer? _dispatchTimer;
+  StreamSubscription<OnWayRealtimeEvent>? _realtimeSubscription;
 
   final _licenseController = TextEditingController();
   final _nationalIdController = TextEditingController();
@@ -69,12 +70,14 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   void initState() {
     super.initState();
     if (!widget.previewMode) {
+      _bindRealtimeUpdates();
       _workspaceFuture = widget.authService!.fetchDriverWorkspace();
     }
   }
 
   @override
   void dispose() {
+    _realtimeSubscription?.cancel();
     _dispatchTimer?.cancel();
     _licenseController.dispose();
     _nationalIdController.dispose();
@@ -83,6 +86,23 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
     _seatsController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _bindRealtimeUpdates() {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = widget.authService?.realtimeEvents.listen((event) {
+      if (!mounted) {
+        return;
+      }
+
+      if (event.channel != 'driver_dispatch' && event.channel != 'trip_updates') {
+        return;
+      }
+
+      setState(() {
+        _dispatchFuture = widget.authService!.fetchDriverRequests();
+      });
+    });
   }
 
   Future<void> _reloadWorkspace() async {

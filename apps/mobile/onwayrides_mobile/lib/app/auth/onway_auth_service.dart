@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -36,6 +37,22 @@ class OnWayPhoneVerificationChallenge {
   final bool instantlyVerified;
 }
 
+class OnWayRealtimeEvent {
+  const OnWayRealtimeEvent({
+    required this.channel,
+    required this.type,
+    this.bookingId,
+    this.status,
+    this.data = const <String, String>{},
+  });
+
+  final String channel;
+  final String type;
+  final int? bookingId;
+  final String? status;
+  final Map<String, String> data;
+}
+
 class OnWayAuthService {
   static const _requestTimeout = Duration(seconds: 20);
   static const _productionApiBaseUrl = 'https://api.onwayrides.com/api';
@@ -46,11 +63,19 @@ class OnWayAuthService {
     String? apiBaseUrl,
   }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
        _httpClient = httpClient ?? http.Client(),
+       _firebaseMessaging = FirebaseMessaging.instance,
        _apiBaseUrl = apiBaseUrl;
 
   final FirebaseAuth _firebaseAuth;
   final http.Client _httpClient;
+  final FirebaseMessaging _firebaseMessaging;
   final String? _apiBaseUrl;
+  final StreamController<OnWayRealtimeEvent> _realtimeEventsController =
+      StreamController<OnWayRealtimeEvent>.broadcast();
+  bool _realtimeInitialized = false;
+
+  Stream<OnWayRealtimeEvent> get realtimeEvents =>
+      _realtimeEventsController.stream;
 
   Stream<User?> authStateChanges() => _firebaseAuth.authStateChanges();
 
@@ -159,6 +184,8 @@ class OnWayAuthService {
             'Unable to sync Firebase user with backend.',
       );
     }
+
+    unawaited(_initializeRealtime());
 
     return OnWayAuthSession.fromJson(responseBody);
   }
@@ -955,7 +982,10 @@ class OnWayAuthService {
     }
   }
 
-  Future<void> signOut() => _firebaseAuth.signOut();
+  Future<void> signOut() async {
+    await _removeCurrentDeviceToken();
+    await _firebaseAuth.signOut();
+  }
 
   String normalizePhoneNumber({
     required String countryCode,
@@ -1064,6 +1094,12 @@ class OnWayAuthService {
             headers: headers,
             body: jsonEncode(body ?? const {}),
           );
+        case 'DELETE':
+          return _httpClient.delete(
+            uri,
+            headers: headers,
+            body: jsonEncode(body ?? const {}),
+          );
         default:
           throw UnsupportedError('Unsupported HTTP method: $method');
       }
@@ -1133,6 +1169,125 @@ class OnWayAuthService {
         ),
       );
     }
+  }
+
+  Future<void> _initializeRealtime() async {
+    if (_realtimeInitialized) {
+      await _syncCurrentDeviceToken();
+      return;
+    }
+
+    _realtimeInitialized = true;
+
+    try {
+      await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (_) {
+      // Ignore permission failures on unsupported platforms.
+    }
+
+    try {
+      await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (_) {
+      // Only supported on Apple platforms.
+    }
+
+    FirebaseMessaging.onMessage.listen(_handleRealtimeMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleRealtimeMessage);
+    _firebaseMessaging.onTokenRefresh.listen((_) {
+      unawaited(_syncCurrentDeviceToken());
+    });
+
+    await _syncCurrentDeviceToken();
+  }
+
+  Future<void> _syncCurrentDeviceToken() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null || !(kIsWeb || Platform.isAndroid || Platform.isIOS)) {
+      return;
+    }
+
+    try {
+      final token = await _firebaseMessaging.getToken();
+      if (token == null || token.trim().isEmpty) {
+        return;
+      }
+
+      await _authorizedJsonRequest(
+        method: 'POST',
+        path: '/devices/token',
+        body: {
+          'token': token.trim(),
+          'platform': _pushPlatformLabel(),
+          'device_name': _defaultPlatformLabel(),
+        },
+        fallback: 'Unable to register this device for live dispatch.',
+      );
+    } catch (_) {
+      // Push registration should not block sign-in or trip usage.
+    }
+  }
+
+  Future<void> _removeCurrentDeviceToken() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null || !(kIsWeb || Platform.isAndroid || Platform.isIOS)) {
+      return;
+    }
+
+    try {
+      final token = await _firebaseMessaging.getToken();
+      if (token == null || token.trim().isEmpty) {
+        return;
+      }
+
+      await _authorizedJsonRequest(
+        method: 'DELETE',
+        path: '/devices/token',
+        body: {'token': token.trim()},
+        fallback: 'Unable to unregister this device from live dispatch.',
+      );
+    } catch (_) {
+      // Signing out should still complete even if token cleanup fails.
+    }
+  }
+
+  void _handleRealtimeMessage(RemoteMessage message) {
+    final data = message.data.map(
+      (key, value) => MapEntry(key, value.toString()),
+    );
+    final channel = data['channel']?.trim();
+    final type = data['type']?.trim();
+
+    if (channel == null || channel.isEmpty || type == null || type.isEmpty) {
+      return;
+    }
+
+    _realtimeEventsController.add(
+      OnWayRealtimeEvent(
+        channel: channel,
+        type: type,
+        bookingId: int.tryParse(data['booking_id'] ?? ''),
+        status: data['status'],
+        data: data,
+      ),
+    );
+  }
+
+  String _pushPlatformLabel() {
+    if (kIsWeb) {
+      return 'web';
+    }
+    if (Platform.isIOS) {
+      return 'ios';
+    }
+    return 'android';
   }
 
   String _mapPhoneVerificationError(

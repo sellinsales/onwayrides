@@ -10,6 +10,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 
@@ -113,7 +114,8 @@ function configureEmailScreen(mode = "signin") {
 }
 
 function buildApiUrl(path) {
-  return `${String(config.apiBaseUrl ?? "").replace(/\/$/, "")}${path}`;
+  const apiBaseUrl = String(config.apiBaseUrl ?? `${window.location.origin}/api`).replace(/\/$/, "");
+  return `${apiBaseUrl}${path}`;
 }
 
 async function withIdToken(callback) {
@@ -283,7 +285,10 @@ async function handleEmailAuth(event, mode = "signin") {
 
   try {
     if (mode === "register") {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      if (fullName) {
+        await updateProfile(credential.user, { displayName: fullName });
+      }
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
