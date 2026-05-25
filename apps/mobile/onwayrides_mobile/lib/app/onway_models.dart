@@ -52,6 +52,38 @@ class FareOption {
   final bool negotiable;
 }
 
+class OnWayPlaceSuggestion {
+  const OnWayPlaceSuggestion({
+    required this.title,
+    required this.addressLine,
+    required this.icon,
+    this.badge,
+    this.isSaved = false,
+  });
+
+  final String title;
+  final String addressLine;
+  final IconData icon;
+  final String? badge;
+  final bool isSaved;
+}
+
+class OnWayContextualSuggestion {
+  const OnWayContextualSuggestion({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.serviceType,
+    this.ctaLabel = 'Use this flow',
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+  final ServiceType serviceType;
+  final String ctaLabel;
+}
+
 class DriverProfile {
   const DriverProfile({
     required this.name,

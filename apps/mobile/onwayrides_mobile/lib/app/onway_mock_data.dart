@@ -114,6 +114,144 @@ class OnWayMockData {
     ),
   ];
 
+  static const savedPlaces = <OnWayPlaceSuggestion>[
+    OnWayPlaceSuggestion(
+      title: 'Home',
+      addressLine: 'Johar Town, Lahore',
+      icon: Icons.home_rounded,
+      badge: 'Saved',
+      isSaved: true,
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Office',
+      addressLine: 'Gulberg Main Boulevard, Lahore',
+      icon: Icons.business_center_rounded,
+      badge: 'Saved',
+      isSaved: true,
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Airport',
+      addressLine: 'Allama Iqbal International Airport',
+      icon: Icons.flight_takeoff_rounded,
+      badge: 'Saved',
+      isSaved: true,
+    ),
+    OnWayPlaceSuggestion(
+      title: 'School',
+      addressLine: 'Beaconhouse Canal Campus',
+      icon: Icons.school_rounded,
+      badge: 'Saved',
+      isSaved: true,
+    ),
+  ];
+
+  static const recentPlaces = <OnWayPlaceSuggestion>[
+    OnWayPlaceSuggestion(
+      title: 'Packages Mall',
+      addressLine: 'Walton Road, Lahore',
+      icon: Icons.local_mall_rounded,
+      badge: 'Recent',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Emporium Mall',
+      addressLine: 'Abdul Haque Road, Lahore',
+      icon: Icons.storefront_rounded,
+      badge: 'Recent',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Liberty Roundabout',
+      addressLine: 'Gulberg III, Lahore',
+      icon: Icons.place_rounded,
+      badge: 'Recent',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Rawalakot Bypass',
+      addressLine: 'Poonch, Azad Kashmir',
+      icon: Icons.route_rounded,
+      badge: 'Recent',
+    ),
+  ];
+
+  static const locationSuggestions = <OnWayPlaceSuggestion>[
+    OnWayPlaceSuggestion(
+      title: 'Current location',
+      addressLine: 'Use device GPS pin',
+      icon: Icons.my_location_rounded,
+      badge: 'GPS',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Muzaffarabad City',
+      addressLine: 'Old Secretariat Road, Azad Kashmir',
+      icon: Icons.location_city_rounded,
+      badge: 'AJK',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Mirpur City',
+      addressLine: 'Sector F-1, Azad Kashmir',
+      icon: Icons.location_city_rounded,
+      badge: 'AJK',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Bhimber Chowk',
+      addressLine: 'Bhimber, Azad Kashmir',
+      icon: Icons.location_city_rounded,
+      badge: 'AJK',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Daewoo Terminal',
+      addressLine: 'Thokar Niaz Baig, Lahore',
+      icon: Icons.directions_bus_rounded,
+      badge: 'Terminal',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'LGS 55 Main',
+      addressLine: 'Gulberg Lahore',
+      icon: Icons.school_rounded,
+      badge: 'School',
+    ),
+    OnWayPlaceSuggestion(
+      title: 'Cargo Market',
+      addressLine: 'Badami Bagh, Lahore',
+      icon: Icons.local_shipping_rounded,
+      badge: 'Courier',
+    ),
+  ];
+
+  static const riderContextualSuggestions = <OnWayContextualSuggestion>[
+    OnWayContextualSuggestion(
+      title: 'Airport transfer available',
+      description:
+          'If you are heading to a terminal or booking for family arrival, switch to the airport flow for luggage-ready vehicles.',
+      icon: Icons.flight_takeoff_rounded,
+      serviceType: ServiceType.airport,
+      ctaLabel: 'Switch to airport',
+    ),
+    OnWayContextualSuggestion(
+      title: 'Courier instead of rider trip?',
+      description:
+          'Sending documents or a parcel is faster through the courier flow than a normal taxi booking.',
+      icon: Icons.inventory_2_rounded,
+      serviceType: ServiceType.courier,
+      ctaLabel: 'Use courier',
+    ),
+    OnWayContextualSuggestion(
+      title: 'Need a rental for the day?',
+      description:
+          'Long waits, meetings, or family trips are easier in the rental flow with hourly and daily options.',
+      icon: Icons.directions_car_filled_rounded,
+      serviceType: ServiceType.rentCar,
+      ctaLabel: 'Open rentals',
+    ),
+    OnWayContextualSuggestion(
+      title: 'Set a recurring school route',
+      description:
+          'If this is a repeated pickup, save time by switching to the school and office route flow.',
+      icon: Icons.school_rounded,
+      serviceType: ServiceType.schoolOffice,
+      ctaLabel: 'Use school flow',
+    ),
+  ];
+
   static const driver = DriverProfile(
     name: 'Ali Raza',
     rating: '4.9',
@@ -275,5 +413,31 @@ class OnWayMockData {
       fareLabel: fareOptions.first.priceLabel,
       driver: driver,
     );
+  }
+
+  static List<OnWayContextualSuggestion> contextualSuggestionsFor(
+    String routeText,
+  ) {
+    final normalized = routeText.toLowerCase();
+    final matches = <OnWayContextualSuggestion>[];
+
+    if (normalized.contains('airport') || normalized.contains('terminal')) {
+      matches.add(riderContextualSuggestions.first);
+    }
+    if (normalized.contains('school') ||
+        normalized.contains('campus') ||
+        normalized.contains('office')) {
+      matches.add(riderContextualSuggestions[3]);
+    }
+    if (normalized.contains('cargo') ||
+        normalized.contains('market') ||
+        normalized.contains('parcel')) {
+      matches.add(riderContextualSuggestions[1]);
+    }
+
+    matches.add(riderContextualSuggestions[2]);
+
+    final unique = <ServiceType>{};
+    return matches.where((item) => unique.add(item.serviceType)).toList();
   }
 }

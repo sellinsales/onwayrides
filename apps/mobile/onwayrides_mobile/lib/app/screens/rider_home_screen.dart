@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../onway_mock_data.dart';
 import '../onway_models.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
@@ -30,161 +31,68 @@ class RiderHomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const BrandHeader(
+                    caption: 'Search first. Then choose the right service.',
                     trailing: CircleAvatar(
                       radius: 22,
                       backgroundColor: Colors.white10,
                       child: Icon(Icons.notifications_none_rounded),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  _HeroCard(onOpenBooking: onOpenBooking),
+                  const SizedBox(height: 20),
+                  _SearchFirstCard(onOpenBooking: onOpenBooking),
                   const SizedBox(height: 16),
-                  const _SignalRow(),
+                  _QuickIntentRow(
+                    services: services,
+                    onOpenBooking: onOpenBooking,
+                  ),
                   const SizedBox(height: 24),
-                  SectionHeading(
-                    title: 'Quick services',
+                  const SectionHeading(
+                    title: 'Saved and recent places',
                     subtitle:
-                        'Book fast, negotiate where needed, and keep every service inside one premium flow.',
-                    action: TextButton(
-                      onPressed: () => onOpenBooking(),
-                      child: const Text('Plan a trip'),
-                    ),
+                        'Focus riders on familiar locations first so they book faster.',
                   ),
                   const SizedBox(height: 14),
-                  _ServiceGrid(services: services, onTap: onOpenBooking),
-                  const SizedBox(height: 24),
+                  _PlaceShortcuts(
+                    places: OnWayMockData.savedPlaces,
+                    onTap: () => onOpenBooking(),
+                  ),
+                  const SizedBox(height: 12),
+                  _RecentPlaceList(
+                    places: OnWayMockData.recentPlaces,
+                    onTap: () => onOpenBooking(),
+                  ),
                   if (activeTrip != null) ...[
+                    const SizedBox(height: 24),
                     SectionHeading(
                       title: 'Active booking',
                       subtitle: activeTrip!.statusLine,
                       action: TextButton(
                         onPressed: () => onOpenTracking(activeTrip),
-                        child: const Text('Track ride'),
+                        child: const Text('Track'),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    OnWayPanel(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      activeTrip!.serviceTitle,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${activeTrip!.pickup} -> ${activeTrip!.destination}',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0x29FFC107),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  activeTrip!.fareLabel,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(color: OnWayTheme.yellow),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 28,
-                                backgroundColor: Colors.white10,
-                                backgroundImage: activeTrip!.driver != null
-                                    ? AssetImage(
-                                        activeTrip!.driver!.avatarAsset,
-                                      )
-                                    : null,
-                                child: activeTrip!.driver == null
-                                    ? const Icon(
-                                        Icons.support_agent_rounded,
-                                        color: OnWayTheme.yellow,
-                                      )
-                                    : null,
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      activeTrip!.driver?.name ??
-                                          'OnWay dispatch is assigning your driver',
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      activeTrip!.driver != null
-                                          ? '${activeTrip!.driver!.vehicle}\n${activeTrip!.driver!.eta}'
-                                          : 'Your booking is live in the dispatch queue.',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              FilledButton.tonal(
-                                onPressed: () => onOpenTracking(activeTrip),
-                                child: const Text('Open'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    _ActiveTripCard(
+                      trip: activeTrip!,
+                      onOpenTracking: onOpenTracking,
                     ),
-                    const SizedBox(height: 24),
                   ],
-                  SectionHeading(
-                    title: 'Built for local travel',
+                  const SizedBox(height: 24),
+                  const SectionHeading(
+                    title: 'Smart suggestions',
                     subtitle:
-                        'Affordable pricing, familiar vehicles, and service design tuned for local markets.',
+                        'Guide riders into the best service without showing every option at once.',
                   ),
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: const [
-                      _ShowcaseCard(
-                        width: 340,
-                        title: 'School, office and family routines',
-                        subtitle:
-                            'Set recurring pickups, trusted drivers, and simple cash-first checkout.',
-                        imageAsset: 'assets/showcase/rider_passenger.png',
-                      ),
-                      _ShowcaseCard(
-                        width: 340,
-                        title: 'One app for rides, food and courier',
-                        subtitle:
-                            'Scale from a quick ride to intercity bookings without changing apps.',
-                        imageAsset: 'assets/showcase/app_mockup.png',
-                      ),
-                    ],
+                  _SuggestionStrip(
+                    suggestions: OnWayMockData.riderContextualSuggestions,
+                    onSelect: (serviceType) {
+                      final service = services.firstWhere(
+                        (item) => item.type == serviceType,
+                        orElse: () => services.first,
+                      );
+                      onOpenBooking(service);
+                    },
                   ),
                 ],
               ),
@@ -196,227 +104,440 @@ class RiderHomeScreen extends StatelessWidget {
   }
 }
 
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.onOpenBooking});
+class _SearchFirstCard extends StatelessWidget {
+  const _SearchFirstCard({required this.onOpenBooking});
 
   final Future<void> Function([OnWayService? service]) onOpenBooking;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 352,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        image: const DecorationImage(
-          image: AssetImage('assets/showcase/hero_banner.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.black.withValues(alpha: 0.82),
-              Colors.black.withValues(alpha: 0.38),
-            ],
+    return OnWayPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Book rides, rentals and deliveries from one app',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(999),
+          const SizedBox(height: 8),
+          Text(
+            'Start with the route. The app can then narrow the right vehicle or service for that trip.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 18),
+          _SearchField(
+            icon: Icons.my_location_rounded,
+            title: 'Pickup',
+            value: 'Current location',
+            onTap: () => onOpenBooking(),
+          ),
+          const SizedBox(height: 10),
+          _SearchField(
+            icon: Icons.location_on_outlined,
+            title: 'Destination',
+            value: 'Where to?',
+            emphasized: true,
+            onTap: () => onOpenBooking(),
+          ),
+          const SizedBox(height: 10),
+          _SearchField(
+            icon: Icons.schedule_rounded,
+            title: 'When',
+            value: 'Now or schedule later',
+            onTap: () => onOpenBooking(),
+          ),
+          const SizedBox(height: 18),
+          FilledButton(
+            onPressed: () => onOpenBooking(),
+            child: const Text('Search rides'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickIntentRow extends StatelessWidget {
+  const _QuickIntentRow({required this.services, required this.onOpenBooking});
+
+  final List<OnWayService> services;
+  final Future<void> Function([OnWayService? service]) onOpenBooking;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryTypes = [
+      ServiceType.rideShare,
+      ServiceType.airport,
+      ServiceType.courier,
+      ServiceType.rentCar,
+    ];
+
+    final quickServices = primaryTypes
+        .map(
+          (type) => services.firstWhere(
+            (service) => service.type == type,
+            orElse: () => services.first,
+          ),
+        )
+        .toList(growable: false);
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: quickServices
+          .map(
+            (service) => ActionChip(
+              avatar: Icon(service.icon, size: 18),
+              label: Text(service.title),
+              onPressed: () => onOpenBooking(service),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class _PlaceShortcuts extends StatelessWidget {
+  const _PlaceShortcuts({required this.places, required this.onTap});
+
+  final List<OnWayPlaceSuggestion> places;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final place in places) ...[
+            SizedBox(
+              width: 156,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(20),
+                child: Ink(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: OnWayTheme.charcoal,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0x29FFC107),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(place.icon, color: OnWayTheme.yellow),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        place.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        place.addressLine,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: const Text('Lahore | Cash first | Driver offers'),
             ),
-            const Spacer(),
-            Text(
-              'Your ride.\nYour way.',
-              style: Theme.of(context).textTheme.displayMedium,
+            const SizedBox(width: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentPlaceList extends StatelessWidget {
+  const _RecentPlaceList({required this.places, required this.onTap});
+
+  final List<OnWayPlaceSuggestion> places;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: places
+          .map(
+            (place) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(20),
+                child: Ink(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: OnWayTheme.charcoal,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(place.icon, color: OnWayTheme.yellow),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              place.title,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              place.addressLine,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (place.badge != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            place.badge!,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Modern local mobility for rides, food, rentals, courier, airport, school transport, and prebookings.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 18),
-            InkWell(
-              onTap: () => onOpenBooking(),
-              borderRadius: BorderRadius.circular(18),
-              child: Ink(
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class _ActiveTripCard extends StatelessWidget {
+  const _ActiveTripCard({required this.trip, required this.onOpenTracking});
+
+  final ActiveTrip trip;
+  final Future<void> Function([ActiveTrip? trip]) onOpenTracking;
+
+  @override
+  Widget build(BuildContext context) {
+    return OnWayPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trip.serviceTitle,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${trip.pickup} -> ${trip.destination}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
+                  horizontal: 12,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: OnWayTheme.white,
-                  borderRadius: BorderRadius.circular(18),
+                  color: const Color(0x29FFC107),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Row(
+                child: Text(
+                  trip.fareLabel,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: OnWayTheme.yellow),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white10,
+                backgroundImage: trip.driver != null
+                    ? AssetImage(trip.driver!.avatarAsset)
+                    : null,
+                child: trip.driver == null
+                    ? const Icon(
+                        Icons.support_agent_rounded,
+                        color: OnWayTheme.yellow,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.search_rounded, color: OnWayTheme.black),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Where to?',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(color: OnWayTheme.black),
-                      ),
+                    Text(
+                      trip.driver?.name ??
+                          'OnWay dispatch is assigning your driver',
                     ),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: OnWayTheme.black,
+                    const SizedBox(height: 4),
+                    Text(
+                      trip.driver != null
+                          ? '${trip.driver!.vehicle}\n${trip.driver!.eta}'
+                          : 'Your booking is live in the dispatch queue.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.tonal(
+                onPressed: () => onOpenTracking(trip),
+                child: const Text('Open'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuggestionStrip extends StatelessWidget {
+  const _SuggestionStrip({required this.suggestions, required this.onSelect});
+
+  final List<OnWayContextualSuggestion> suggestions;
+  final ValueChanged<ServiceType> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final suggestion in suggestions) ...[
+            SizedBox(
+              width: 250,
+              child: OnWayPanel(
+                backgroundColor: OnWayTheme.slate,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(suggestion.icon, color: OnWayTheme.yellow, size: 24),
+                    const SizedBox(height: 12),
+                    Text(
+                      suggestion.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      suggestion.description,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 14),
+                    TextButton(
+                      onPressed: () => onSelect(suggestion.serviceType),
+                      child: Text(suggestion.ctaLabel),
                     ),
                   ],
                 ),
               ),
             ),
+            const SizedBox(width: 12),
           ],
-        ),
+        ],
       ),
     );
   }
 }
 
-class _SignalRow extends StatelessWidget {
-  const _SignalRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth > 720
-            ? (constraints.maxWidth - 24) / 3
-            : constraints.maxWidth;
-
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _SignalCard(
-              width: width,
-              title: '10 services',
-              subtitle: 'Taxi, bike, rickshaw, courier, airport and rentals',
-            ),
-            _SignalCard(
-              width: width,
-              title: 'Cash-first',
-              subtitle:
-                  'Built for trust and affordability before full wallet rollout',
-            ),
-            _SignalCard(
-              width: width,
-              title: 'Fleet-ready',
-              subtitle: 'Driver mode and fleet operations share one system',
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _SignalCard extends StatelessWidget {
-  const _SignalCard({
-    required this.width,
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.icon,
     required this.title,
-    required this.subtitle,
+    required this.value,
+    required this.onTap,
+    this.emphasized = false,
   });
 
-  final double width;
+  final IconData icon;
   final String title;
-  final String subtitle;
+  final String value;
+  final VoidCallback onTap;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: OnWayPanel(
-        padding: const EdgeInsets.all(16),
-        backgroundColor: OnWayTheme.slate,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: emphasized ? Colors.white : OnWayTheme.slate,
+          borderRadius: BorderRadius.circular(18),
         ),
-      ),
-    );
-  }
-}
-
-class _ServiceGrid extends StatelessWidget {
-  const _ServiceGrid({required this.services, required this.onTap});
-
-  final List<OnWayService> services;
-  final Future<void> Function([OnWayService? service]) onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = (constraints.maxWidth - 24) / 3;
-
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+        child: Row(
           children: [
-            for (final service in services)
-              SizedBox(
-                width: width,
-                child: ServiceCard(
-                  service: service,
-                  onTap: () => onTap(service),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ShowcaseCard extends StatelessWidget {
-  const _ShowcaseCard({
-    required this.width,
-    required this.title,
-    required this.subtitle,
-    required this.imageAsset,
-  });
-
-  final double width;
-  final String title;
-  final String subtitle;
-  final String imageAsset;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: OnWayPanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: AspectRatio(
-                aspectRatio: 1.5,
-                child: Image.asset(imageAsset, fit: BoxFit.cover),
+            Icon(
+              icon,
+              color: emphasized ? OnWayTheme.black : OnWayTheme.yellow,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: emphasized ? Colors.black54 : Colors.white60,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: emphasized ? OnWayTheme.black : Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 14),
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 6),
-            Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: emphasized ? OnWayTheme.black : Colors.white54,
+            ),
           ],
         ),
       ),

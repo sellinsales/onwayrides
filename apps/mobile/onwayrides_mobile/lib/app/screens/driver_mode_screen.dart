@@ -195,19 +195,23 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   Widget _buildHero(BuildContext context, OnWayDriverWorkspaceBundle bundle) {
     final application = bundle.driverApplication;
     final statusLabel = application == null
-        ? 'Rider mode active'
+        ? 'Not onboarded'
         : application.isApproved
-        ? 'Driver mode approved'
+        ? (_driverOnline ? 'Online now' : 'Approved • Offline')
         : application.statusLabel;
     final title = application == null
-        ? 'Drive with the same OnWay account'
+        ? 'Apply once, drive from the same app'
         : application.isApproved
-        ? 'You can switch between rider and driver in one app'
-        : 'Your driver journey is in progress';
+        ? (_driverOnline
+              ? 'Driver mode is live and listening for nearby demand'
+              : 'You are approved and ready to go online')
+        : 'Your driver onboarding is in progress';
     final description = application == null
-        ? 'Apply as a driver without creating a second app account. Keep your rider history, profile and support links in the same place.'
+        ? 'Keep rider bookings, driver onboarding, and support in one identity. Start when you are ready instead of installing a second app.'
         : application.isApproved
-        ? 'Go online when you want work, stay in rider mode when you just need a booking, and keep one identity across both sides of the platform.'
+        ? (_driverOnline
+              ? 'Focus on live requests, your current trip, and your enabled services. Everything else stays secondary.'
+              : 'Review your enabled services, then go online only when you want to start taking requests.')
         : _statusDescription(application);
 
     return OnWayPanel(
@@ -245,13 +249,9 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
               _inlineStat(
                 context,
                 '${application?.documents.length ?? 0}',
-                'Documents on file',
+                'Docs',
               ),
-              _inlineStat(
-                context,
-                '${_selectedServiceIds.length}',
-                'Enabled services',
-              ),
+              _inlineStat(context, '${_selectedServiceIds.length}', 'Services'),
             ],
           ),
         ],
@@ -268,11 +268,11 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
     return [
       SectionHeading(
         title: application == null
-            ? 'Become a driver'
-            : 'Continue driver application',
+            ? 'Start driver onboarding'
+            : 'Continue driver onboarding',
         subtitle: application == null
-            ? 'Use a guided, market-style onboarding flow: identity, services, vehicle, then document review.'
-            : 'Keep your driver draft updated while review and document approval move in parallel.',
+            ? 'Keep this short and professional: profile, vehicle, documents, then review.'
+            : 'Finish the next needed step instead of scrolling through everything at once.',
         action: TextButton(
           onPressed: () =>
               setState(() => _editingApplication = !_editingApplication),
@@ -286,8 +286,8 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           children: [
             Text(
               application == null
-                  ? 'One app, two earning paths'
-                  : 'Application status',
+                  ? 'Driver onboarding state'
+                  : 'Current driver state',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),
@@ -307,6 +307,46 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     '${application.documents.length} documents uploaded',
                   ),
                 _statusBadge('Support review during beta'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _progressTile(
+                    context,
+                    '1',
+                    'Profile',
+                    complete: application != null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _progressTile(
+                    context,
+                    '2',
+                    'Vehicle',
+                    complete: application?.vehicle != null,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _progressTile(
+                    context,
+                    '3',
+                    'Documents',
+                    complete: (application?.documents.length ?? 0) > 0,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _progressTile(
+                    context,
+                    '4',
+                    'Go live',
+                    complete: application?.isApproved ?? false,
+                  ),
+                ),
               ],
             ),
           ],
@@ -329,9 +369,10 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
 
     return [
       SectionHeading(
-        title: 'Driver operations',
-        subtitle:
-            'This follows the same pattern as market apps: go online, choose what you want to accept, then wait for nearby demand.',
+        title: _driverOnline ? 'Live driver mode' : 'Approved driver mode',
+        subtitle: _driverOnline
+            ? 'Stay focused on incoming requests, the current trip, and quick status changes.'
+            : 'You are approved. Pick your services and go online only when you want to earn.',
       ),
       const SizedBox(height: 14),
       OnWayPanel(
@@ -1338,6 +1379,35 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           color: OnWayTheme.yellow,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+
+  Widget _progressTile(
+    BuildContext context,
+    String step,
+    String label, {
+    required bool complete,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: complete ? const Color(0x29FFC107) : Colors.white10,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            step,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: complete ? OnWayTheme.yellow : Colors.white54,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: Theme.of(context).textTheme.titleSmall),
+        ],
       ),
     );
   }

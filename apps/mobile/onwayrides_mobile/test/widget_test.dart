@@ -15,7 +15,10 @@ void main() {
       const MaterialApp(home: OnWayShell(previewMode: true)),
     );
 
-    expect(find.text('Quick services'), findsOneWidget);
+    expect(
+      find.text('Book rides, rentals and deliveries from one app'),
+      findsOneWidget,
+    );
     expect(find.text('Driver Mode'), findsOneWidget);
   });
 }
