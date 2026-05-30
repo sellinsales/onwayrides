@@ -22,7 +22,7 @@ class RiderHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mediaSize = MediaQuery.sizeOf(context);
-    final heroMarkers = _mapMarkersForHome();
+    final markers = _markersForHome();
     final route =
         activeTrip?.pickupCoordinate != null &&
             activeTrip?.destinationCoordinate != null
@@ -39,7 +39,7 @@ class RiderHomeScreen extends StatelessWidget {
             child: OnWayMapSurface(
               height: mediaSize.height,
               interactive: false,
-              markers: heroMarkers,
+              markers: markers,
               route: route,
               overlay: DecoratedBox(
                 decoration: BoxDecoration(
@@ -47,9 +47,9 @@ class RiderHomeScreen extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
+                      Colors.black.withValues(alpha: 0.08),
                       Colors.black.withValues(alpha: 0.18),
-                      Colors.black.withValues(alpha: 0.36),
-                      Colors.black.withValues(alpha: 0.72),
+                      Colors.black.withValues(alpha: 0.48),
                     ],
                   ),
                 ),
@@ -58,70 +58,130 @@ class RiderHomeScreen extends StatelessWidget {
           ),
           Positioned(
             top: 14,
-            left: 20,
-            right: 20,
+            left: 16,
+            right: 16,
             child: Row(
               children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.66),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: Row(
-                      children: [
-                        Image.asset(
-                          'assets/brand/onwayrides_logo.png',
-                          height: 20,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            activeTrip == null
-                                ? 'Book a ride with the map first.'
-                                : activeTrip!.statusLine,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
+                _FloatingMapButton(icon: Icons.menu_rounded, onTap: () {}),
+                const Spacer(),
+                if (activeTrip == null)
+                  _FloatingStatusPill(
+                    icon: Icons.near_me_rounded,
+                    label: 'Current location',
+                  )
+                else
+                  _FloatingStatusPill(
+                    icon: Icons.directions_car_rounded,
+                    label: activeTrip!.statusLine,
                   ),
-                ),
-                const SizedBox(width: 10),
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.black.withValues(alpha: 0.66),
-                  child: const Icon(Icons.notifications_none_rounded),
+                const Spacer(),
+                _FloatingMapButton(
+                  icon: Icons.my_location_rounded,
+                  onTap: () => onOpenBooking(),
                 ),
               ],
             ),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _RiderBottomSheet(
-              activeTrip: activeTrip,
-              services: services,
-              onOpenBooking: onOpenBooking,
-              onOpenTracking: onOpenTracking,
+          if (activeTrip == null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: mediaSize.height * 0.23,
+              child: GestureDetector(
+                onTap: () => onOpenBooking(_primaryService()),
+                child: Container(
+                  height: 56,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_rounded, color: OnWayTheme.black),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Where to?',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: OnWayTheme.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: OnWayTheme.black,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
+          DraggableScrollableSheet(
+            initialChildSize: activeTrip == null ? 0.24 : 0.30,
+            minChildSize: activeTrip == null ? 0.20 : 0.26,
+            maxChildSize: activeTrip == null ? 0.56 : 0.50,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.96),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(30),
+                  ),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    if (activeTrip == null)
+                      _IdleRideSheet(
+                        primaryService: _primaryService(),
+                        services: services,
+                        onOpenBooking: onOpenBooking,
+                      )
+                    else
+                      _ActiveRideSheet(
+                        trip: activeTrip!,
+                        onOpenTracking: onOpenTracking,
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  List<OnWayMapMarkerSpec> _mapMarkersForHome() {
+  OnWayService _primaryService() {
+    return services.firstWhere(
+      (service) => service.type == ServiceType.rideShare,
+      orElse: () => services.first,
+    );
+  }
+
+  List<OnWayMapMarkerSpec> _markersForHome() {
     if (activeTrip != null) {
       return [
         OnWayMapMarkerSpec(
@@ -157,219 +217,114 @@ class RiderHomeScreen extends StatelessWidget {
         coordinate: OnWayMockData.packagesMall,
         icon: Icons.local_mall_rounded,
         label: 'Mall',
-        size: 36,
+        size: 34,
       ),
       OnWayMapMarkerSpec(
         coordinate: OnWayMockData.airport,
         icon: Icons.flight_takeoff_rounded,
         label: 'Airport',
-        size: 36,
-      ),
-      OnWayMapMarkerSpec(
-        coordinate: OnWayMockData.gulberg,
-        icon: Icons.business_center_rounded,
-        label: 'City',
-        size: 36,
+        size: 34,
       ),
     ];
   }
 }
 
-class _RiderBottomSheet extends StatelessWidget {
-  const _RiderBottomSheet({
-    required this.activeTrip,
+class _IdleRideSheet extends StatelessWidget {
+  const _IdleRideSheet({
+    required this.primaryService,
     required this.services,
     required this.onOpenBooking,
-    required this.onOpenTracking,
   });
 
-  final ActiveTrip? activeTrip;
-  final List<OnWayService> services;
-  final Future<void> Function([OnWayService? service]) onOpenBooking;
-  final Future<void> Function([ActiveTrip? trip]) onOpenTracking;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.92),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
-        border: Border.all(color: Colors.white12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.32),
-            blurRadius: 24,
-            offset: const Offset(0, -12),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
-          child: activeTrip == null
-              ? _IdleBottomSheet(
-                  services: services,
-                  onOpenBooking: onOpenBooking,
-                )
-              : _ActiveTripBottomSheet(
-                  trip: activeTrip!,
-                  onOpenTracking: onOpenTracking,
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-class _IdleBottomSheet extends StatelessWidget {
-  const _IdleBottomSheet({required this.services, required this.onOpenBooking});
-
+  final OnWayService primaryService;
   final List<OnWayService> services;
   final Future<void> Function([OnWayService? service]) onOpenBooking;
 
   @override
   Widget build(BuildContext context) {
-    final taxiService = services.firstWhere(
-      (service) => service.type == ServiceType.rideShare,
-      orElse: () => services.first,
-    );
     final airportService = services.firstWhere(
       (service) => service.type == ServiceType.airport,
-      orElse: () => services.first,
+      orElse: () => primaryService,
     );
     final courierService = services.firstWhere(
       (service) => service.type == ServiceType.courier,
-      orElse: () => services.first,
+      orElse: () => primaryService,
     );
     final rentalService = services.firstWhere(
       (service) => service.type == ServiceType.rentCar,
-      orElse: () => services.first,
+      orElse: () => primaryService,
     );
 
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
-          child: Container(
-            width: 42,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        Text('Where to?', style: Theme.of(context).textTheme.headlineMedium),
+        Text('Book a ride', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
         Text(
-          'Pick your destination first. Ride options appear after the route is set.',
+          'Choose destination, then compare cars and prices.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 18),
-        InkWell(
-          onTap: () => onOpenBooking(taxiService),
-          borderRadius: BorderRadius.circular(22),
-          child: Ink(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.search_rounded, color: OnWayTheme.black),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Search destination',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: OnWayTheme.black),
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: OnWayTheme.black,
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        _HomeRoutePreviewRow(
+        _NativeRouteRow(
           icon: Icons.my_location_rounded,
-          label: 'Pickup',
-          value: 'Current location',
-          onTap: () => onOpenBooking(taxiService),
+          title: 'Pickup',
+          subtitle: 'Current location',
+          onTap: () => onOpenBooking(primaryService),
         ),
         const SizedBox(height: 10),
-        _HomeRoutePreviewRow(
+        _NativeRouteRow(
           icon: Icons.location_on_outlined,
-          label: 'Destination',
-          value: 'Choose on map or search',
+          title: 'Destination',
+          subtitle: 'Search destination',
           emphasized: true,
-          onTap: () => onOpenBooking(taxiService),
+          onTap: () => onOpenBooking(primaryService),
         ),
         const SizedBox(height: 18),
-        Text('Recent places', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        for (final place in OnWayMockData.recentPlaces.take(3))
-          ListTile(
-            onTap: () => onOpenBooking(taxiService),
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            leading: CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.white10,
-              child: Icon(place.icon, color: OnWayTheme.yellow, size: 18),
-            ),
-            title: Text(place.title),
-            subtitle: Text(
-              place.addressLine,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        const SizedBox(height: 10),
         Text(
-          'More ways to use OnWay',
+          'Recent destinations',
           style: Theme.of(context).textTheme.titleMedium,
         ),
+        const SizedBox(height: 8),
+        for (final place in OnWayMockData.recentPlaces.take(3))
+          _RecentPlaceRow(
+            place: place,
+            onTap: () => onOpenBooking(primaryService),
+          ),
+        const SizedBox(height: 16),
+        Text('Other services', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _SecondaryFlowChip(
-              label: airportService.title,
-              icon: airportService.icon,
-              onTap: () => onOpenBooking(airportService),
-            ),
-            _SecondaryFlowChip(
-              label: courierService.title,
-              icon: courierService.icon,
-              onTap: () => onOpenBooking(courierService),
-            ),
-            _SecondaryFlowChip(
-              label: rentalService.title,
-              icon: rentalService.icon,
-              onTap: () => onOpenBooking(rentalService),
-            ),
-          ],
+        SizedBox(
+          height: 42,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _MinimalServicePill(
+                label: airportService.title,
+                icon: airportService.icon,
+                onTap: () => onOpenBooking(airportService),
+              ),
+              const SizedBox(width: 8),
+              _MinimalServicePill(
+                label: courierService.title,
+                icon: courierService.icon,
+                onTap: () => onOpenBooking(courierService),
+              ),
+              const SizedBox(width: 8),
+              _MinimalServicePill(
+                label: rentalService.title,
+                icon: rentalService.icon,
+                onTap: () => onOpenBooking(rentalService),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _ActiveTripBottomSheet extends StatelessWidget {
-  const _ActiveTripBottomSheet({
-    required this.trip,
-    required this.onOpenTracking,
-  });
+class _ActiveRideSheet extends StatelessWidget {
+  const _ActiveRideSheet({required this.trip, required this.onOpenTracking});
 
   final ActiveTrip trip;
   final Future<void> Function([ActiveTrip? trip]) onOpenTracking;
@@ -377,54 +332,38 @@ class _ActiveTripBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
-          child: Container(
-            width: 42,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        Text(
-          'Trip in progress',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
+        Text(trip.statusLine, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),
-        Text(trip.statusLine, style: Theme.of(context).textTheme.bodyMedium),
+        Text(trip.routeLine, style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 18),
-        _HomeRoutePreviewRow(
-          icon: Icons.my_location_rounded,
-          label: 'Pickup',
-          value: trip.pickup,
+        _NativeRouteRow(
+          icon: Icons.trip_origin_rounded,
+          title: 'Pickup',
+          subtitle: trip.pickup,
           onTap: () => onOpenTracking(trip),
         ),
         const SizedBox(height: 10),
-        _HomeRoutePreviewRow(
+        _NativeRouteRow(
           icon: Icons.location_on_outlined,
-          label: 'Destination',
-          value: trip.destination,
+          title: 'Destination',
+          subtitle: trip.destination,
           emphasized: true,
           onTap: () => onOpenTracking(trip),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: OnWayTheme.charcoal,
-            borderRadius: BorderRadius.circular(22),
+            color: const Color(0xFF171717),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white10),
           ),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 26,
+                radius: 22,
                 backgroundColor: Colors.white10,
                 backgroundImage: trip.driver != null
                     ? AssetImage(trip.driver!.avatarAsset)
@@ -436,7 +375,7 @@ class _ActiveTripBottomSheet extends StatelessWidget {
                       )
                     : null,
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,11 +384,11 @@ class _ActiveTripBottomSheet extends StatelessWidget {
                       trip.driver?.name ?? 'OnWay dispatch',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       trip.driver != null
-                          ? '${trip.driver!.vehicle}\n${trip.driver!.eta}'
-                          : 'Driver details appear after assignment.',
+                          ? '${trip.driver!.vehicle} • ${trip.driver!.eta}'
+                          : 'Driver details will appear here.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -467,82 +406,193 @@ class _ActiveTripBottomSheet extends StatelessWidget {
         const SizedBox(height: 16),
         FilledButton(
           onPressed: () => onOpenTracking(trip),
-          child: const Text('Track on map'),
+          child: const Text('Open trip'),
         ),
       ],
     );
   }
 }
 
-class _HomeRoutePreviewRow extends StatelessWidget {
-  const _HomeRoutePreviewRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-    this.emphasized = false,
-  });
+class _FloatingMapButton extends StatelessWidget {
+  const _FloatingMapButton({required this.icon, required this.onTap});
 
   final IconData icon;
-  final String label;
-  final String value;
   final VoidCallback onTap;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Ink(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: emphasized ? Colors.white : OnWayTheme.charcoal,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: emphasized ? Colors.white : Colors.white10),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: emphasized ? OnWayTheme.black : OnWayTheme.yellow,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: emphasized ? Colors.black54 : Colors.white54,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: emphasized ? OnWayTheme.black : Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: emphasized ? OnWayTheme.black : Colors.white54,
-            ),
-          ],
+    return Material(
+      color: Colors.black.withValues(alpha: 0.66),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(icon, color: Colors.white),
         ),
       ),
     );
   }
 }
 
-class _SecondaryFlowChip extends StatelessWidget {
-  const _SecondaryFlowChip({
+class _FloatingStatusPill extends StatelessWidget {
+  const _FloatingStatusPill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 210),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.66),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: OnWayTheme.yellow),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NativeRouteRow extends StatelessWidget {
+  const _NativeRouteRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.emphasized = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: emphasized ? Colors.white : const Color(0xFF171717),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: emphasized ? OnWayTheme.black : OnWayTheme.yellow,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: emphasized ? Colors.black54 : Colors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: emphasized ? OnWayTheme.black : Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: emphasized ? OnWayTheme.black : Colors.white54,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentPlaceRow extends StatelessWidget {
+  const _RecentPlaceRow({required this.place, required this.onTap});
+
+  final OnWayPlaceSuggestion place;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(place.icon, size: 18, color: OnWayTheme.yellow),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(place.title),
+                    const SizedBox(height: 2),
+                    Text(
+                      place.addressLine,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MinimalServicePill extends StatelessWidget {
+  const _MinimalServicePill({
     required this.label,
     required this.icon,
     required this.onTap,
@@ -554,10 +604,24 @@ class _SecondaryFlowChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
-      onPressed: onTap,
+    return Material(
+      color: const Color(0xFF171717),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: OnWayTheme.yellow),
+              const SizedBox(width: 8),
+              Text(label),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
