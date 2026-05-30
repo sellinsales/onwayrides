@@ -31,7 +31,7 @@ class RiderHomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const BrandHeader(
-                    caption: 'Search first. Then choose the right service.',
+                    caption: 'Where would you like to go today?',
                     trailing: CircleAvatar(
                       radius: 22,
                       backgroundColor: Colors.white10,
@@ -48,8 +48,7 @@ class RiderHomeScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   const SectionHeading(
                     title: 'Saved and recent places',
-                    subtitle:
-                        'Focus riders on familiar locations first so they book faster.',
+                    subtitle: 'Book faster from the places you use most.',
                   ),
                   const SizedBox(height: 14),
                   _PlaceShortcuts(
@@ -64,7 +63,7 @@ class RiderHomeScreen extends StatelessWidget {
                   if (activeTrip != null) ...[
                     const SizedBox(height: 24),
                     SectionHeading(
-                      title: 'Active booking',
+                      title: 'Current trip',
                       subtitle: activeTrip!.statusLine,
                       action: TextButton(
                         onPressed: () => onOpenTracking(activeTrip),
@@ -79,9 +78,8 @@ class RiderHomeScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 24),
                   const SectionHeading(
-                    title: 'Smart suggestions',
-                    subtitle:
-                        'Guide riders into the best service without showing every option at once.',
+                    title: 'Popular ways to book',
+                    subtitle: 'Choose the option that fits your trip best.',
                   ),
                   const SizedBox(height: 14),
                   _SuggestionStrip(
@@ -116,12 +114,12 @@ class _SearchFirstCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Book rides, rentals and deliveries from one app',
+            'One app for rides, rentals, and deliveries',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Start with the route. The app can then narrow the right vehicle or service for that trip.',
+            'Start with your route and we will help you choose the right option for the trip.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 18),

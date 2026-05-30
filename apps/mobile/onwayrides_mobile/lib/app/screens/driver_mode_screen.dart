@@ -51,6 +51,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   bool _editingApplication = false;
   bool _formHydrated = false;
   bool _savingDraft = false;
+  bool _activatingDemoAccess = false;
   bool _updatingMode = false;
   bool _requestActionBusy = false;
   String? _uploadingDocumentType;
@@ -95,12 +96,19 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
         return;
       }
 
-      if (event.channel != 'driver_dispatch' && event.channel != 'trip_updates') {
+      if (event.channel != 'driver_dispatch' &&
+          event.channel != 'trip_updates' &&
+          event.channel != 'driver_onboarding') {
         return;
       }
 
       setState(() {
-        _dispatchFuture = widget.authService!.fetchDriverRequests();
+        if (event.channel == 'driver_onboarding') {
+          _formHydrated = false;
+          _workspaceFuture = widget.authService!.fetchDriverWorkspace();
+        } else {
+          _dispatchFuture = widget.authService!.fetchDriverRequests();
+        }
       });
     });
   }
@@ -115,6 +123,38 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
       _dispatchFuture = null;
       _workspaceFuture = widget.authService!.fetchDriverWorkspace();
     });
+  }
+
+  Future<void> _activateDemoDriverAccess() async {
+    if (widget.previewMode || _activatingDemoAccess) {
+      return;
+    }
+
+    setState(() => _activatingDemoAccess = true);
+
+    try {
+      await widget.authService!.activateDriverDemoAccess();
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage('Temporary demo driver access is now active.');
+      setState(() {
+        _formHydrated = false;
+        _dispatchFuture = null;
+        _workspaceFuture = widget.authService!.fetchDriverWorkspace();
+      });
+    } on OnWayAuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(error.message);
+    } finally {
+      if (mounted) {
+        setState(() => _activatingDemoAccess = false);
+      }
+    }
   }
 
   void _hydrateForm(OnWayDriverWorkspaceBundle bundle) {
@@ -192,7 +232,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
             children: [
               BrandHeader(
-                caption: 'One account for rider trips and driver growth',
+                caption: 'Drive, manage requests, and track your progress',
                 trailing: IconButton(
                   onPressed: _reloadWorkspace,
                   icon: const Icon(Icons.refresh_rounded),
@@ -220,14 +260,14 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
         ? (_driverOnline ? 'Online now' : 'Approved • Offline')
         : application.statusLabel;
     final title = application == null
-        ? 'Apply once, drive from the same app'
+        ? 'Drive with the same account you already use'
         : application.isApproved
         ? (_driverOnline
               ? 'Driver mode is live and listening for nearby demand'
               : 'You are approved and ready to go online')
         : 'Your driver onboarding is in progress';
     final description = application == null
-        ? 'Keep rider bookings, driver onboarding, and support in one identity. Start when you are ready instead of installing a second app.'
+        ? 'Apply to drive, manage your documents, and stay ready for requests without switching apps.'
         : application.isApproved
         ? (_driverOnline
               ? 'Focus on live requests, your current trip, and your enabled services. Everything else stays secondary.'
@@ -244,9 +284,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
             children: [
               ModeChip(label: 'Rider', selected: true),
               ModeChip(
-                label: application?.isApproved == true
-                    ? 'Driver live'
-                    : 'Driver path',
+                label: application?.isApproved == true ? 'Drive' : 'Apply',
                 selected: application?.isApproved == true,
               ),
               ModeChip(label: statusLabel, selected: false),
@@ -264,12 +302,12 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
               _inlineStat(
                 context,
                 application?.driverCode ?? 'Not issued yet',
-                'Driver code',
+                'Driver ID',
               ),
               _inlineStat(
                 context,
                 '${application?.documents.length ?? 0}',
-                'Docs',
+                'Documents',
               ),
               _inlineStat(context, '${_selectedServiceIds.length}', 'Services'),
             ],
@@ -284,15 +322,20 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
     OnWayDriverWorkspaceBundle bundle,
   ) {
     final application = bundle.driverApplication;
+    final checklist = application?.checklist;
+    final requiredUploaded = checklist?.requiredDocumentsSubmitted ?? 0;
+    final requiredTotal =
+        checklist?.requiredDocumentsTotal ??
+        bundle.documentTypes.where((document) => document.isRequired).length;
 
     return [
       SectionHeading(
         title: application == null
-            ? 'Start driver onboarding'
-            : 'Continue driver onboarding',
+            ? 'Start your driver application'
+            : 'Continue your driver application',
         subtitle: application == null
-            ? 'Keep this short and professional: profile, vehicle, documents, then review.'
-            : 'Finish the next needed step instead of scrolling through everything at once.',
+            ? 'Complete your profile, add a vehicle, upload documents, and submit for review.'
+            : 'Pick up where you left off and follow the next step shown below.',
         action: TextButton(
           onPressed: () =>
               setState(() => _editingApplication = !_editingApplication),
@@ -305,16 +348,14 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              application == null
-                  ? 'Driver onboarding state'
-                  : 'Current driver state',
+              application == null ? 'Application status' : 'Your driver status',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),
             Text(
               application == null
-                  ? 'You can keep booking rides as a rider while building your driver profile. This is the main difference in the OnWay approach: no separate driver app is required during onboarding.'
-                  : _statusDescription(application),
+                  ? 'You can keep booking rides while you complete your driver application.'
+                  : checklist?.nextAction ?? _statusDescription(application),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -324,11 +365,53 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                 _statusBadge(application?.statusLabel ?? 'Not started'),
                 if (application != null)
                   _statusBadge(
-                    '${application.documents.length} documents uploaded',
+                    '$requiredUploaded of $requiredTotal required documents uploaded',
                   ),
-                _statusBadge('Support review during beta'),
+                if (checklist != null) _statusBadge(_pretty(checklist.stage)),
+                if (bundle.driverDemoAccessEnabled)
+                  _statusBadge('Demo access enabled'),
               ],
             ),
+            if (bundle.canActivateDriverDemoAccess &&
+                !(application?.isApproved ?? false)) ...[
+              const SizedBox(height: 16),
+              OnWayPanel(
+                padding: const EdgeInsets.all(14),
+                backgroundColor: OnWayTheme.slate,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Test driver mode before approval',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      bundle.driverDemoAccessEnabled
+                          ? 'Demo access is active on your account. You can explore live driver tools while you finish your real documents.'
+                          : 'Turn on temporary demo access to try requests, online mode, and live driver screens before your real documents are approved.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: bundle.driverDemoAccessEnabled
+                          ? null
+                          : _activatingDemoAccess
+                          ? null
+                          : _activateDemoDriverAccess,
+                      icon: const Icon(Icons.verified_user_rounded),
+                      label: Text(
+                        bundle.driverDemoAccessEnabled
+                            ? 'Demo access active'
+                            : _activatingDemoAccess
+                            ? 'Activating demo access...'
+                            : 'Activate demo driver access',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -337,7 +420,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     context,
                     '1',
                     'Profile',
-                    complete: application != null,
+                    complete: checklist?.profileComplete ?? application != null,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -346,7 +429,9 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     context,
                     '2',
                     'Vehicle',
-                    complete: application?.vehicle != null,
+                    complete:
+                        checklist?.vehicleComplete ??
+                        application?.vehicle != null,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -355,7 +440,9 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     context,
                     '3',
                     'Documents',
-                    complete: (application?.documents.length ?? 0) > 0,
+                    complete:
+                        checklist?.allRequiredSubmitted ??
+                        (application?.documents.isNotEmpty ?? false),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -363,12 +450,24 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                   child: _progressTile(
                     context,
                     '4',
-                    'Go live',
-                    complete: application?.isApproved ?? false,
+                    'Review',
+                    complete:
+                        checklist?.allRequiredApproved ??
+                        application?.isApproved ??
+                        false,
                   ),
                 ),
               ],
             ),
+            if (application != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                _stageHeadline(checklist?.stage ?? 'profile'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(_stageDescription(application)),
+            ],
           ],
         ),
       ),
@@ -526,12 +625,12 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Dispatch rollout',
+              'Dispatch operations',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             SizedBox(height: 10),
             Text(
-              'Rider booking is already live in this shared app. Live nearby driver requests, counter-offers, and streaming dispatch are the next operational layer.',
+              'Manage nearby requests, active trips, and your service availability from one place.',
             ),
           ],
         ),
@@ -609,7 +708,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
               const SizedBox(height: 8),
               Text(
                 feed.isOnline
-                    ? 'Polling nearby requests every few seconds. This is the operational beta path before full realtime sockets.'
+                    ? 'Nearby requests refresh automatically while you stay online.'
                     : 'Go online first to start receiving nearby rider demand.',
               ),
               if (feed.currentTrip != null) ...[
@@ -928,12 +1027,16 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
     BuildContext context,
     OnWayDriverWorkspaceBundle bundle,
   ) {
+    final application = bundle.driverApplication;
+    final checklist = application?.checklist;
     final existingByType = {
       for (final document
-          in bundle.driverApplication?.documents ??
-              const <OnWayDriverDocumentSummary>[])
+          in application?.documents ?? const <OnWayDriverDocumentSummary>[])
         document.documentType: document,
     };
+    final documentTypes = [...bundle.documentTypes]
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final uploadsLocked = application == null;
 
     return OnWayPanel(
       child: Column(
@@ -945,16 +1048,34 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Keep this part light during beta. Save your core driver profile here, then complete secure document review as support activates mobile uploads.',
+            uploadsLocked
+                ? 'Save your core driver profile first. Document upload opens immediately after that.'
+                : (checklist?.nextAction ??
+                      'Upload the missing documents and keep an eye on review updates here.'),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-          for (final type in bundle.documentTypes.take(4)) ...[
+          if (application != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                'Required documents approved: ${checklist?.requiredDocumentsApproved ?? 0} / ${checklist?.requiredDocumentsTotal ?? 0}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+          for (final type in documentTypes) ...[
             _documentRow(
               context,
               type,
-              existingByType[type.value]?.status ?? 'needed',
-              bundle.driverSamples[type.value] ?? '',
+              existingByType[type.value],
+              uploadsLocked: uploadsLocked,
             ),
             const SizedBox(height: 10),
           ],
@@ -1005,7 +1126,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
         return;
       }
 
-      _showMessage('Driver draft saved.');
+      _showMessage('Driver application saved. Continue with document upload.');
       await _reloadWorkspace();
     } on OnWayAuthException catch (error) {
       _showMessage(error.message);
@@ -1065,7 +1186,7 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
         return;
       }
 
-      _showMessage('${documentType.label} uploaded.');
+      _showMessage('${documentType.label} uploaded and sent for review.');
       await _reloadWorkspace();
     } on OnWayAuthException catch (error) {
       _showMessage(error.message);
@@ -1435,10 +1556,28 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   Widget _documentRow(
     BuildContext context,
     OnWayDriverDocumentTypeOption type,
-    String status,
-    String help,
-  ) {
+    OnWayDriverDocumentSummary? document, {
+    required bool uploadsLocked,
+  }) {
+    final help = document?.sampleHint ?? type.sampleHint ?? '';
     final uploading = _uploadingDocumentType == type.value;
+    final statusColor = document == null
+        ? Colors.white70
+        : document.isApproved
+        ? Colors.greenAccent.shade100
+        : document.isRejected
+        ? Colors.redAccent.shade100
+        : OnWayTheme.yellow;
+    final actionLabel = uploadsLocked
+        ? 'Save profile first'
+        : uploading
+        ? 'Uploading...'
+        : document == null
+        ? 'Upload document'
+        : document.canResubmit
+        ? 'Replace document'
+        : 'Upload again';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1452,17 +1591,15 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
             children: [
               Expanded(
                 child: Text(
-                  type.label,
+                  type.label + (type.isRequired ? ' *' : ''),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
               Text(
-                _pretty(status),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: status == 'approved'
-                      ? Colors.greenAccent.shade100
-                      : OnWayTheme.yellow,
-                ),
+                document?.effectiveStatusLabel ?? 'Not submitted',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: statusColor),
               ),
             ],
           ),
@@ -1470,13 +1607,38 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
             const SizedBox(height: 6),
             Text(help, style: Theme.of(context).textTheme.bodySmall),
           ],
+          if (document?.rejectionReason != null &&
+              document!.rejectionReason!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Reason: ${document.rejectionReason!}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.redAccent.shade100),
+            ),
+          ],
+          if (document?.reviewedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Reviewed: ${document!.reviewedAt!}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ] else if (document?.submittedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Submitted: ${document!.submittedAt!}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
-              onPressed: uploading ? null : () => _pickAndUploadDocument(type),
+              onPressed: uploadsLocked || uploading
+                  ? null
+                  : () => _pickAndUploadDocument(type),
               icon: const Icon(Icons.upload_file_rounded),
-              label: Text(uploading ? 'Uploading...' : 'Upload document'),
+              label: Text(actionLabel),
             ),
           ),
         ],
@@ -1499,13 +1661,52 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
   String _statusDescription(OnWayDriverApplication application) {
     switch (application.onboardingStatus) {
       case 'documents_pending':
-        return 'Your basic driver profile is saved. Keep your city, services and vehicle details current while documents are reviewed.';
+        return 'Your profile is saved. Upload the remaining documents so review can continue.';
       case 'review':
-        return 'Your application is in review. Support can verify your setup without forcing you into a separate app.';
+        return 'Your application is under review. Watch this screen for approvals, rejections, and the next action.';
       case 'rejected':
-        return 'Your application needs updates before approval. Correct the draft below and resubmit.';
+        return 'Your application needs updates before approval. Review the flagged items and resubmit them.';
+      case 'approved':
+        return 'Your application is approved and you are ready to drive.';
       default:
         return 'Your application is being prepared for review.';
+    }
+  }
+
+  String _stageHeadline(String stage) {
+    switch (stage) {
+      case 'vehicle':
+        return 'Next step: add your main vehicle';
+      case 'documents':
+        return 'Next step: finish document upload';
+      case 'review':
+        return 'Next step: wait for review updates';
+      case 'activation':
+        return 'Next step: final activation';
+      case 'approved':
+        return 'You are ready to drive';
+      default:
+        return 'Next step: complete your profile';
+    }
+  }
+
+  String _stageDescription(OnWayDriverApplication application) {
+    final checklist = application.checklist;
+    switch (checklist.stage) {
+      case 'vehicle':
+        return 'Your identity and service choices are saved. Add the vehicle you want to drive so document review stays linked to the right car or bike.';
+      case 'documents':
+        return checklist.requiredDocumentsRejected > 0
+            ? 'One or more required documents were rejected. Replace them here and they will go back into review.'
+            : 'Upload every required document. Each tile will show whether it is submitted, approved, or rejected.';
+      case 'review':
+        return 'All required documents are on file. This screen will keep showing review progress until final approval.';
+      case 'activation':
+        return 'All required documents are approved. The last step is final account activation from the operations team.';
+      case 'approved':
+        return 'Your setup is complete. Go online whenever you want to receive requests.';
+      default:
+        return 'Start with your city, identity details, and service choices. After that, continue into vehicle and document steps.';
     }
   }
 
@@ -1534,7 +1735,7 @@ class _DriverLoadingScreen extends StatelessWidget {
             children: [
               CircularProgressIndicator(color: OnWayTheme.yellow),
               SizedBox(height: 16),
-              Text('Loading driver workspace...'),
+              Text('Loading driver tools...'),
             ],
           ),
         ),
@@ -1621,7 +1822,7 @@ class _PreviewDriverModeState extends State<_PreviewDriverMode> {
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
         children: [
           BrandHeader(
-            caption: 'Preview driver mode with requests and operations',
+            caption: 'Explore driving tools and trip requests',
             trailing: Switch(
               value: _online,
               activeThumbColor: OnWayTheme.yellow,
@@ -1634,17 +1835,17 @@ class _PreviewDriverModeState extends State<_PreviewDriverMode> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Preview-only driver mode',
+                  'Driver workspace',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'This preview mirrors the final live layout once driver approval and dispatch are active in the backend.',
+                  'Review your earnings, request flow, and availability from one simple screen.',
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: widget.onOpenFleetOwner,
-                  child: const Text('Open Fleet Owner module'),
+                  child: const Text('Open business tools'),
                 ),
               ],
             ),

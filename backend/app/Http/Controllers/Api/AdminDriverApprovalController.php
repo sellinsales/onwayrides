@@ -6,6 +6,7 @@ use App\Contracts\Auth\FirebaseTokenVerifier;
 use App\Http\Controllers\Api\Concerns\ResolvesAdminRequestUser;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\FirebaseUserSyncService;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +63,9 @@ class AdminDriverApprovalController extends Controller
                 'primary_admin_email' => config('onwayrides.super_admin_email'),
                 'users_endpoint' => route('api.admin.users.index', absolute: false),
             ],
+            'dispatch' => [
+                'endpoint' => route('api.admin.bookings.dispatch.index', absolute: false),
+            ],
             'summary' => $this->buildSummary(),
             'data' => $profiles->map(fn (object $profile): array => $this->serializeListItem($profile))->all(),
         ]);
@@ -99,7 +103,8 @@ class AdminDriverApprovalController extends Controller
         Request $request,
         int $documentId,
         FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
+        FirebaseUserSyncService $userSyncService,
+        PushNotificationService $pushNotificationService
     ): JsonResponse {
         $admin = $this->resolveAdminUser($request, $tokenVerifier, $userSyncService);
         if ($admin instanceof JsonResponse) {
@@ -161,6 +166,40 @@ class AdminDriverApprovalController extends Controller
             ]);
         });
 
+        if ($result->getStatusCode() === 200) {
+            $document = DB::table('driver_documents as dd')
+                ->join('driver_profiles as dp', 'dp.id', '=', 'dd.driver_profile_id')
+                ->where('dd.id', $documentId)
+                ->first([
+                    'dd.document_type',
+                    'dd.status',
+                    'dd.rejection_reason',
+                    'dp.user_id',
+                ]);
+
+            if ($document !== null) {
+                $documentLabel = Str::headline(str_replace('_', ' ', (string) $document->document_type));
+                $body = match ((string) $document->status) {
+                    'approved' => $documentLabel . ' was approved.',
+                    'rejected' => $documentLabel . ' needs attention. Review the note and upload it again.',
+                    'expired' => $documentLabel . ' expired and needs to be uploaded again.',
+                    default => $documentLabel . ' status was updated.',
+                };
+
+                $pushNotificationService->sendToUsers(
+                    [(int) $document->user_id],
+                    title: 'Document review updated',
+                    body: $body,
+                    data: [
+                        'channel' => 'driver_onboarding',
+                        'type' => 'document_status_changed',
+                        'document_type' => (string) $document->document_type,
+                        'status' => (string) $document->status,
+                    ],
+                );
+            }
+        }
+
         return $result;
     }
 
@@ -168,7 +207,8 @@ class AdminDriverApprovalController extends Controller
         Request $request,
         int $driverProfileId,
         FirebaseTokenVerifier $tokenVerifier,
-        FirebaseUserSyncService $userSyncService
+        FirebaseUserSyncService $userSyncService,
+        PushNotificationService $pushNotificationService
     ): JsonResponse {
         $admin = $this->resolveAdminUser($request, $tokenVerifier, $userSyncService);
         if ($admin instanceof JsonResponse) {
@@ -272,6 +312,40 @@ class AdminDriverApprovalController extends Controller
                 'application' => $updated ? $this->serializeDetail($updated) : null,
             ]);
         });
+
+        if ($result->getStatusCode() === 200) {
+            $profile = DB::table('driver_profiles as dp')
+                ->join('users as u', 'u.id', '=', 'dp.user_id')
+                ->where('dp.id', $driverProfileId)
+                ->first([
+                    'u.id as user_id',
+                    'dp.status',
+                    'dp.onboarding_status',
+                ]);
+
+            if ($profile !== null) {
+                $decision = (string) $payload['decision'];
+                $body = match ($decision) {
+                    'approve' => 'Your driver account is approved. You can now go online and receive requests.',
+                    'reject' => 'Your driver application needs updates before approval. Review the latest notes and resubmit.',
+                    'suspend' => 'Your driver access was suspended. Contact support if you need assistance.',
+                    'reopen' => 'Your driver application was reopened for review. Complete the requested updates to continue.',
+                    default => 'Your driver onboarding status changed.',
+                };
+
+                $pushNotificationService->sendToUsers(
+                    [(int) $profile->user_id],
+                    title: 'Driver application updated',
+                    body: $body,
+                    data: [
+                        'channel' => 'driver_onboarding',
+                        'type' => 'application_status_changed',
+                        'status' => (string) $profile->status,
+                        'onboarding_status' => (string) $profile->onboarding_status,
+                    ],
+                );
+            }
+        }
 
         return $result;
     }

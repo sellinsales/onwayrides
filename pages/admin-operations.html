@@ -111,6 +111,59 @@
 
               <div class="summary-grid" id="ops-summary-grid"></div>
 
+              <div class="marketing-table-card" id="ops-dispatch-card">
+                <div class="inline-actions" style="justify-content:space-between; align-items:flex-start; gap:16px;">
+                  <div>
+                    <span class="eyebrow">Dispatch Board</span>
+                    <h2 style="margin:10px 0 0;">Live marketplace activity</h2>
+                  </div>
+                </div>
+                <div class="helper-text" style="margin-top:12px;">
+                  Review open bookings, active trips, scheduled work, and driver availability from one dispatch view.
+                </div>
+
+                <form class="admin-filter-form" id="ops-dispatch-filter-form" style="margin-top:18px;">
+                  <div class="field-grid">
+                    <div class="field-group">
+                      <label for="ops-dispatch-search">Search</label>
+                      <input id="ops-dispatch-search" name="q" type="text" placeholder="Reference, rider, driver, route">
+                    </div>
+                    <div class="field-group">
+                      <label for="ops-dispatch-status">Dispatch state</label>
+                      <select id="ops-dispatch-status" name="status">
+                        <option value="open">Open work</option>
+                        <option value="unassigned">Unassigned</option>
+                        <option value="active">Active trips</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="marketing-actions">
+                    <button class="primary-button" type="submit">Refresh dispatch board</button>
+                  </div>
+                </form>
+
+                <div class="summary-grid" id="ops-dispatch-summary-grid" style="margin-top:18px;"></div>
+
+                <div class="table-wrap" style="margin-top:18px;">
+                  <table class="marketing-table">
+                    <thead>
+                      <tr>
+                        <th>Booking</th>
+                        <th>Route</th>
+                        <th>Status</th>
+                        <th>Driver</th>
+                        <th>Age</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ops-dispatch-table-body"></tbody>
+                  </table>
+                </div>
+                <div class="error-text" id="ops-dispatch-error" hidden></div>
+              </div>
+
               <div class="marketing-table-card" id="ops-role-management-card" hidden>
                 <div class="inline-actions" style="justify-content:space-between; align-items:flex-start; gap:16px;">
                   <div>

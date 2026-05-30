@@ -304,8 +304,8 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
               children: [
                 BrandHeader(
                   caption: widget.session.needsPhoneNumber
-                      ? 'Complete your OnWay setup before entering the app'
-                      : 'Confirm your phone and consent settings',
+                      ? 'Finish your account details to start booking'
+                      : 'Confirm your phone number and preferences',
                   trailing: TextButton(
                     onPressed: _submitting ? null : () => widget.onSignOut(),
                     child: const Text('Sign out'),
@@ -384,7 +384,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Beta access reminder',
+                        'A better trip starts here',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -392,11 +392,11 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'Free beta users can currently try up to 3 rides per day.',
+                        'Your phone number helps with pickup updates, driver contact, and faster support.',
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Driver operations and broader rollout features stay gated behind document approval and later verification steps.',
+                        'We only ask for the details needed to keep your rides smooth and secure.',
                       ),
                     ],
                   ),
@@ -431,11 +431,11 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
   String _stepTitle() {
     switch (_currentStep) {
       case 0:
-        return 'Set up your account';
+        return 'Add your name';
       case 1:
-        return 'Add your working phone';
+        return 'Add your phone number';
       case 2:
-        return 'Confirm policies and preferences';
+        return 'Review terms and updates';
       default:
         return 'Complete your rider profile';
     }
@@ -444,13 +444,13 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
   String _stepSubtitle() {
     switch (_currentStep) {
       case 0:
-        return 'Keep onboarding short and production-ready. Start with your visible account identity.';
+        return 'Use the name you want drivers and support to recognize.';
       case 1:
         return widget.session.phoneVerificationRequired
-            ? 'Add the number you will actually use for ride coordination and verify it before entering the app.'
-            : 'Add the number you will actually use for ride coordination. OTP is available now and can be enforced later.';
+            ? 'Add the number you use for ride updates and verify it before continuing.'
+            : 'Add the number you use for ride updates and support.';
       case 2:
-        return 'Accept the required platform policies and choose whether you want optional updates later.';
+        return 'Accept the required terms and choose whether you want optional offers later.';
       default:
         return '';
     }
@@ -488,7 +488,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'You will add a working phone number, confirm the required policies, then enter the app with rider access. Driver and fleet tools stay in the same app for later use.',
+                    'Next, you will add your phone number, review the required terms, and start using the app.',
                   ),
                 ],
               ),
@@ -543,10 +543,10 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
             const SizedBox(height: 10),
             Text(
               _phoneVerified
-                  ? 'This phone number has been verified with Firebase and can now be saved to your OnWay profile.'
+                  ? 'This phone number is verified and ready to use for ride updates.'
                   : widget.session.phoneVerificationRequired
-                  ? 'Send a verification code and confirm the OTP before you can continue.'
-                  : 'Phone verification is optional during beta. Continue without OTP for now and verify later for the full version.',
+                  ? 'Send a verification code and confirm it before you continue.'
+                  : 'You can verify this number now or come back to it later.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -624,7 +624,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
               value: _acceptPrivacyPolicy,
               title: 'I accept the Privacy Policy',
               subtitle:
-                  'Required. Covers Firebase auth, ride usage, support, and data handling.',
+                  'Required. Explains how your account, trip details, and support information are handled.',
               onChanged: (value) {
                 setState(() => _acceptPrivacyPolicy = value ?? false);
               },
@@ -636,7 +636,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
               value: _acceptTerms,
               title: 'I accept the Terms of Service',
               subtitle:
-                  'Required. Includes beta ride limits, account rules, and driver approval conditions.',
+                  'Required. Covers account use, ride rules, and service expectations.',
               onChanged: (value) {
                 setState(() => _acceptTerms = value ?? false);
               },
@@ -658,7 +658,7 @@ class _AccountCompletionScreenState extends State<AccountCompletionScreen> {
               value: _whatsappMarketingOptIn,
               title: 'Allow WhatsApp marketing updates',
               subtitle:
-                  'Optional. Useful for launch offers, city announcements and beta campaigns.',
+                  'Optional. Receive offers, service news, and city updates on WhatsApp.',
               onChanged: (value) {
                 setState(() => _whatsappMarketingOptIn = value ?? false);
               },
@@ -678,7 +678,7 @@ class _StepStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const steps = ['Account', 'Phone', 'Consent'];
+    const steps = ['Name', 'Phone', 'Terms'];
 
     return Row(
       children: List.generate(steps.length, (index) {

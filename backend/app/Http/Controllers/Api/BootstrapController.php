@@ -40,6 +40,7 @@ class BootstrapController extends Controller
                 'admin_contacts_export_endpoint' => route('api.admin.marketing.contacts.export', absolute: false),
             ],
             'admin_operations' => [
+                'dispatch_endpoint' => route('api.admin.bookings.dispatch.index', absolute: false),
                 'driver_applications_endpoint' => route('api.admin.drivers.applications.index', absolute: false),
                 'user_roles_endpoint' => route('api.admin.users.index', absolute: false),
                 'primary_admin_email' => config('onwayrides.super_admin_email'),

@@ -25,6 +25,10 @@ const filterForm = document.querySelector("#ops-filter-form");
 const summaryGrid = document.querySelector("#ops-summary-grid");
 const tableBody = document.querySelector("#ops-table-body");
 const tableError = document.querySelector("#ops-table-error");
+const dispatchFilterForm = document.querySelector("#ops-dispatch-filter-form");
+const dispatchSummaryGrid = document.querySelector("#ops-dispatch-summary-grid");
+const dispatchTableBody = document.querySelector("#ops-dispatch-table-body");
+const dispatchError = document.querySelector("#ops-dispatch-error");
 const roleManagementCard = document.querySelector("#ops-role-management-card");
 const roleSearchForm = document.querySelector("#ops-role-search-form");
 const roleSearchInput = document.querySelector("#ops-role-search");
@@ -52,6 +56,7 @@ let currentApplication = null;
 let currentViewer = null;
 let roleManagementConfig = null;
 let manageableRoles = ["rider", "support", "admin"];
+let dispatchConfig = null;
 
 function buildApiUrl(path, params = new URLSearchParams()) {
   const apiBaseUrl = String(config.apiBaseUrl ?? `${window.location.origin}/api`).replace(/\/$/, "");
@@ -83,6 +88,11 @@ function showAuthError(message) {
 function showTableError(message) {
   tableError.hidden = !message;
   tableError.textContent = message ?? "";
+}
+
+function showDispatchError(message) {
+  dispatchError.hidden = !message;
+  dispatchError.textContent = message ?? "";
 }
 
 function showRoleError(message) {
@@ -163,10 +173,21 @@ function renderSummary(summary = {}) {
 function badgeClassForStatus(status) {
   switch (status) {
     case "approved":
+    case "completed":
+      return "good";
+    case "accepted":
+    case "arriving":
+    case "in_progress":
       return "good";
     case "rejected":
     case "suspended":
+    case "cancelled":
       return "warn";
+    case "pending":
+    case "searching":
+    case "offered":
+    case "scheduled":
+      return "dark";
     default:
       return "dark";
   }
@@ -270,6 +291,94 @@ function renderRoleRows(rows = []) {
   });
 }
 
+function buildDispatchParams() {
+  const formData = new FormData(dispatchFilterForm);
+  const params = new URLSearchParams();
+
+  for (const [key, value] of formData.entries()) {
+    if (String(value).trim()) {
+      params.set(key, String(value).trim());
+    }
+  }
+
+  return params;
+}
+
+function renderDispatchSummary(summary = {}) {
+  const cards = [
+    ["Unassigned", summary.open_unassigned ?? 0],
+    ["Active trips", summary.active_trips ?? 0],
+    ["Scheduled", summary.scheduled ?? 0],
+    ["Completed today", summary.completed_today ?? 0],
+    ["Online drivers", summary.online_drivers ?? 0],
+    ["Busy drivers", summary.busy_drivers ?? 0],
+  ];
+
+  dispatchSummaryGrid.innerHTML = cards.map(([label, value]) => `
+    <article>
+      <strong>${value}</strong>
+      <span>${label}</span>
+    </article>
+  `).join("");
+}
+
+function renderDispatchRows(rows = []) {
+  if (!rows.length) {
+    dispatchTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="helper-text">No dispatch rows matched the current filter.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  dispatchTableBody.innerHTML = rows.map((row) => `
+    <tr>
+      <td>
+        <strong>${row.reference}</strong><br>
+        <span class="helper-text">${row.rider_name ?? "Rider"} | ${row.service_name ?? "Service"}</span>
+      </td>
+      <td>
+        <strong>${row.pickup_address}</strong><br>
+        <span class="helper-text">${row.destination_address}</span>
+      </td>
+      <td>
+        <span class="pill ${row.needs_attention ? "warn" : badgeClassForStatus(row.status)}">${row.status_label}</span><br>
+        <span class="helper-text">${row.fare_label} | ${row.payment_method}</span>
+      </td>
+      <td><span class="helper-text">${row.driver_name ?? "Unassigned"}</span></td>
+      <td><span class="helper-text">${row.queue_age_minutes} min</span></td>
+    </tr>
+  `).join("");
+}
+
+async function loadDispatchBoard() {
+  showDispatchError("");
+
+  try {
+    const payload = await withIdToken(async (idToken) => {
+      const endpoint = dispatchConfig?.endpoint ?? "/admin/bookings/dispatch";
+      const response = await fetch(buildApiUrl(endpoint.replace(/^\/api/, ""), buildDispatchParams()), {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message ?? "Unable to load the dispatch board.");
+      }
+
+      return data;
+    });
+
+    renderDispatchSummary(payload.summary);
+    renderDispatchRows(payload.data);
+  } catch (error) {
+    showDispatchError(error.message ?? "Unable to load the dispatch board.");
+  }
+}
+
 async function loadQueue() {
   showTableError("");
 
@@ -290,9 +399,12 @@ async function loadQueue() {
     });
 
     renderRoleManagement(payload);
+    dispatchConfig = payload.dispatch ?? dispatchConfig;
     renderSummary(payload.summary);
     renderRows(payload.data);
     setScreen("dashboard");
+
+    await loadDispatchBoard();
 
     if (payload.viewer?.can_manage_admins && payload.role_management?.enabled) {
       await loadRoleCandidates();
@@ -637,6 +749,10 @@ filterForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   loadQueue();
 });
+dispatchFilterForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadDispatchBoard();
+});
 roleSearchForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   loadRoleCandidates();
@@ -646,6 +762,7 @@ signoutButton?.addEventListener("click", async () => {
   currentApplication = null;
   currentViewer = null;
   roleManagementConfig = null;
+  dispatchConfig = null;
   detailCard.hidden = true;
   setScreen("auth");
 });

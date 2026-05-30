@@ -256,12 +256,12 @@ class _OnWayShellState extends State<OnWayShell> {
           NavigationDestination(
             icon: Icon(Icons.directions_car_outlined),
             selectedIcon: Icon(Icons.directions_car_rounded),
-            label: 'Driver Mode',
+            label: 'Drive',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
+            label: 'Account',
           ),
         ],
       ),

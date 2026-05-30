@@ -108,9 +108,7 @@ class OnWayAuthService {
         password: password,
       );
     } on FirebaseAuthException catch (error) {
-      throw OnWayAuthException(
-        error.message ?? 'Unable to sign in with Firebase.',
-      );
+      throw OnWayAuthException(error.message ?? 'Unable to sign in right now.');
     }
   }
 
@@ -129,7 +127,7 @@ class OnWayAuthService {
       await credential.user?.reload();
     } on FirebaseAuthException catch (error) {
       throw OnWayAuthException(
-        error.message ?? 'Unable to create Firebase account.',
+        error.message ?? 'Unable to create your account right now.',
       );
     }
   }
@@ -145,10 +143,28 @@ class OnWayAuthService {
 
       await _firebaseAuth.signInWithProvider(provider);
     } on FirebaseAuthException catch (error) {
-      throw OnWayAuthException(
-        error.message ?? 'Unable to sign in with Google right now.',
-      );
+      throw OnWayAuthException(_googleSignInErrorMessage(error));
     }
+  }
+
+  String _googleSignInErrorMessage(FirebaseAuthException error) {
+    final message = error.message?.trim();
+    final normalizedMessage = message?.toLowerCase() ?? '';
+    final normalizedCode = error.code.trim().toLowerCase();
+
+    final missingCertificate =
+        normalizedMessage.contains('package certificate') ||
+        (normalizedMessage.contains('package name') &&
+            normalizedMessage.contains('certificate')) ||
+        (normalizedCode == 'sign_in_failed' &&
+            normalizedMessage.contains('certificate'));
+
+    if (!kIsWeb && missingCertificate) {
+      return 'Google sign-in is unavailable in this version of the app. '
+          'Please update the app or try email sign-in for now.';
+    }
+
+    return message ?? 'Unable to sign in with Google right now.';
   }
 
   Future<OnWayAuthSession> syncCurrentUser({
@@ -312,6 +328,8 @@ class OnWayAuthService {
     final user = workspace['user'] as Map<String, dynamic>? ?? const {};
     final driver = workspace['driver_application'] as Map<String, dynamic>?;
     final vehicle = driver?['vehicle'] as Map<String, dynamic>?;
+    final demoDriverAccess =
+        workspace['demo_driver_access'] as Map<String, dynamic>? ?? const {};
 
     return OnWayDriverWorkspaceBundle(
       user: OnWayDriverWorkspaceUser(
@@ -394,6 +412,9 @@ class OnWayAuthService {
                 (item) => OnWayDriverDocumentTypeOption(
                   value: (item['value'] as String?) ?? 'other',
                   label: (item['label'] as String?) ?? 'Document',
+                  sampleHint: item['sample_hint'] as String?,
+                  isRequired: (item['is_required'] as bool?) ?? false,
+                  sortOrder: (item['sort_order'] as num?)?.toInt() ?? 999,
                 ),
               )
               .toList(growable: false),
@@ -401,6 +422,9 @@ class OnWayAuthService {
           .map(
             (key, value) => MapEntry(key.toString(), value?.toString() ?? ''),
           ),
+      driverDemoAccessEnabled: (demoDriverAccess['enabled'] as bool?) ?? false,
+      canActivateDriverDemoAccess:
+          (demoDriverAccess['can_activate'] as bool?) ?? false,
       driverApplication: driver == null
           ? null
           : OnWayDriverApplication(
@@ -422,6 +446,94 @@ class OnWayAuthService {
               tripsCompleted: (driver['trips_completed'] as num?)?.toInt() ?? 0,
               licenseNumber: driver['license_number'] as String?,
               notes: driver['notes'] as String?,
+              checklist: OnWayDriverOnboardingChecklist(
+                stage:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['stage']
+                        as String? ??
+                    'profile',
+                nextAction:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['next_action']
+                        as String? ??
+                    'Complete your driver profile.',
+                profileComplete:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['profile_complete']
+                        as bool? ??
+                    false,
+                vehicleComplete:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['vehicle_complete']
+                        as bool? ??
+                    false,
+                allRequiredSubmitted:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['all_required_submitted']
+                        as bool? ??
+                    false,
+                allRequiredApproved:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['all_required_approved']
+                        as bool? ??
+                    false,
+                activationReady:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['activation_ready']
+                        as bool? ??
+                    false,
+                reviewPending:
+                    (driver['checklist'] as Map<String, dynamic>? ??
+                            const <String, dynamic>{})['review_pending']
+                        as bool? ??
+                    false,
+                requiredDocumentTypes:
+                    (((driver['checklist'] as Map<String, dynamic>? ??
+                                    const <
+                                      String,
+                                      dynamic
+                                    >{})['required_document_types']
+                                as List?) ??
+                            const [])
+                        .map((item) => item.toString())
+                        .toList(growable: false),
+                requiredDocumentsTotal:
+                    ((driver['checklist'] as Map<String, dynamic>? ??
+                                const <
+                                  String,
+                                  dynamic
+                                >{})['required_documents_total']
+                            as num?)
+                        ?.toInt() ??
+                    0,
+                requiredDocumentsSubmitted:
+                    ((driver['checklist'] as Map<String, dynamic>? ??
+                                const <
+                                  String,
+                                  dynamic
+                                >{})['required_documents_submitted']
+                            as num?)
+                        ?.toInt() ??
+                    0,
+                requiredDocumentsApproved:
+                    ((driver['checklist'] as Map<String, dynamic>? ??
+                                const <
+                                  String,
+                                  dynamic
+                                >{})['required_documents_approved']
+                            as num?)
+                        ?.toInt() ??
+                    0,
+                requiredDocumentsRejected:
+                    ((driver['checklist'] as Map<String, dynamic>? ??
+                                const <
+                                  String,
+                                  dynamic
+                                >{})['required_documents_rejected']
+                            as num?)
+                        ?.toInt() ??
+                    0,
+              ),
               serviceTypeIds:
                   ((driver['service_type_ids'] as List?) ?? const [])
                       .map((item) => (item as num).toInt())
@@ -433,9 +545,18 @@ class OnWayAuthService {
                       id: (item['id'] as num?)?.toInt() ?? 0,
                       documentType:
                           (item['document_type'] as String?) ?? 'other',
+                      documentLabel: item['document_label'] as String?,
                       status: (item['status'] as String?) ?? 'pending',
+                      statusLabel: item['status_label'] as String?,
                       expiryDate: item['expiry_date'] as String?,
+                      submittedAt: item['submitted_at'] as String?,
+                      reviewedAt: item['reviewed_at'] as String?,
+                      rejectionReason: item['rejection_reason'] as String?,
                       updatedAt: item['updated_at'] as String?,
+                      isRequired: (item['is_required'] as bool?) ?? false,
+                      canResubmit: (item['can_resubmit'] as bool?) ?? false,
+                      sampleHint: item['sample_hint'] as String?,
+                      sortOrder: (item['sort_order'] as num?)?.toInt() ?? 999,
                     ),
                   )
                   .toList(growable: false),
@@ -459,6 +580,14 @@ class OnWayAuthService {
                       status: vehicle['status'] as String?,
                     ),
             ),
+    );
+  }
+
+  Future<void> activateDriverDemoAccess() async {
+    await _authorizedJsonRequest(
+      method: 'POST',
+      path: '/onboarding/driver/demo-access',
+      fallback: 'Unable to activate demo driver access right now.',
     );
   }
 
@@ -1300,7 +1429,7 @@ class OnWayAuthService {
       case 'too-many-requests':
         return 'Too many verification attempts were made. Please try again later.';
       case 'quota-exceeded':
-        return 'Firebase phone verification quota has been exceeded for now.';
+        return 'Phone verification is temporarily busy. Please try again later.';
       case 'session-expired':
         return 'The verification session expired. Request a new code.';
       case 'invalid-verification-code':
@@ -1311,7 +1440,7 @@ class OnWayAuthService {
       case 'provider-already-linked':
         return 'A phone number is already linked to this account.';
       case 'operation-not-allowed':
-        return 'Phone authentication is not enabled in Firebase yet.';
+        return 'Phone verification is unavailable right now.';
       default:
         return error.message ?? fallback;
     }

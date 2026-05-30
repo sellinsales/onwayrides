@@ -203,10 +203,16 @@ class OnWayDriverDocumentTypeOption {
   const OnWayDriverDocumentTypeOption({
     required this.value,
     required this.label,
+    this.sampleHint,
+    this.isRequired = false,
+    this.sortOrder = 999,
   });
 
   final String value;
   final String label;
+  final String? sampleHint;
+  final bool isRequired;
+  final int sortOrder;
 }
 
 class OnWayDriverDocumentSummary {
@@ -214,15 +220,87 @@ class OnWayDriverDocumentSummary {
     required this.id,
     required this.documentType,
     required this.status,
+    this.documentLabel,
+    this.statusLabel,
     this.expiryDate,
+    this.submittedAt,
+    this.reviewedAt,
+    this.rejectionReason,
     this.updatedAt,
+    this.isRequired = false,
+    this.canResubmit = false,
+    this.sampleHint,
+    this.sortOrder = 999,
   });
 
   final int id;
   final String documentType;
   final String status;
+  final String? documentLabel;
+  final String? statusLabel;
   final String? expiryDate;
+  final String? submittedAt;
+  final String? reviewedAt;
+  final String? rejectionReason;
   final String? updatedAt;
+  final bool isRequired;
+  final bool canResubmit;
+  final String? sampleHint;
+  final int sortOrder;
+
+  bool get isApproved => status == 'approved';
+  bool get isRejected => status == 'rejected' || status == 'expired';
+  bool get isPendingReview => status == 'pending';
+
+  String get effectiveLabel {
+    if (documentLabel != null && documentLabel!.trim().isNotEmpty) {
+      return documentLabel!;
+    }
+
+    final normalized = documentType.replaceAll('_', ' ');
+    return normalized[0].toUpperCase() + normalized.substring(1);
+  }
+
+  String get effectiveStatusLabel {
+    if (statusLabel != null && statusLabel!.trim().isNotEmpty) {
+      return statusLabel!;
+    }
+
+    final normalized = status.replaceAll('_', ' ');
+    return normalized[0].toUpperCase() + normalized.substring(1);
+  }
+}
+
+class OnWayDriverOnboardingChecklist {
+  const OnWayDriverOnboardingChecklist({
+    required this.stage,
+    required this.nextAction,
+    required this.profileComplete,
+    required this.vehicleComplete,
+    required this.allRequiredSubmitted,
+    required this.allRequiredApproved,
+    required this.activationReady,
+    required this.reviewPending,
+    required this.requiredDocumentTypes,
+    required this.requiredDocumentsTotal,
+    required this.requiredDocumentsSubmitted,
+    required this.requiredDocumentsApproved,
+    required this.requiredDocumentsRejected,
+  });
+
+  final String stage;
+  final String nextAction;
+  final bool profileComplete;
+  final bool vehicleComplete;
+  final bool allRequiredSubmitted;
+  final bool allRequiredApproved;
+  final bool activationReady;
+  final bool reviewPending;
+  final List<String> requiredDocumentTypes;
+  final int requiredDocumentsTotal;
+  final int requiredDocumentsSubmitted;
+  final int requiredDocumentsApproved;
+  final int requiredDocumentsRejected;
 }
 
 class OnWayVehicleDraft {
@@ -268,6 +346,7 @@ class OnWayDriverApplication {
     required this.tripsCompleted,
     required this.serviceTypeIds,
     required this.documents,
+    required this.checklist,
     this.licenseNumber,
     this.notes,
     this.vehicle,
@@ -288,6 +367,7 @@ class OnWayDriverApplication {
   final int tripsCompleted;
   final List<int> serviceTypeIds;
   final List<OnWayDriverDocumentSummary> documents;
+  final OnWayDriverOnboardingChecklist checklist;
   final String? licenseNumber;
   final String? notes;
   final OnWayVehicleDraft? vehicle;
@@ -338,6 +418,8 @@ class OnWayDriverWorkspaceBundle {
     required this.vehicleModels,
     required this.documentTypes,
     required this.driverSamples,
+    required this.driverDemoAccessEnabled,
+    required this.canActivateDriverDemoAccess,
     this.driverApplication,
   });
 
@@ -350,6 +432,8 @@ class OnWayDriverWorkspaceBundle {
   final List<OnWayVehicleModelOption> vehicleModels;
   final List<OnWayDriverDocumentTypeOption> documentTypes;
   final Map<String, String> driverSamples;
+  final bool driverDemoAccessEnabled;
+  final bool canActivateDriverDemoAccess;
   final OnWayDriverApplication? driverApplication;
 }
 

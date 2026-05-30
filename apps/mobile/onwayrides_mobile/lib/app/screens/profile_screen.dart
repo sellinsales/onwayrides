@@ -26,14 +26,16 @@ class ProfileScreen extends StatelessWidget {
     final accountEmail = session?.email;
     final accountPhone = session?.phone;
     final accountSubtitle = previewMode
-        ? 'Preview mode with mock rider and driver views'
-        : '${session?.roleLabel ?? 'Rider'} account synced from Firebase and Laravel';
+        ? 'Preview account'
+        : '${session?.roleLabel ?? 'Rider'} account';
 
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
         children: [
-          const BrandHeader(caption: 'Account, support and business access'),
+          const BrandHeader(
+            caption: 'Your account, support, and saved details',
+          ),
           const SizedBox(height: 20),
           OnWayPanel(
             child: Column(
@@ -91,11 +93,13 @@ class ProfileScreen extends StatelessWidget {
                       selected: true,
                     ),
                     ModeChip(
-                      label: previewMode ? 'Preview' : 'Firebase Auth',
+                      label: session?.phoneVerified == true
+                          ? 'Phone verified'
+                          : 'Phone not verified',
                       selected: false,
                     ),
                     ModeChip(
-                      label: session?.statusLabel ?? 'Beta',
+                      label: session?.statusLabel ?? 'Active',
                       selected: false,
                     ),
                   ],
@@ -103,19 +107,17 @@ class ProfileScreen extends StatelessWidget {
                 if (session != null) ...[
                   const SizedBox(height: 18),
                   Text(
-                    'Beta access: ${session!.betaModeLabel} | ${session!.dailyRideLimitLabel}',
+                    'Contact details',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    session!.phoneVerified
-                        ? 'Phone status: Verified'
-                        : 'Phone status: Collected but not verified yet',
+                    accountEmail ?? 'No email added',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Marketing consent: SMS ${session!.smsMarketingOptIn ? 'on' : 'off'} | WhatsApp ${session!.whatsappMarketingOptIn ? 'on' : 'off'}',
+                    accountPhone ?? 'No phone number added',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -125,7 +127,7 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Quick shortcuts',
-            subtitle: 'Keep the account area clean, fast and production-ready.',
+            subtitle: 'The things you may need most often.',
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -157,7 +159,7 @@ class ProfileScreen extends StatelessWidget {
               _ShortcutCard(
                 icon: Icons.groups_rounded,
                 title: 'Fleet center',
-                subtitle: 'Drivers and vehicles',
+                subtitle: 'Business and fleet access',
                 onTap: onOpenFleetOwner,
               ),
             ],
@@ -165,28 +167,26 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Trust and policies',
-            subtitle:
-                'Everything needed for support, compliance and store review.',
+            subtitle: 'Important account information and support links.',
           ),
           const SizedBox(height: 12),
           _ActionTile(
             icon: Icons.policy_outlined,
             title: 'Privacy policy',
             subtitle:
-                'See how OnWay Rides, Firebase Auth and backend systems use your data',
+                'Learn how your account and trip information are handled.',
             onTap: () => _openExternalLink(context, OnWayLinks.privacyPolicy),
           ),
           _ActionTile(
             icon: Icons.gavel_rounded,
             title: 'Terms of service',
-            subtitle: 'Review beta usage rules, ride limits and account terms',
+            subtitle: 'Read the rules for using OnWay services.',
             onTap: () => _openExternalLink(context, OnWayLinks.termsOfService),
           ),
           _ActionTile(
             icon: Icons.delete_outline_rounded,
             title: 'Delete account and data',
-            subtitle:
-                'Open the public deletion request page required for Google Play',
+            subtitle: 'Request account deletion or data removal.',
             onTap: () => _openExternalLink(
               context,
               OnWayLinks.deleteAccount,
@@ -207,8 +207,8 @@ class ProfileScreen extends StatelessWidget {
           OnWayPanel(
             child: Text(
               previewMode
-                  ? 'Preview mode stays available for design review even when Firebase is not configured locally.'
-                  : 'Firebase identity is now synced to the Laravel backend. Wallet, saved places, and support endpoints are the next mobile integration layer.',
+                  ? 'Use this preview to explore the account layout and shortcuts.'
+                  : 'Keep your phone number current so drivers and support can reach you when needed.',
             ),
           ),
         ],

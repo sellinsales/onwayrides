@@ -129,7 +129,7 @@ class DriverDocumentController extends Controller
             DB::table('driver_profiles')
                 ->where('id', $driverProfile->id)
                 ->update([
-                    'onboarding_status' => 'documents_pending',
+                    'onboarding_status' => 'review',
                     'updated_at' => $now,
                 ]);
         } catch (FirebaseConfigurationException $exception) {
@@ -213,11 +213,15 @@ class DriverDocumentController extends Controller
     private function serializeDocument(object $document): array
     {
         return [
-            'id' => $document->id,
-            'document_type' => $document->document_type,
+            'id' => (int) $document->id,
+            'document_type' => (string) $document->document_type,
+            'document_label' => Str::headline(str_replace('_', ' ', (string) $document->document_type)),
             'document_number' => $document->document_number,
-            'status' => $document->status,
+            'status' => (string) $document->status,
+            'status_label' => Str::headline(str_replace('_', ' ', (string) $document->status)),
             'expiry_date' => $document->expiry_date,
+            'reviewed_at' => $document->reviewed_at ?? null,
+            'rejection_reason' => $document->rejection_reason ?? null,
             'updated_at' => $document->updated_at,
         ];
     }

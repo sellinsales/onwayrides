@@ -45,6 +45,26 @@ Inside `apps/mobile/onwayrides_mobile`:
    flutter run --dart-define=ONWAYRIDES_API_BASE_URL=https://api.onwayrides.com/api
    ```
 
+4. if Google sign-in is enabled on Android, register your signing
+   certificates in Firebase before testing it
+
+   - Open Firebase Console for project `onwayrides`
+   - Go to `Project settings` -> `Your apps` -> Android app `com.onway.rides`
+   - Add the SHA-1 and SHA-256 fingerprints for every key you use:
+     debug keystore, upload keystore, and Play App Signing key if Play signs
+     release builds
+   - Download the refreshed `google-services.json`
+   - Replace `android/app/google-services.json`
+
+   Example debug keystore command:
+
+   ```bash
+   keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore
+   ```
+
+   If Google login shows a package certificate error, the Android app is
+   missing one of those SHA fingerprints in Firebase.
+
 ## Notes
 
 - Android and Web are the Firebase-configured target platforms in this repo

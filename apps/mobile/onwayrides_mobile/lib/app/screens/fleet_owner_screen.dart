@@ -10,12 +10,12 @@ class FleetOwnerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Fleet Owner')),
+      appBar: AppBar(title: const Text('Business & Fleet')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
           const BrandHeader(
-            caption: 'Fleet ID, drivers, vehicles and operations',
+            caption: 'Manage drivers, vehicles, and daily business activity',
           ),
           const SizedBox(height: 20),
           OnWayPanel(
@@ -28,7 +28,7 @@ class FleetOwnerScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Fleet owner dashboard for local city operations, complaints and payouts.',
+                  'Keep your team organized, your vehicles active, and your daily operations moving smoothly.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 16),
@@ -36,20 +36,16 @@ class FleetOwnerScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: FilledButton(
-                        onPressed: () => _showPendingAction(
-                          context,
-                          'Add driver',
-                        ),
+                        onPressed: () =>
+                            _showPendingAction(context, 'Add driver'),
                         child: const Text('Add driver'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => _showPendingAction(
-                          context,
-                          'Add vehicle',
-                        ),
+                        onPressed: () =>
+                            _showPendingAction(context, 'Add vehicle'),
                         child: const Text('Add vehicle'),
                       ),
                     ),
@@ -61,8 +57,7 @@ class FleetOwnerScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Fleet health',
-            subtitle:
-                'Drivers, vehicles, rides, earnings and support quality.',
+            subtitle: 'A quick view of rides, earnings, and team performance.',
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -90,8 +85,7 @@ class FleetOwnerScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const SectionHeading(
             title: 'Drivers',
-            subtitle:
-                'Independent or fleet-linked drivers can be managed here.',
+            subtitle: 'See who is active, available, and ready for trips.',
           ),
           const SizedBox(height: 14),
           for (final driver in OnWayMockData.fleetDrivers) ...[
@@ -109,9 +103,7 @@ class FleetOwnerScreen extends StatelessWidget {
                       ),
                       Text(
                         driver.status,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: OnWayTheme.yellow,
                         ),
                       ),
@@ -139,7 +131,7 @@ class FleetOwnerScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const SectionHeading(
             title: 'Vehicles & assignment',
-            subtitle: 'Assign drivers to vehicles and keep documents current.',
+            subtitle: 'Match drivers to vehicles and keep records up to date.',
           ),
           const SizedBox(height: 14),
           for (final vehicle in OnWayMockData.fleetVehicles) ...[
@@ -191,17 +183,18 @@ class FleetOwnerScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Operations responsibility',
+                  'Keep your fleet ready',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 12),
-                Text('Driver documents and renewals stay under fleet control.'),
-                Text('Vehicle inspection and permits must remain current.'),
-                Text('Assignments, payouts and disputes are tracked centrally.'),
-                Text('Rider complaints and driver quality require daily review.'),
+                Text('Keep driver documents and renewals up to date.'),
                 Text(
-                  'Fleet onboarding data is synced through the shared workspace.',
+                  'Make sure inspections, permits, and vehicle details stay current.',
                 ),
+                Text(
+                  'Review assignments, payouts, and support issues regularly.',
+                ),
+                Text('Strong fleet response helps riders trust the service.'),
               ],
             ),
           ),
@@ -212,11 +205,7 @@ class FleetOwnerScreen extends StatelessWidget {
 
   void _showPendingAction(BuildContext context, String action) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$action will be available after fleet onboarding approval.',
-        ),
-      ),
+      SnackBar(content: Text('$action will be available here soon.')),
     );
   }
 }

@@ -73,9 +73,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
       stream: widget.authService.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _AuthLoadingScreen(
-            message: 'Checking Firebase session...',
-          );
+          return const _AuthLoadingScreen(message: 'Checking your account...');
         }
 
         final firebaseUser = snapshot.data;
@@ -87,15 +85,13 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           future: _sessionFor(firebaseUser),
           builder: (context, sessionSnapshot) {
             if (sessionSnapshot.connectionState == ConnectionState.waiting) {
-              return const _AuthLoadingScreen(
-                message: 'Syncing account with backend...',
-              );
+              return const _AuthLoadingScreen(message: 'Finishing sign-in...');
             }
 
             if (sessionSnapshot.hasError) {
               final message = sessionSnapshot.error is OnWayAuthException
                   ? (sessionSnapshot.error as OnWayAuthException).message
-                  : 'Unable to sync the signed-in Firebase user with the backend.';
+                  : 'We could not finish signing you in right now.';
 
               return _AuthSyncErrorScreen(
                 message: message,
@@ -148,8 +144,6 @@ class _EmailAuthScreen extends StatefulWidget {
 }
 
 class _EmailAuthScreenState extends State<_EmailAuthScreen> {
-  static const _demoDriverEmail = 'demo.driver@onwayrides.com';
-
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -223,14 +217,6 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
     }
   }
 
-  void _useDemoDriverEmail() {
-    setState(() {
-      _registerMode = false;
-      _errorMessage = null;
-      _emailController.text = _demoDriverEmail;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -268,8 +254,8 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                         const SizedBox(height: 8),
                         Text(
                           _registerMode
-                              ? 'Set up one account for rider bookings now, with driver and fleet access available from the same app later.'
-                              : 'Sign in once and keep your rider profile, driver onboarding and support access in one place.',
+                              ? 'Create one account for rides, deliveries, and travel whenever you need them.'
+                              : 'Welcome back. Sign in to book trips, manage rides, and get support quickly.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 20),
@@ -388,47 +374,16 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                           child: Text(
                             _registerMode
                                 ? 'Already have an account? Sign in'
-                                : 'Need rider beta access? Create an account',
+                                : 'New to OnWay? Create an account',
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Phone-based sign-in stays limited during beta. Use Google or email first, then add your working phone number inside the onboarding steps.',
+                          'Use Google or email now. You can add your contact number in the next step.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                OnWayPanel(
-                  backgroundColor: OnWayTheme.slate,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Shared demo driver',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Use the seeded approved driver account to test dispatch, request acceptance, and live trip flow from the same app shell.',
-                      ),
-                      const SizedBox(height: 12),
-                      SelectableText(
-                        _demoDriverEmail,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Sign in with the shared Firebase password configured for this account. All testers will share the same live driver state and notifications.',
-                      ),
-                      const SizedBox(height: 14),
-                      FilledButton.tonal(
-                        onPressed: _loading ? null : _useDemoDriverEmail,
-                        child: const Text('Use demo driver email'),
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -438,7 +393,7 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Beta access policy',
+                        'Why people use OnWay',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -446,11 +401,15 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'Free beta riders can currently test with a maximum of 3 rides per day.',
+                        'Book everyday rides, airport transfers, rentals, and deliveries from one account.',
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Drivers and operational users unlock broader access after document approval.',
+                        'Keep pickup details, trip progress, and support in one simple place.',
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Start as a rider today and unlock more services as OnWay grows in your city.',
                       ),
                     ],
                   ),
@@ -488,30 +447,17 @@ class _FirebaseSetupScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const BrandHeader(
-                      caption: 'Firebase setup required for sign-in',
+                      caption: 'Sign in to keep rides and support in one place',
                     ),
                     const SizedBox(height: 22),
                     Text(
-                      'Firebase auth is not active in this local build.',
+                      'Sign-in is unavailable in this build right now.',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      bootstrap.message ??
-                          'Add your real Firebase values to lib/firebase_options.dart or run flutterfire configure for this app.',
+                      'Please try a newer version of the app or continue with the preview experience for now.',
                       style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 18),
-                    const Text('What to do next:'),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '1. Run flutterfire configure inside apps/mobile/onwayrides_mobile',
-                    ),
-                    const Text(
-                      '2. Make sure Web and Android apps use the real OnWay Rides Firebase project',
-                    ),
-                    const Text(
-                      '3. Point the mobile app backend URL to the Laravel API',
                     ),
                     const SizedBox(height: 20),
                     Wrap(
@@ -520,7 +466,7 @@ class _FirebaseSetupScreen extends StatelessWidget {
                       children: [
                         FilledButton.tonal(
                           onPressed: onContinuePreview,
-                          child: const Text('Continue preview mode'),
+                          child: const Text('Open app preview'),
                         ),
                       ],
                     ),
@@ -552,20 +498,20 @@ class _IntroCarousel extends StatelessWidget {
       (
         title: 'Book local rides fast',
         body:
-            'Everyday rides, airport transfers and city-to-city travel across Pakistan and Azad Kashmir.',
+            'Everyday rides, airport transfers, and out-of-town travel from one simple app.',
         icon: Icons.local_taxi_rounded,
       ),
       (
-        title: 'Rentals and courier in one flow',
+        title: 'Plan more than one kind of trip',
         body:
-            'Keep recurring trips, rentals and courier demand inside the same clean customer account.',
+            'Switch between rentals, courier requests, and city travel without creating another account.',
         icon: Icons.inventory_2_rounded,
       ),
       (
-        title: 'Apply as driver later',
+        title: 'Stay ready on the move',
         body:
-            'Use the same app account for rider bookings today and driver onboarding when you are ready.',
-        icon: Icons.badge_rounded,
+            'Save your details once and come back faster whenever you need your next ride.',
+        icon: Icons.route_rounded,
       ),
     ];
 
@@ -693,7 +639,7 @@ class _AuthSyncErrorScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Signed in to Firebase, but backend sync failed.',
+                    'We signed you in, but could not load your account.',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 10),
@@ -705,7 +651,7 @@ class _AuthSyncErrorScreen extends StatelessWidget {
                     children: [
                       FilledButton(
                         onPressed: onRetry,
-                        child: const Text('Retry sync'),
+                        child: const Text('Try again'),
                       ),
                       FilledButton.tonal(
                         onPressed: () {

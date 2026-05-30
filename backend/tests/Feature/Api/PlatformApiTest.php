@@ -68,6 +68,16 @@ class PlatformApiTest extends TestCase
             ]);
     }
 
+    public function test_admin_dispatch_board_requires_a_firebase_token(): void
+    {
+        $this->getJson('/api/admin/bookings/dispatch')
+            ->assertUnauthorized()
+            ->assertJsonFragment([
+                'status' => 'error',
+                'message' => 'A Firebase ID token is required.',
+            ]);
+    }
+
     public function test_device_token_registration_requires_a_firebase_token(): void
     {
         $this->postJson('/api/devices/token', [

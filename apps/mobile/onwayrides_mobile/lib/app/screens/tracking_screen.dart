@@ -71,7 +71,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Future<void> _cancelRide() async {
     final bookingId = _trip.bookingId;
     if (bookingId == null || widget.authService == null) {
-      _showMessage('Live cancellation is not available in preview mode.');
+      _showMessage('Ride cancellation is unavailable right now.');
       return;
     }
 
@@ -94,9 +94,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   void _showTodo(String action) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$action will connect to live APIs next.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$action will be available soon.')));
   }
 
   void _showMessage(String message) {
