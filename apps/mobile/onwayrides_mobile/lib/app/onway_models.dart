@@ -14,6 +14,13 @@ enum ServiceType {
   prebooking,
 }
 
+class OnWayCoordinate {
+  const OnWayCoordinate({required this.latitude, required this.longitude});
+
+  final double latitude;
+  final double longitude;
+}
+
 class OnWayService {
   const OnWayService({
     required this.type,
@@ -57,6 +64,7 @@ class OnWayPlaceSuggestion {
     required this.title,
     required this.addressLine,
     required this.icon,
+    required this.coordinate,
     this.badge,
     this.isSaved = false,
   });
@@ -64,6 +72,7 @@ class OnWayPlaceSuggestion {
   final String title;
   final String addressLine;
   final IconData icon;
+  final OnWayCoordinate coordinate;
   final String? badge;
   final bool isSaved;
 }
@@ -119,6 +128,9 @@ class ActiveTrip {
     required this.paymentLabel,
     required this.fareLabel,
     this.driver,
+    this.pickupCoordinate,
+    this.destinationCoordinate,
+    this.driverCoordinate,
   });
 
   final int? bookingId;
@@ -132,6 +144,9 @@ class ActiveTrip {
   final String paymentLabel;
   final String fareLabel;
   final DriverProfile? driver;
+  final OnWayCoordinate? pickupCoordinate;
+  final OnWayCoordinate? destinationCoordinate;
+  final OnWayCoordinate? driverCoordinate;
 }
 
 class TripHistoryItem {
@@ -463,6 +478,8 @@ class DriverRequest {
     required this.canCounter,
     this.status = 'pending',
     this.statusLine = 'Request ready for driver action.',
+    this.pickupCoordinate,
+    this.dropoffCoordinate,
   });
 
   final int? id;
@@ -477,6 +494,8 @@ class DriverRequest {
   final bool canCounter;
   final String status;
   final String statusLine;
+  final OnWayCoordinate? pickupCoordinate;
+  final OnWayCoordinate? dropoffCoordinate;
 }
 
 class OnWayDriverCurrentTrip {
@@ -492,6 +511,8 @@ class OnWayDriverCurrentTrip {
     required this.fareLabel,
     required this.paymentLabel,
     this.riderPhone,
+    this.pickupCoordinate,
+    this.dropoffCoordinate,
   });
 
   final int id;
@@ -505,6 +526,8 @@ class OnWayDriverCurrentTrip {
   final String fareLabel;
   final String paymentLabel;
   final String? riderPhone;
+  final OnWayCoordinate? pickupCoordinate;
+  final OnWayCoordinate? dropoffCoordinate;
 
   String get nextPrimaryActionLabel {
     switch (status) {

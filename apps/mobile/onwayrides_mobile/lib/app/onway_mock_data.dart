@@ -3,6 +3,65 @@ import 'package:flutter/material.dart';
 import 'onway_models.dart';
 
 class OnWayMockData {
+  static const lahoreCenter = OnWayCoordinate(
+    latitude: 31.5204,
+    longitude: 74.3587,
+  );
+  static const joharTown = OnWayCoordinate(
+    latitude: 31.4697,
+    longitude: 74.2728,
+  );
+  static const gulberg = OnWayCoordinate(latitude: 31.5142, longitude: 74.3441);
+  static const airport = OnWayCoordinate(latitude: 31.5216, longitude: 74.4036);
+  static const beaconhouseCanal = OnWayCoordinate(
+    latitude: 31.4786,
+    longitude: 74.2522,
+  );
+  static const packagesMall = OnWayCoordinate(
+    latitude: 31.4673,
+    longitude: 74.3637,
+  );
+  static const emporiumMall = OnWayCoordinate(
+    latitude: 31.4698,
+    longitude: 74.2654,
+  );
+  static const libertyRoundabout = OnWayCoordinate(
+    latitude: 31.5208,
+    longitude: 74.3466,
+  );
+  static const rawalakotBypass = OnWayCoordinate(
+    latitude: 33.8578,
+    longitude: 73.7608,
+  );
+  static const muzaffarabadCity = OnWayCoordinate(
+    latitude: 34.3700,
+    longitude: 73.4711,
+  );
+  static const mirpurCity = OnWayCoordinate(
+    latitude: 33.1480,
+    longitude: 73.7514,
+  );
+  static const bhimberChowk = OnWayCoordinate(
+    latitude: 32.9754,
+    longitude: 74.0785,
+  );
+  static const daewooTerminal = OnWayCoordinate(
+    latitude: 31.4713,
+    longitude: 74.2406,
+  );
+  static const lgs55Main = OnWayCoordinate(
+    latitude: 31.5154,
+    longitude: 74.3476,
+  );
+  static const cargoMarket = OnWayCoordinate(
+    latitude: 31.6021,
+    longitude: 74.3142,
+  );
+  static const driverLivePosition = OnWayCoordinate(
+    latitude: 31.4818,
+    longitude: 74.3124,
+  );
+
   static const services = <OnWayService>[
     OnWayService(
       type: ServiceType.rideShare,
@@ -119,6 +178,7 @@ class OnWayMockData {
       title: 'Home',
       addressLine: 'Johar Town, Lahore',
       icon: Icons.home_rounded,
+      coordinate: joharTown,
       badge: 'Saved',
       isSaved: true,
     ),
@@ -126,6 +186,7 @@ class OnWayMockData {
       title: 'Office',
       addressLine: 'Gulberg Main Boulevard, Lahore',
       icon: Icons.business_center_rounded,
+      coordinate: gulberg,
       badge: 'Saved',
       isSaved: true,
     ),
@@ -133,6 +194,7 @@ class OnWayMockData {
       title: 'Airport',
       addressLine: 'Allama Iqbal International Airport',
       icon: Icons.flight_takeoff_rounded,
+      coordinate: airport,
       badge: 'Saved',
       isSaved: true,
     ),
@@ -140,6 +202,7 @@ class OnWayMockData {
       title: 'School',
       addressLine: 'Beaconhouse Canal Campus',
       icon: Icons.school_rounded,
+      coordinate: beaconhouseCanal,
       badge: 'Saved',
       isSaved: true,
     ),
@@ -150,24 +213,28 @@ class OnWayMockData {
       title: 'Packages Mall',
       addressLine: 'Walton Road, Lahore',
       icon: Icons.local_mall_rounded,
+      coordinate: packagesMall,
       badge: 'Recent',
     ),
     OnWayPlaceSuggestion(
       title: 'Emporium Mall',
       addressLine: 'Abdul Haque Road, Lahore',
       icon: Icons.storefront_rounded,
+      coordinate: emporiumMall,
       badge: 'Recent',
     ),
     OnWayPlaceSuggestion(
       title: 'Liberty Roundabout',
       addressLine: 'Gulberg III, Lahore',
       icon: Icons.place_rounded,
+      coordinate: libertyRoundabout,
       badge: 'Recent',
     ),
     OnWayPlaceSuggestion(
       title: 'Rawalakot Bypass',
       addressLine: 'Poonch, Azad Kashmir',
       icon: Icons.route_rounded,
+      coordinate: rawalakotBypass,
       badge: 'Recent',
     ),
   ];
@@ -177,42 +244,49 @@ class OnWayMockData {
       title: 'Current location',
       addressLine: 'Use device GPS pin',
       icon: Icons.my_location_rounded,
+      coordinate: joharTown,
       badge: 'GPS',
     ),
     OnWayPlaceSuggestion(
       title: 'Muzaffarabad City',
       addressLine: 'Old Secretariat Road, Azad Kashmir',
       icon: Icons.location_city_rounded,
+      coordinate: muzaffarabadCity,
       badge: 'AJK',
     ),
     OnWayPlaceSuggestion(
       title: 'Mirpur City',
       addressLine: 'Sector F-1, Azad Kashmir',
       icon: Icons.location_city_rounded,
+      coordinate: mirpurCity,
       badge: 'AJK',
     ),
     OnWayPlaceSuggestion(
       title: 'Bhimber Chowk',
       addressLine: 'Bhimber, Azad Kashmir',
       icon: Icons.location_city_rounded,
+      coordinate: bhimberChowk,
       badge: 'AJK',
     ),
     OnWayPlaceSuggestion(
       title: 'Daewoo Terminal',
       addressLine: 'Thokar Niaz Baig, Lahore',
       icon: Icons.directions_bus_rounded,
+      coordinate: daewooTerminal,
       badge: 'Terminal',
     ),
     OnWayPlaceSuggestion(
       title: 'LGS 55 Main',
       addressLine: 'Gulberg Lahore',
       icon: Icons.school_rounded,
+      coordinate: lgs55Main,
       badge: 'School',
     ),
     OnWayPlaceSuggestion(
       title: 'Cargo Market',
       addressLine: 'Badami Bagh, Lahore',
       icon: Icons.local_shipping_rounded,
+      coordinate: cargoMarket,
       badge: 'Courier',
     ),
   ];
@@ -272,6 +346,9 @@ class OnWayMockData {
     paymentLabel: 'Cash payment',
     fareLabel: 'PKR 620',
     driver: driver,
+    pickupCoordinate: joharTown,
+    destinationCoordinate: packagesMall,
+    driverCoordinate: driverLivePosition,
   );
 
   static const tripHistory = <TripHistoryItem>[
@@ -315,6 +392,8 @@ class OnWayMockData {
       distanceLabel: '8.4 km',
       paymentLabel: 'Cash',
       canCounter: true,
+      pickupCoordinate: emporiumMall,
+      dropoffCoordinate: gulberg,
     ),
     DriverRequest(
       serviceTitle: 'Courier',
@@ -325,6 +404,8 @@ class OnWayMockData {
       distanceLabel: '5.1 km',
       paymentLabel: 'Wallet',
       canCounter: true,
+      pickupCoordinate: libertyRoundabout,
+      dropoffCoordinate: OnWayCoordinate(latitude: 31.4830, longitude: 74.3250),
     ),
     DriverRequest(
       serviceTitle: 'School & Office',
@@ -335,6 +416,8 @@ class OnWayMockData {
       distanceLabel: 'Recurring',
       paymentLabel: 'Cash',
       canCounter: false,
+      pickupCoordinate: OnWayCoordinate(latitude: 31.4707, longitude: 74.4145),
+      dropoffCoordinate: lgs55Main,
     ),
   ];
 
@@ -399,6 +482,10 @@ class OnWayMockData {
   }
 
   static ActiveTrip tripForService(OnWayService service) {
+    final destinationCoordinate = service.type == ServiceType.airport
+        ? airport
+        : packagesMall;
+
     return ActiveTrip(
       serviceTitle: service.title,
       pickup: 'Johar Town, Lahore',
@@ -412,6 +499,9 @@ class OnWayMockData {
       paymentLabel: 'Cash payment',
       fareLabel: fareOptions.first.priceLabel,
       driver: driver,
+      pickupCoordinate: joharTown,
+      destinationCoordinate: destinationCoordinate,
+      driverCoordinate: midpointBetween(joharTown, destinationCoordinate),
     );
   }
 
@@ -439,5 +529,44 @@ class OnWayMockData {
 
     final unique = <ServiceType>{};
     return matches.where((item) => unique.add(item.serviceType)).toList();
+  }
+
+  static List<OnWayPlaceSuggestion> get allKnownPlaces => [
+    ...savedPlaces,
+    ...recentPlaces,
+    ...locationSuggestions,
+  ];
+
+  static OnWayPlaceSuggestion? placeByTitle(String title) {
+    final normalized = title.trim().toLowerCase();
+    for (final place in allKnownPlaces) {
+      if (place.title.toLowerCase() == normalized ||
+          place.addressLine.toLowerCase() == normalized) {
+        return place;
+      }
+    }
+    return null;
+  }
+
+  static OnWayCoordinate coordinateForAddress(String text) {
+    final normalized = text.trim().toLowerCase();
+    for (final place in allKnownPlaces) {
+      final haystack = '${place.title} ${place.addressLine}'.toLowerCase();
+      if (haystack.contains(normalized) ||
+          normalized.contains(place.title.toLowerCase())) {
+        return place.coordinate;
+      }
+    }
+    return lahoreCenter;
+  }
+
+  static OnWayCoordinate midpointBetween(
+    OnWayCoordinate start,
+    OnWayCoordinate end,
+  ) {
+    return OnWayCoordinate(
+      latitude: (start.latitude + end.latitude) / 2,
+      longitude: (start.longitude + end.longitude) / 2,
+    );
   }
 }

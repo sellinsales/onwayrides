@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../auth/onway_auth_service.dart';
 import '../auth/onway_auth_session.dart';
+import '../onway_map.dart';
+import '../onway_mock_data.dart';
 import '../onway_models.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
@@ -711,6 +713,8 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
                     ? 'Nearby requests refresh automatically while you stay online.'
                     : 'Go online first to start receiving nearby rider demand.',
               ),
+              const SizedBox(height: 18),
+              _buildDispatchMapCard(context, feed),
               if (feed.currentTrip != null) ...[
                 const SizedBox(height: 18),
                 _currentTripCard(context, feed.currentTrip!),
@@ -741,6 +745,77 @@ class _DriverModeScreenState extends State<DriverModeScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDispatchMapCard(
+    BuildContext context,
+    OnWayDriverDispatchFeed feed,
+  ) {
+    final currentTrip = feed.currentTrip;
+    final pickupCoordinate =
+        currentTrip?.pickupCoordinate ??
+        (currentTrip != null
+            ? OnWayMockData.coordinateForAddress(currentTrip.pickup)
+            : null);
+    final dropoffCoordinate =
+        currentTrip?.dropoffCoordinate ??
+        (currentTrip != null
+            ? OnWayMockData.coordinateForAddress(currentTrip.dropoff)
+            : null);
+    final route = pickupCoordinate != null && dropoffCoordinate != null
+        ? buildRoutePath(pickupCoordinate, dropoffCoordinate)
+        : const <OnWayCoordinate>[];
+    final markers = <OnWayMapMarkerSpec>[
+      const OnWayMapMarkerSpec(
+        coordinate: OnWayMockData.driverLivePosition,
+        icon: Icons.navigation_rounded,
+        label: 'You',
+        color: Color(0xFF91F2C0),
+      ),
+      if (pickupCoordinate != null)
+        OnWayMapMarkerSpec(
+          coordinate: pickupCoordinate,
+          icon: Icons.person_pin_circle_rounded,
+          label: currentTrip == null ? 'Pickup' : 'Rider',
+          color: Colors.white,
+        ),
+      if (dropoffCoordinate != null)
+        OnWayMapMarkerSpec(
+          coordinate: dropoffCoordinate,
+          icon: Icons.flag_rounded,
+          label: 'Dropoff',
+        ),
+      if (currentTrip == null)
+        ...feed.requests
+            .take(3)
+            .map(
+              (request) => OnWayMapMarkerSpec(
+                coordinate:
+                    request.pickupCoordinate ??
+                    OnWayMockData.coordinateForAddress(request.pickup),
+                icon: Icons.local_taxi_rounded,
+                label: request.serviceTitle,
+                size: 36,
+              ),
+            ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          currentTrip == null ? 'Dispatch map' : 'Active trip map',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 10),
+        OnWayMapSurface(
+          height: 210,
+          interactive: false,
+          markers: markers,
+          route: route,
+        ),
+      ],
     );
   }
 
@@ -1849,6 +1924,31 @@ class _PreviewDriverModeState extends State<_PreviewDriverMode> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 24),
+          OnWayMapSurface(
+            height: 240,
+            interactive: false,
+            markers: [
+              const OnWayMapMarkerSpec(
+                coordinate: OnWayMockData.driverLivePosition,
+                icon: Icons.navigation_rounded,
+                label: 'You',
+                color: Color(0xFF91F2C0),
+              ),
+              ...widget.requests
+                  .take(3)
+                  .map(
+                    (request) => OnWayMapMarkerSpec(
+                      coordinate:
+                          request.pickupCoordinate ??
+                          OnWayMockData.coordinateForAddress(request.pickup),
+                      icon: Icons.person_pin_circle_rounded,
+                      label: request.serviceTitle,
+                      size: 38,
+                    ),
+                  ),
+            ],
           ),
           const SizedBox(height: 24),
           LayoutBuilder(

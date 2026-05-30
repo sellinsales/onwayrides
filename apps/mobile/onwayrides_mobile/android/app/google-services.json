@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "867042633205-cpnb3eke2653i7hrjup7fu5hh1g5j6v1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.onway.rides",
+            "certificate_hash": "14f2b8699f0933fa57a2f8e91aca569fe880c58f"
+          }
+        },
+        {
+          "client_id": "867042633205-u27nl86k90v68292d0olmt6jsurmrcrb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.onway.rides",
+            "certificate_hash": "7cceef73d6f9440704eabbae834012dc235b39a1"
+          }
+        },
+        {
           "client_id": "867042633205-hb64cbkqhgc1pglt5ifq1th0q8q47046.apps.googleusercontent.com",
           "client_type": 3
         }

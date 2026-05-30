@@ -225,12 +225,12 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 40),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               children: [
                 const BrandHeader(
-                  caption: 'Rides, rentals and deliveries from one app',
+                  caption: 'Rides, rentals, and delivery in one app',
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
                 _IntroCarousel(
                   controller: _introController,
                   currentIndex: _introIndex,
@@ -238,8 +238,9 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                     setState(() => _introIndex = value);
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 OnWayPanel(
+                  padding: const EdgeInsets.all(16),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -251,17 +252,17 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                               : 'Sign in to OnWay Rides',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           _registerMode
-                              ? 'Create one account for rides, deliveries, and travel whenever you need them.'
-                              : 'Welcome back. Sign in to book trips, manage rides, and get support quickly.',
+                              ? 'Create one account for rides, deliveries, and travel.'
+                              : 'Sign in to book trips and manage rides quickly.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         if (_registerMode)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.only(bottom: 12),
                             child: TextFormField(
                               controller: _fullNameController,
                               decoration: const InputDecoration(
@@ -279,7 +280,7 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                             ),
                           ),
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: TextFormField(
                             controller: _emailController,
                             decoration: const InputDecoration(
@@ -310,20 +311,20 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                           },
                         ),
                         if (_errorMessage != null) ...[
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           Text(
                             _errorMessage!,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: Colors.red.shade300),
                           ),
                         ],
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         FilledButton.tonalIcon(
                           onPressed: _loading ? null : _signInWithGoogle,
                           icon: const Icon(Icons.g_mobiledata_rounded),
                           label: const Text('Continue with Google'),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Row(
                           children: [
                             Expanded(
@@ -363,7 +364,7 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                                 : 'Sign in',
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
                         TextButton(
                           onPressed: _loading
                               ? null
@@ -377,9 +378,9 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                                 : 'New to OnWay? Create an account',
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Text(
-                          'Use Google or email now. You can add your contact number in the next step.',
+                          'Use Google or email now. Add your phone number in the next step.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -406,10 +407,6 @@ class _EmailAuthScreenState extends State<_EmailAuthScreen> {
                       SizedBox(height: 8),
                       Text(
                         'Keep pickup details, trip progress, and support in one simple place.',
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Start as a rider today and unlock more services as OnWay grows in your city.',
                       ),
                     ],
                   ),
@@ -498,13 +495,13 @@ class _IntroCarousel extends StatelessWidget {
       (
         title: 'Book local rides fast',
         body:
-            'Everyday rides, airport transfers, and out-of-town travel from one simple app.',
+            'Everyday rides, airport trips, and out-of-town travel from one app.',
         icon: Icons.local_taxi_rounded,
       ),
       (
-        title: 'Plan more than one kind of trip',
+        title: 'More than one kind of trip',
         body:
-            'Switch between rentals, courier requests, and city travel without creating another account.',
+            'Switch between rentals, courier requests, and city travel with the same account.',
         icon: Icons.inventory_2_rounded,
       ),
       (
@@ -518,7 +515,7 @@ class _IntroCarousel extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          height: 172,
+          height: 168,
           child: PageView.builder(
             controller: controller,
             itemCount: slides.length,
@@ -530,28 +527,37 @@ class _IntroCarousel extends StatelessWidget {
                   right: index == slides.length - 1 ? 0 : 12,
                 ),
                 child: OnWayPanel(
+                  padding: const EdgeInsets.all(14),
                   backgroundColor: OnWayTheme.slate,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
                           color: const Color(0x29FFC107),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(slide.icon, color: OnWayTheme.yellow),
+                        child: Icon(
+                          slide.icon,
+                          color: OnWayTheme.yellow,
+                          size: 20,
+                        ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       Text(
                         slide.title,
-                        style: Theme.of(context).textTheme.titleLarge,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         slide.body,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),

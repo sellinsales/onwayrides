@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
+import '../onway_mock_data.dart';
 import '../onway_models.dart';
 import 'onway_auth_session.dart';
 
@@ -160,8 +161,8 @@ class OnWayAuthService {
             normalizedMessage.contains('certificate'));
 
     if (!kIsWeb && missingCertificate) {
-      return 'Google sign-in is unavailable in this version of the app. '
-          'Please update the app or try email sign-in for now.';
+      return 'Google sign-in is not ready on this Android test build yet. '
+          'Use email sign-in for now.';
     }
 
     return message ?? 'Unable to sign in with Google right now.';
@@ -176,7 +177,10 @@ class OnWayAuthService {
       throw const OnWayAuthException('No signed-in Firebase user was found.');
     }
 
-    final idToken = await user.getIdToken(true);
+    final idToken = await _getFreshIdToken(
+      user: user,
+      fallback: 'Unable to refresh your secure sign-in session.',
+    );
     final response = await _performJsonRequest(
       () => _httpClient.post(
         Uri.parse('$apiBaseUrl/auth/login'),
@@ -220,7 +224,10 @@ class OnWayAuthService {
       throw const OnWayAuthException('No signed-in Firebase user was found.');
     }
 
-    final idToken = await user.getIdToken(true);
+    final idToken = await _getFreshIdToken(
+      user: user,
+      fallback: 'Unable to refresh your secure sign-in session.',
+    );
     final response = await _performJsonRequest(
       () => _httpClient.patch(
         Uri.parse('$apiBaseUrl/auth/onboarding'),
@@ -275,7 +282,10 @@ class OnWayAuthService {
       throw const OnWayAuthException('No signed-in Firebase user was found.');
     }
 
-    final idToken = await user.getIdToken(true);
+    final idToken = await _getFreshIdToken(
+      user: user,
+      fallback: 'Unable to refresh your secure sign-in session.',
+    );
     final response = await _performJsonRequest(
       () => _httpClient.get(
         Uri.parse('$apiBaseUrl/bookings'),
@@ -659,7 +669,10 @@ class OnWayAuthService {
       throw const OnWayAuthException('No signed-in Firebase user was found.');
     }
 
-    final idToken = await user.getIdToken(true);
+    final idToken = await _getFreshIdToken(
+      user: user,
+      fallback: 'Unable to refresh your secure sign-in session.',
+    );
     final uri = Uri.parse('$apiBaseUrl/onboarding/driver-documents');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $idToken'
@@ -778,6 +791,12 @@ class OnWayAuthService {
               paymentLabel:
                   (currentBooking['payment_label'] as String?) ?? 'Cash',
               riderPhone: currentBooking['rider_phone'] as String?,
+              pickupCoordinate: _coordinateFromPayload(
+                currentBooking['pickup_coordinate'],
+              ),
+              dropoffCoordinate: _coordinateFromPayload(
+                currentBooking['dropoff_coordinate'],
+              ),
             )
           : null,
       requests: requests is List
@@ -802,6 +821,12 @@ class OnWayAuthService {
                     statusLine:
                         (item['status_line'] as String?) ??
                         'Request ready for driver action.',
+                    pickupCoordinate: _coordinateFromPayload(
+                      item['pickup_coordinate'],
+                    ),
+                    dropoffCoordinate: _coordinateFromPayload(
+                      item['dropoff_coordinate'],
+                    ),
                   ),
                 )
                 .toList(growable: false)
@@ -895,6 +920,8 @@ class OnWayAuthService {
     required String paymentMethod,
     required bool negotiated,
     required String offeredFare,
+    OnWayCoordinate? pickupCoordinate,
+    OnWayCoordinate? destinationCoordinate,
     DateTime? scheduledFor,
   }) async {
     final user = _firebaseAuth.currentUser;
@@ -902,7 +929,10 @@ class OnWayAuthService {
       throw const OnWayAuthException('No signed-in Firebase user was found.');
     }
 
-    final idToken = await user.getIdToken(true);
+    final idToken = await _getFreshIdToken(
+      user: user,
+      fallback: 'Unable to refresh your secure sign-in session.',
+    );
     final response = await _performJsonRequest(
       () => _httpClient.post(
         Uri.parse('$apiBaseUrl/bookings'),
@@ -914,6 +944,10 @@ class OnWayAuthService {
           'service_slug': _serviceSlugForType(service.type),
           'pickup_address': pickupAddress.trim(),
           'destination_address': destinationAddress.trim(),
+          'pickup_latitude': pickupCoordinate?.latitude,
+          'pickup_longitude': pickupCoordinate?.longitude,
+          'destination_latitude': destinationCoordinate?.latitude,
+          'destination_longitude': destinationCoordinate?.longitude,
           'payment_method': paymentMethod.toLowerCase(),
           'estimated_fare': _parseCurrencyLabel(fare.priceLabel),
           'offered_fare': negotiated ? _parseLooseAmount(offeredFare) : null,
@@ -923,6 +957,18 @@ class OnWayAuthService {
             'mobile_service_subtitle': service.subtitle,
             'mobile_fare_title': fare.title,
             'negotiated': negotiated,
+            'pickup_coordinate': pickupCoordinate == null
+                ? null
+                : {
+                    'latitude': pickupCoordinate.latitude,
+                    'longitude': pickupCoordinate.longitude,
+                  },
+            'destination_coordinate': destinationCoordinate == null
+                ? null
+                : {
+                    'latitude': destinationCoordinate.latitude,
+                    'longitude': destinationCoordinate.longitude,
+                  },
           },
         }),
       ),
@@ -944,7 +990,40 @@ class OnWayAuthService {
       );
     }
 
-    return _tripFromBookingJson(booking);
+    final trip = _tripFromBookingJson(booking);
+    if (trip.pickupCoordinate != null && trip.destinationCoordinate != null) {
+      return trip;
+    }
+
+    return ActiveTrip(
+      bookingId: trip.bookingId,
+      bookingReference: trip.bookingReference,
+      status: trip.status,
+      serviceTitle: trip.serviceTitle,
+      pickup: trip.pickup,
+      destination: trip.destination,
+      statusLine: trip.statusLine,
+      routeLine: trip.routeLine,
+      paymentLabel: trip.paymentLabel,
+      fareLabel: trip.fareLabel,
+      driver: trip.driver,
+      pickupCoordinate:
+          trip.pickupCoordinate ??
+          pickupCoordinate ??
+          OnWayMockData.coordinateForAddress(trip.pickup),
+      destinationCoordinate:
+          trip.destinationCoordinate ??
+          destinationCoordinate ??
+          OnWayMockData.coordinateForAddress(trip.destination),
+      driverCoordinate:
+          trip.driverCoordinate ??
+          (pickupCoordinate != null && destinationCoordinate != null
+              ? OnWayMockData.midpointBetween(
+                  pickupCoordinate,
+                  destinationCoordinate,
+                )
+              : null),
+    );
   }
 
   Future<OnWayPhoneVerificationChallenge> startPhoneVerification({
@@ -1150,6 +1229,35 @@ class OnWayAuthService {
     return defaultTargetPlatform.name;
   }
 
+  Future<String> _getFreshIdToken({
+    required User user,
+    required String fallback,
+  }) async {
+    try {
+      final idToken = await user.getIdToken(true);
+      if (idToken == null || idToken.trim().isEmpty) {
+        throw OnWayAuthException(fallback);
+      }
+      return idToken;
+    } on FirebaseAuthException catch (error) {
+      switch (error.code) {
+        case 'network-request-failed':
+          throw OnWayAuthException(
+            '$fallback Check your connection and try again.',
+          );
+        case 'user-token-expired':
+        case 'invalid-user-token':
+          throw OnWayAuthException(
+            '$fallback Please sign in again to continue.',
+          );
+        default:
+          throw OnWayAuthException(error.message ?? fallback);
+      }
+    } on SocketException catch (error) {
+      throw OnWayAuthException('$fallback ${error.message}');
+    }
+  }
+
   Future<http.Response> _performJsonRequest(
     Future<http.Response> Function() request, {
     required String fallback,
@@ -1200,7 +1308,10 @@ class OnWayAuthService {
       throw const OnWayAuthException('No signed-in Firebase user was found.');
     }
 
-    final idToken = await user.getIdToken(true);
+    final idToken = await _getFreshIdToken(
+      user: user,
+      fallback: 'Unable to refresh your secure sign-in session.',
+    );
     final response = await _performJsonRequest(() {
       final uri = Uri.parse('$apiBaseUrl$path');
       final headers = {
@@ -1448,6 +1559,7 @@ class OnWayAuthService {
 
   ActiveTrip _tripFromBookingJson(Map<String, dynamic> json) {
     final service = json['service'] as Map<String, dynamic>? ?? const {};
+    final metadata = json['metadata'] as Map<String, dynamic>? ?? const {};
 
     return ActiveTrip(
       bookingId: (json['id'] as num?)?.toInt(),
@@ -1463,7 +1575,33 @@ class OnWayAuthService {
       paymentLabel: (json['payment_label'] as String?) ?? 'Cash payment',
       fareLabel: (json['fare_label'] as String?) ?? 'Fare to confirm',
       driver: _driverFromBookingJson(json['driver']),
+      pickupCoordinate:
+          _coordinateFromPayload(json['pickup_coordinate']) ??
+          _coordinateFromPayload(metadata['pickup_coordinate']),
+      destinationCoordinate:
+          _coordinateFromPayload(json['destination_coordinate']) ??
+          _coordinateFromPayload(metadata['destination_coordinate']),
+      driverCoordinate: _coordinateFromPayload(json['driver_coordinate']),
     );
+  }
+
+  OnWayCoordinate? _coordinateFromPayload(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      return null;
+    }
+
+    final latitude =
+        (value['latitude'] as num?)?.toDouble() ??
+        (value['lat'] as num?)?.toDouble();
+    final longitude =
+        (value['longitude'] as num?)?.toDouble() ??
+        (value['lng'] as num?)?.toDouble();
+
+    if (latitude == null || longitude == null) {
+      return null;
+    }
+
+    return OnWayCoordinate(latitude: latitude, longitude: longitude);
   }
 
   TripHistoryItem _historyItemFromBookingJson(Map<String, dynamic> json) {

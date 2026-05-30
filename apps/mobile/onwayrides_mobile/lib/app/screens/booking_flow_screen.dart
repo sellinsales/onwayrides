@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../auth/onway_auth_service.dart';
+import '../onway_map.dart';
 import '../onway_mock_data.dart';
 import '../onway_models.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
+
+enum _MapSelectionTarget { pickup, destination }
 
 class BookingFlowScreen extends StatefulWidget {
   const BookingFlowScreen({
@@ -39,6 +42,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
   String _paymentMethod = 'Cash';
   String _scheduleLabel = 'Now';
   String? _errorMessage;
+  OnWayCoordinate? _pickupCoordinate;
+  OnWayCoordinate? _destinationCoordinate;
+  _MapSelectionTarget _mapSelectionTarget = _MapSelectionTarget.destination;
 
   @override
   void initState() {
@@ -48,7 +54,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     _pickupController = TextEditingController(text: 'Current location');
     _destinationController = TextEditingController();
     _offerController = TextEditingController(text: '600');
+    _pickupCoordinate = OnWayMockData.joharTown;
     _syncNegotiation();
+    _hydrateCurrentLocation();
   }
 
   @override
@@ -61,6 +69,15 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
 
   void _syncNegotiation() {
     _isNegotiated = _selectedService.negotiable && _selectedFare.negotiable;
+  }
+
+  Future<void> _hydrateCurrentLocation() async {
+    final current = await tryResolveCurrentLocation();
+    if (!mounted || current == null) {
+      return;
+    }
+
+    setState(() => _pickupCoordinate = current);
   }
 
   List<OnWayService> get _relevantServices {
@@ -92,9 +109,6 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
       ServiceType.airport,
       ServiceType.courier,
       ServiceType.rentCar,
-      ServiceType.cityToCity,
-      ServiceType.schoolOffice,
-      ServiceType.prebooking,
     ]);
   }
 
@@ -107,6 +121,52 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
           ),
         )
         .toList(growable: false);
+  }
+
+  String _labelForCoordinate(OnWayCoordinate coordinate) {
+    OnWayPlaceSuggestion? nearest;
+    var bestScore = double.infinity;
+    for (final place in OnWayMockData.allKnownPlaces) {
+      final latDelta = coordinate.latitude - place.coordinate.latitude;
+      final lngDelta = coordinate.longitude - place.coordinate.longitude;
+      final score = (latDelta * latDelta) + (lngDelta * lngDelta);
+      if (score < bestScore) {
+        bestScore = score;
+        nearest = place;
+      }
+    }
+
+    if (nearest != null && bestScore < 0.0004) {
+      return nearest.title;
+    }
+
+    return 'Pinned location';
+  }
+
+  void _applyCoordinate({
+    required bool pickup,
+    required OnWayCoordinate coordinate,
+    String? label,
+  }) {
+    setState(() {
+      if (pickup) {
+        _pickupCoordinate = coordinate;
+        _pickupController.text = label ?? _labelForCoordinate(coordinate);
+      } else {
+        _destinationCoordinate = coordinate;
+        _destinationController.text = label ?? _labelForCoordinate(coordinate);
+      }
+    });
+  }
+
+  void _selectOnMap(OnWayCoordinate coordinate) {
+    _applyCoordinate(
+      pickup: _mapSelectionTarget == _MapSelectionTarget.pickup,
+      coordinate: coordinate,
+      label: _mapSelectionTarget == _MapSelectionTarget.pickup
+          ? 'Pickup pin'
+          : 'Destination pin',
+    );
   }
 
   Future<void> _openLocationPicker({required bool pickup}) async {
@@ -126,15 +186,13 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
       return;
     }
 
-    setState(() {
-      if (pickup) {
-        _pickupController.text = selected.title == 'Current location'
-            ? 'Current location'
-            : selected.title;
-      } else {
-        _destinationController.text = selected.title;
-      }
-    });
+    _applyCoordinate(
+      pickup: pickup,
+      coordinate: selected.coordinate,
+      label: selected.title == 'Current location'
+          ? 'Current location'
+          : selected.title,
+    );
 
     if (!pickup) {
       await _maybeShowRouteSuggestions();
@@ -149,12 +207,11 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     final suggestions = OnWayMockData.contextualSuggestionsFor(
       _destinationController.text,
     );
-    if (suggestions.isEmpty) {
+    if (suggestions.isEmpty || !mounted) {
       return;
     }
 
     _routeSuggestionShown = true;
-
     final selectedType = await showModalBottomSheet<ServiceType>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -165,22 +222,37 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
       return;
     }
 
-    final matched = widget.services.firstWhere(
-      (service) => service.type == selectedType,
-      orElse: () => _selectedService,
-    );
-
     setState(() {
-      _selectedService = matched;
-      _isPrebooked = matched.type == ServiceType.prebooking;
+      _selectedService = widget.services.firstWhere(
+        (service) => service.type == selectedType,
+        orElse: () => _selectedService,
+      );
       _syncNegotiation();
     });
   }
 
   void _applyShortcutPlace(OnWayPlaceSuggestion place) {
-    setState(() {
-      _destinationController.text = place.title;
-    });
+    _applyCoordinate(
+      pickup: false,
+      coordinate: place.coordinate,
+      label: place.title,
+    );
+  }
+
+  String? _validateStep() {
+    if (_currentStep == 0) {
+      if (_pickupController.text.trim().isEmpty ||
+          _destinationController.text.trim().isEmpty) {
+        return 'Select both pickup and destination first.';
+      }
+      if (_pickupCoordinate == null || _destinationCoordinate == null) {
+        return 'Set both route points on the map first.';
+      }
+    }
+    if (_currentStep == 1 && _selectedService.title.isEmpty) {
+      return 'Choose a ride option first.';
+    }
+    return null;
   }
 
   void _continue() {
@@ -196,24 +268,6 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
         _currentStep += 1;
       }
     });
-  }
-
-  String? _validateStep() {
-    if (_currentStep == 0) {
-      if (_pickupController.text.trim().isEmpty ||
-          _destinationController.text.trim().isEmpty) {
-        return 'Select both pickup and destination first.';
-      }
-    }
-    if (_currentStep == 1) {
-      if (_selectedService.title.isEmpty) {
-        return 'Choose a service for this route.';
-      }
-      if (_isNegotiated && _offerController.text.trim().isEmpty) {
-        return 'Enter your offered fare.';
-      }
-    }
-    return null;
   }
 
   Future<void> _confirmBooking() async {
@@ -250,6 +304,12 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                 ? 'PKR ${_offerController.text}'
                 : _selectedFare.priceLabel,
             driver: trip.driver,
+            pickupCoordinate: _pickupCoordinate,
+            destinationCoordinate: _destinationCoordinate,
+            driverCoordinate: OnWayMockData.midpointBetween(
+              _pickupCoordinate!,
+              _destinationCoordinate!,
+            ),
           ),
         );
         return;
@@ -267,6 +327,8 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
         paymentMethod: _paymentMethod,
         negotiated: _isNegotiated,
         offeredFare: _offerController.text,
+        pickupCoordinate: _pickupCoordinate,
+        destinationCoordinate: _destinationCoordinate,
         scheduledFor: scheduledFor,
       );
 
@@ -288,62 +350,134 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Plan your booking')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        children: [
-          const BrandHeader(caption: 'Route first. Service second.'),
-          const SizedBox(height: 18),
-          _StepHeader(currentStep: _currentStep),
-          const SizedBox(height: 20),
-          if (_currentStep == 0) _buildRouteStep(context),
-          if (_currentStep == 1) _buildServiceStep(context),
-          if (_currentStep == 2) _buildReviewStep(context),
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.red.shade300),
-            ),
-          ],
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-        child: Row(
-          children: [
-            if (_currentStep > 0) ...[
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _submitting
-                      ? null
-                      : () => setState(() => _currentStep -= 1),
-                  child: const Text('Back'),
-                ),
-              ),
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: FilledButton(
-                onPressed: _submitting
-                    ? null
-                    : _currentStep == 2
-                    ? _confirmBooking
-                    : _continue,
-                child: Text(
-                  _submitting
-                      ? 'Creating booking...'
-                      : _currentStep == 2
-                      ? 'Confirm booking'
-                      : 'Continue',
-                ),
-              ),
-            ),
-          ],
+    final mediaSize = MediaQuery.sizeOf(context);
+    final route = _pickupCoordinate != null && _destinationCoordinate != null
+        ? buildRoutePath(_pickupCoordinate!, _destinationCoordinate!)
+        : const <OnWayCoordinate>[];
+    final markers = <OnWayMapMarkerSpec>[
+      if (_pickupCoordinate != null)
+        OnWayMapMarkerSpec(
+          coordinate: _pickupCoordinate!,
+          icon: Icons.trip_origin_rounded,
+          label: _currentStep == 0 ? 'Pickup' : 'Start',
+          color: Colors.white,
         ),
+      if (_destinationCoordinate != null)
+        OnWayMapMarkerSpec(
+          coordinate: _destinationCoordinate!,
+          icon: Icons.location_on_rounded,
+          label: 'Dropoff',
+        ),
+    ];
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: OnWayMapSurface(
+              height: mediaSize.height,
+              markers: markers,
+              route: route,
+              onTap: _currentStep == 0 ? _selectOnMap : null,
+              overlay: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.14),
+                      Colors.black.withValues(alpha: 0.24),
+                      Colors.black.withValues(alpha: 0.68),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: Row(
+                children: [
+                  IconButton.filledTonal(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black.withValues(alpha: 0.64),
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.64),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${_currentStep + 1}/3',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(color: OnWayTheme.yellow),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _currentStep == 0
+                                  ? 'Set your route'
+                                  : _currentStep == 1
+                                  ? 'Choose your ride'
+                                  : 'Confirm your trip',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _BookingSheetShell(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: KeyedSubtree(
+                  key: ValueKey(_currentStep),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_currentStep == 0) _buildRouteStep(context),
+                      if (_currentStep == 1) _buildServiceStep(context),
+                      if (_currentStep == 2) _buildReviewStep(context),
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          _errorMessage!,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.red.shade200),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -352,10 +486,41 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeading(
-          title: 'Choose your route',
+        const _SheetTitle(
+          title: 'Where to?',
           subtitle:
-              'Select pickup, destination and timing before the app shows the best service options.',
+              'Tap the map or search. Pickup and destination stay on one continuous trip sheet.',
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            ChoiceChip(
+              label: const Text('Set pickup'),
+              selected: _mapSelectionTarget == _MapSelectionTarget.pickup,
+              onSelected: (_) {
+                setState(
+                  () => _mapSelectionTarget = _MapSelectionTarget.pickup,
+                );
+              },
+            ),
+            ChoiceChip(
+              label: const Text('Set destination'),
+              selected: _mapSelectionTarget == _MapSelectionTarget.destination,
+              onSelected: (_) {
+                setState(
+                  () => _mapSelectionTarget = _MapSelectionTarget.destination,
+                );
+              },
+            ),
+            _MiniStatusChip(
+              icon: Icons.touch_app_rounded,
+              label: _mapSelectionTarget == _MapSelectionTarget.pickup
+                  ? 'Tap map for pickup'
+                  : 'Tap map for destination',
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         _RouteField(
@@ -371,15 +536,19 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
           icon: Icons.location_on_outlined,
           title: 'Destination',
           value: _destinationController.text.isEmpty
-              ? 'Where do you want to go?'
+              ? 'Search destination'
               : _destinationController.text,
           emphasized: true,
           onTap: () => _openLocationPicker(pickup: false),
         ),
         const SizedBox(height: 12),
-        OnWayPanel(
-          padding: const EdgeInsets.all(16),
-          backgroundColor: OnWayTheme.slate,
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: OnWayTheme.charcoal,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white10),
+          ),
           child: Row(
             children: [
               const Icon(Icons.schedule_rounded, color: OnWayTheme.yellow),
@@ -388,7 +557,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('When'),
+                    const Text('Ride time'),
                     const SizedBox(height: 4),
                     Text(
                       _scheduleLabel,
@@ -409,12 +578,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
-        const SectionHeading(
-          title: 'Saved and recent places',
-          subtitle: 'Tap a common destination to move faster.',
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 18),
+        Text('Saved places', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 10,
           runSpacing: 10,
@@ -428,7 +594,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        for (final place in OnWayMockData.recentPlaces.take(3)) ...[
+        for (final place in OnWayMockData.recentPlaces.take(3))
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: CircleAvatar(
@@ -439,7 +605,11 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
             subtitle: Text(place.addressLine),
             onTap: () => _applyShortcutPlace(place),
           ),
-        ],
+        const SizedBox(height: 10),
+        FilledButton(
+          onPressed: _submitting ? null : _continue,
+          child: const Text('See ride options'),
+        ),
       ],
     );
   }
@@ -450,87 +620,103 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeading(
-          title: 'Choose the right service',
+        const _SheetTitle(
+          title: 'Choose your ride',
           subtitle:
-              'The route is set. Now choose the most relevant service and fare for this trip.',
+              'Popular ride options come first. Alternate service flows stay available but secondary.',
         ),
         const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: OnWayTheme.charcoal,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${_pickupController.text} -> ${_destinationController.text}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Current flow: ${_selectedService.title}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Change trip flow',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 10),
         Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
             for (final service in services)
-              SizedBox(
-                width: (MediaQuery.sizeOf(context).width - 52) / 2,
-                child: _CompactServiceTile(
-                  service: service,
-                  selected: service.type == _selectedService.type,
-                  onTap: () {
-                    setState(() {
-                      _selectedService = service;
-                      _syncNegotiation();
-                    });
-                  },
-                ),
+              FilterChip(
+                avatar: Icon(service.icon, size: 18),
+                label: Text(service.title),
+                selected: service.type == _selectedService.type,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedService = service;
+                    _syncNegotiation();
+                  });
+                },
               ),
           ],
         ),
         const SizedBox(height: 20),
-        Text('Available fares', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 10),
-        for (final fare in OnWayMockData.fareOptions) ...[
-          InkWell(
-            borderRadius: BorderRadius.circular(22),
-            onTap: () => setState(() {
-              _selectedFare = fare;
-              _syncNegotiation();
-            }),
-            child: Ink(
-              decoration: BoxDecoration(
-                color: fare == _selectedFare
-                    ? const Color(0x22FFC107)
-                    : OnWayTheme.charcoal,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: fare == _selectedFare
-                      ? OnWayTheme.yellow
-                      : Colors.white10,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fare.title,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Text('${fare.capacity} • ${fare.eta} pickup'),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      fare.priceLabel,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+        Text('Ride options', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 12),
+        for (
+          var index = 0;
+          index < OnWayMockData.fareOptions.length;
+          index++
+        ) ...[
+          _FareTile(
+            fare: OnWayMockData.fareOptions[index],
+            selected: OnWayMockData.fareOptions[index] == _selectedFare,
+            icon: index == 1
+                ? Icons.two_wheeler_rounded
+                : index == 2
+                ? Icons.airport_shuttle_rounded
+                : Icons.local_taxi_rounded,
+            onTap: () {
+              setState(() {
+                _selectedFare = OnWayMockData.fareOptions[index];
+                _syncNegotiation();
+              });
+            },
           ),
           const SizedBox(height: 10),
         ],
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: _maybeShowRouteSuggestions,
-          icon: const Icon(Icons.tips_and_updates_outlined),
-          label: const Text('See route suggestions'),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _submitting
+                    ? null
+                    : () => setState(() => _currentStep -= 1),
+                child: const Text('Back'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: _submitting ? null : _continue,
+                child: const Text('Continue'),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -540,10 +726,10 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeading(
-          title: 'Review and confirm',
+        const _SheetTitle(
+          title: 'Confirm your trip',
           subtitle:
-              'Keep the final step short: payment, fare and one last check.',
+              'Keep the last step light: check the route, choose payment, then request the ride.',
         ),
         const SizedBox(height: 14),
         OnWayPanel(
@@ -555,39 +741,40 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                 label: 'Destination',
                 value: _destinationController.text,
               ),
-              _ReviewRow(label: 'Service', value: _selectedService.title),
-              _ReviewRow(label: 'Fare', value: _selectedFare.priceLabel),
+              _ReviewRow(label: 'Ride', value: _selectedFare.title),
+              _ReviewRow(label: 'Flow', value: _selectedService.title),
+              _ReviewRow(label: 'Price', value: _selectedFare.priceLabel),
               _ReviewRow(label: 'When', value: _scheduleLabel),
             ],
           ),
         ),
-        const SizedBox(height: 18),
-        SwitchListTile(
-          value: _isNegotiated,
-          activeThumbColor: OnWayTheme.yellow,
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Offer a negotiated fare'),
-          subtitle: const Text(
-            'Use this only where local pricing or rider-driver negotiation makes sense.',
+        if (_selectedService.negotiable && _selectedFare.negotiable) ...[
+          const SizedBox(height: 18),
+          SwitchListTile(
+            value: _isNegotiated,
+            activeThumbColor: OnWayTheme.yellow,
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Send a custom fare'),
+            subtitle: const Text(
+              'Use this only when local rider-driver negotiation is expected.',
+            ),
+            onChanged: (value) => setState(() => _isNegotiated = value),
           ),
-          onChanged: _selectedService.negotiable && _selectedFare.negotiable
-              ? (value) => setState(() => _isNegotiated = value)
-              : null,
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _offerController,
-          enabled: _isNegotiated,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Your offered fare (PKR)',
-            prefixIcon: Icon(Icons.price_change_outlined),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _offerController,
+            enabled: _isNegotiated,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Your offered fare (PKR)',
+              prefixIcon: Icon(Icons.price_change_outlined),
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 20),
-        const SectionHeading(
-          title: 'Payment method',
-          subtitle: 'Cash first, then wallet or card as the platform expands.',
+        const _SheetTitle(
+          title: 'Payment',
+          subtitle: 'Choose how the rider will pay for this trip.',
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -602,64 +789,121 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
               ),
           ],
         ),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _submitting
+                    ? null
+                    : () => setState(() => _currentStep -= 1),
+                child: const Text('Back'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: _submitting ? null : _confirmBooking,
+                child: Text(
+                  _submitting ? 'Requesting ride...' : 'Confirm ride',
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 }
 
-class _StepHeader extends StatelessWidget {
-  const _StepHeader({required this.currentStep});
+class _BookingSheetShell extends StatelessWidget {
+  const _BookingSheetShell({required this.child});
 
-  final int currentStep;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Route', 'Service', 'Review'];
-
-    return Row(
-      children: List.generate(labels.length, (index) {
-        final active = currentStep == index;
-        final complete = currentStep > index;
-
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: index == labels.length - 1 ? 0 : 10,
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: active
-                    ? const Color(0x29FFC107)
-                    : complete
-                    ? Colors.white10
-                    : OnWayTheme.charcoal,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: active ? OnWayTheme.yellow : Colors.white10,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.94),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(34)),
+        border: Border.all(color: Colors.white12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 24,
+            offset: const Offset(0, -12),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${index + 1}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: active ? OnWayTheme.yellow : Colors.white54,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    labels[index],
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ],
-              ),
-            ),
+              const SizedBox(height: 18),
+              child,
+            ],
           ),
-        );
-      }),
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetTitle extends StatelessWidget {
+  const _SheetTitle({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 6),
+        Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+      ],
+    );
+  }
+}
+
+class _MiniStatusChip extends StatelessWidget {
+  const _MiniStatusChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white10,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: OnWayTheme.yellow),
+          const SizedBox(width: 8),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
     );
   }
 }
@@ -728,51 +972,77 @@ class _RouteField extends StatelessWidget {
   }
 }
 
-class _CompactServiceTile extends StatelessWidget {
-  const _CompactServiceTile({
-    required this.service,
+class _FareTile extends StatelessWidget {
+  const _FareTile({
+    required this.fare,
     required this.selected,
+    required this.icon,
     required this.onTap,
   });
 
-  final OnWayService service;
+  final FareOption fare;
   final bool selected;
+  final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      borderRadius: BorderRadius.circular(22),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
       child: Ink(
-        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected ? const Color(0x22FFC107) : OnWayTheme.charcoal,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: selected ? OnWayTheme.yellow : Colors.white10,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: AspectRatio(
-                aspectRatio: 1.4,
-                child: Image.asset(service.imageAsset, fit: BoxFit.cover),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: selected ? const Color(0x29FFC107) : Colors.white10,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: selected ? OnWayTheme.yellow : Colors.white70,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(service.title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              service.subtitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fare.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${fare.capacity} • ${fare.eta} pickup'),
+                    if (fare.recommended) ...[
+                      const SizedBox(height: 8),
+                      const _MiniStatusChip(
+                        icon: Icons.star_rounded,
+                        label: 'Recommended',
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                fare.priceLabel,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -917,12 +1187,12 @@ class _SuggestionSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Suggestions for this route',
+                'Better trip flow',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
-                'Show helpful alternatives without interrupting the rider’s main booking intent.',
+                'Switch only when the destination suggests a better match than a normal ride.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),

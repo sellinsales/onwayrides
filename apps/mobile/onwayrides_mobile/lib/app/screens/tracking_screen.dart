@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../auth/onway_auth_service.dart';
+import '../onway_map.dart';
+import '../onway_mock_data.dart';
 import '../onway_models.dart';
 import '../onway_theme.dart';
 import '../onway_widgets.dart';
@@ -108,40 +110,53 @@ class _TrackingScreenState extends State<TrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final driver = _trip.driver;
+    final pickupCoordinate =
+        _trip.pickupCoordinate ??
+        OnWayMockData.coordinateForAddress(_trip.pickup);
+    final destinationCoordinate =
+        _trip.destinationCoordinate ??
+        OnWayMockData.coordinateForAddress(_trip.destination);
+    final driverCoordinate =
+        _trip.driverCoordinate ??
+        OnWayMockData.midpointBetween(pickupCoordinate, destinationCoordinate);
+    final route = buildRoutePath(pickupCoordinate, destinationCoordinate);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Live tracking')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: Stack(
-              children: [
-                Image.asset(
-                  'assets/showcase/rider_navigation.png',
-                  height: 280,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.26),
-                          Colors.black.withValues(alpha: 0.78),
-                        ],
-                      ),
-                    ),
+          Stack(
+            children: [
+              OnWayMapSurface(
+                height: 320,
+                markers: [
+                  OnWayMapMarkerSpec(
+                    coordinate: pickupCoordinate,
+                    icon: Icons.trip_origin_rounded,
+                    label: 'Pickup',
+                    color: Colors.white,
                   ),
-                ),
-                Positioned(
-                  left: 20,
-                  right: 20,
-                  bottom: 20,
+                  OnWayMapMarkerSpec(
+                    coordinate: destinationCoordinate,
+                    icon: Icons.location_on_rounded,
+                    label: 'Dropoff',
+                  ),
+                  OnWayMapMarkerSpec(
+                    coordinate: driverCoordinate,
+                    icon: Icons.directions_car_rounded,
+                    label: 'Driver',
+                    color: const Color(0xFF91F2C0),
+                  ),
+                ],
+                route: route,
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: OnWayPanel(
+                  backgroundColor: Colors.black.withValues(alpha: 0.76),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -154,8 +169,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 18),
           OnWayPanel(
